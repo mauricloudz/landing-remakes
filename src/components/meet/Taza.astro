@@ -1,0 +1,20 @@
+---
+interface Props { class?: string }
+const { class: clase = '' } = Astro.props;
+---
+<svg viewBox="0 0 240 240" class:list={['taza', clase]} aria-hidden="true">
+  <g fill="none" stroke="var(--crema)" stroke-width="6" stroke-linecap="round" opacity=".75">
+    <path class="vapor v1" d="M92 92c-14-18 14-26 0-46" /><path class="vapor v2" d="M120 86c-14-18 14-26 0-46" /><path class="vapor v3" d="M148 92c-14-18 14-26 0-46" />
+  </g>
+  <ellipse cx="120" cy="206" rx="86" ry="14" fill="#000" opacity=".35" />
+  <path d="M176 128h10a26 26 0 0 1 0 52h-14" fill="none" stroke="var(--marca)" stroke-width="12" />
+  <path d="M52 112h136l-12 74a24 24 0 0 1-24 20H88a24 24 0 0 1-24-20z" fill="var(--marca)" />
+  <ellipse cx="120" cy="112" rx="68" ry="12" fill="#6b3a1d" />
+  <ellipse cx="120" cy="112" rx="56" ry="8" fill="#3b1f0f" />
+  <path d="M84 140h72" stroke="var(--espresso)" stroke-width="5" stroke-linecap="round" opacity=".25" />
+</svg>
+<style>
+  .vapor { stroke-dasharray: 60; animation: vapor 3.2s ease-in-out infinite; }
+  .v2 { animation-delay: -1s; } .v3 { animation-delay: -2s; }
+  @keyframes vapor { 0% { stroke-dashoffset: 60; opacity: 0; translate: 0 10px; } 40% { opacity: 1; } 100% { stroke-dashoffset: -60; opacity: 0; translate: 0 -14px; } }
+</style>

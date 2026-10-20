@@ -1,0 +1,304 @@
+---
+import '@fontsource-variable/bricolage-grotesque';
+import '@fontsource-variable/jetbrains-mono';
+import Base from '../../layouts/Base.astro';
+import Cabecera from '../../components/meet/Cabecera.astro';
+import Pie from '../../components/meet/Pie.astro';
+import Taza from '../../components/meet/Taza.astro';
+import Portada from '../../components/meet/Portada.astro';
+import Palabras from '../../components/Palabras.astro';
+import { proxima, agenda, eventos } from '../../data/meet';
+
+const base = import.meta.env.BASE_URL;
+const temas = ['IA', 'Big Data', 'Cloud', 'Ciberseguridad', 'Frontend', 'DevOps', 'Producto', 'Bases de datos', 'Agilidad', 'Open source'];
+const rotativos = ['IA', 'Big Data', 'Cloud', 'Frontend', 'Seguridad'];
+const preguntas = [
+  { p: '¿Cuánto cuesta?', r: 'Nada. Solo pedimos que reserves tu lugar para saber cuánto café preparar.' },
+  { p: '¿Necesito saber programar?', r: 'No. Las charlas parten desde cero y siempre hay alguien dispuesto a explicar lo que no se entendió.' },
+  { p: '¿Puedo ir con alguien?', r: 'Claro. Cada reserva es por persona, así que pídele que reserve la suya.' },
+  { p: '¿Cómo propongo una charla?', r: 'Con el formulario de esta página. Respondemos todas las propuestas, aunque no queden en la agenda.' },
+];
+const jsonLd = {
+  '@context': 'https://schema.org', '@type': 'Organization', name: 'Meet & Coffee',
+  description: 'Comunidad de charlas y encuentros sobre tecnología en Santiago.',
+  url: new URL(`${base}meet-and-coffee/`, Astro.site).toString(),
+  address: { '@type': 'PostalAddress', streetAddress: 'Calle Baker 133', addressLocality: 'Providencia', addressRegion: 'Santiago', addressCountry: 'CL' },
+};
+---
+<Base titulo="Meet & Coffee · Charlas de tecnología con café" descripcion="Charlas, eventos y simposios sobre tecnología, martes y viernes de 19:00 a 22:00 en Providencia, Santiago. Gratis y para todos los niveles." tema="meet" jsonLd={jsonLd}>
+  <Cabecera />
+  <main id="contenido">
+    <!-- HERO -->
+    <section class="relative overflow-hidden">
+      <div class="brillo pointer-events-none absolute -top-40 left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full opacity-40 blur-3xl" aria-hidden="true"></div>
+      <div class="relative mx-auto grid grid-cols-1 max-w-6xl items-center gap-10 px-5 pb-16 pt-16 lg:grid-cols-[1.25fr_1fr] lg:pt-24">
+        <div>
+          <p data-reveal class="mb-6 inline-flex items-center gap-2 rounded-full border border-linea bg-superficie px-4 py-1.5 font-mono text-xs text-suave">
+            <span class="punto size-2 rounded-full bg-acento"></span> Martes y viernes · 19:00 a 22:00 · Providencia
+          </p>
+          <h1 class="text-5xl font-extrabold leading-[0.98] tracking-tight sm:text-6xl lg:text-[5.2rem]">
+            <Palabras texto="Lo último en tecnología, con un café en la mano." />
+          </h1>
+          <p data-reveal style="--d:3" class="mt-7 max-w-xl text-lg leading-relaxed text-suave">
+            Charlas, eventos y simposios sobre{' '}
+            <span class="sr-only">{rotativos.join(', ')},</span><span class="rotador relative inline-grid h-[1.5em] overflow-hidden align-bottom font-semibold text-marca" aria-hidden="true">
+              {rotativos.map((r, i) => <span style={`--i:${i};--n:${rotativos.length}`}>{r}</span>)}
+            </span>
+            para quien recién empieza y para quien lleva años en esto. Gratis.
+          </p>
+          <div data-reveal style="--d:4" class="mt-9 flex flex-wrap gap-3">
+            <a href="#proxima" class="group inline-flex items-center gap-2 rounded-full bg-marca px-7 py-3.5 font-semibold text-[var(--espresso)] transition hover:-translate-y-0.5 hover:bg-marca-fuerte">Reservar mi lugar <span class="transition group-hover:translate-x-1">→</span></a>
+            <a href="#eventos" class="inline-flex rounded-full border border-linea px-7 py-3.5 font-semibold transition hover:border-suave">Ver eventos anteriores</a>
+          </div>
+        </div>
+        <div class="relative" data-reveal="zoom">
+          <Taza class="mx-auto w-[min(80%,320px)]" />
+          <div class="relative mx-auto -mt-6 w-[min(100%,360px)] rounded-3xl border border-linea bg-superficie/90 p-5 shadow-2xl shadow-black/40 backdrop-blur" id="cuenta">
+            <p class="text-xs font-semibold uppercase tracking-[.16em] text-suave">Próxima sesión en</p>
+            <div class="mt-2 grid grid-cols-4 gap-2 text-center font-mono" aria-live="off">
+              {['días', 'horas', 'min', 'seg'].map((u) => (
+                <div class="rounded-xl bg-fondo py-2"><span data-u={u} class="block text-2xl font-bold text-tinta">--</span><span class="text-[10px] uppercase text-suave">{u}</span></div>
+              ))}
+            </div>
+            <p class="mt-3 text-sm text-suave" data-cuando>Calculando…</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MARQUESINA -->
+    <div class="overflow-hidden border-y border-linea py-5" aria-hidden="true">
+      <div class="marquesina gap-4" style="--vel:45s">
+        {[0, 1].map(() => temas.map((t) => <span class="whitespace-nowrap rounded-full border border-linea px-5 py-2 font-display text-lg font-semibold text-suave">{t}</span>))}
+      </div>
+    </div>
+
+    <!-- PRÓXIMA CHARLA -->
+    <section id="proxima" class="mx-auto max-w-6xl scroll-mt-20 px-5 py-24">
+      <p data-reveal class="font-mono text-xs uppercase tracking-[.2em] text-acento">// próxima charla</p>
+      <div class="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[1.4fr_1fr]">
+        <article data-reveal class="relative overflow-hidden rounded-[32px] border border-linea bg-superficie p-8 sm:p-12">
+          <h2 class="text-4xl font-extrabold tracking-tight sm:text-6xl">{proxima.titulo}</h2>
+          <p class="mt-5 max-w-2xl text-lg leading-relaxed text-suave">{proxima.resumen}</p>
+          <h3 class="mt-10 font-mono text-xs uppercase tracking-[.2em] text-suave">Te vas a llevar</h3>
+          <ul class="mt-4 space-y-3">
+            {proxima.aprenderas.map((a, i) => (
+              <li data-reveal="izq" style={`--d:${i + 1}`} class="flex gap-3 text-lg"><span class="mt-1.5 grid size-5 shrink-0 place-items-center rounded-full bg-acento/20 text-xs text-acento">✓</span>{a}</li>
+            ))}
+          </ul>
+        </article>
+        <div class="flex flex-col gap-6">
+          <div data-reveal="der" class="rounded-[32px] border border-linea bg-superficie p-8">
+            <div class="flex items-center gap-4">
+              <span class="grid size-16 place-items-center rounded-2xl bg-gradient-to-br from-marca to-[#8a3b12] font-display text-2xl font-bold text-[var(--espresso)]" aria-hidden="true">RV</span>
+              <div><p class="font-display text-xl font-bold">{proxima.orador.nombre}</p><p class="text-sm text-marca">{proxima.orador.cargo}</p></div>
+            </div>
+            <p class="mt-4 text-suave">{proxima.orador.bio}</p>
+          </div>
+          <form id="form-reserva" data-reveal="der" style="--d:1" class="rounded-[32px] bg-marca p-8 text-[var(--espresso)]">
+            <p class="font-display text-2xl font-bold">Reserva tu lugar</p>
+            <label for="r-correo" class="mt-4 block text-sm font-semibold">Tu correo</label>
+            <div class="mt-2 flex gap-2">
+              <input id="r-correo" type="email" required placeholder="tu@correo.cl" size="1" class="w-full min-w-0 flex-1 rounded-full border-0 bg-[var(--crema)] px-4 py-3 text-[var(--espresso)] placeholder:text-[#7a6a5c] outline-none" />
+              <button class="rounded-full bg-[var(--espresso)] px-5 font-semibold text-[var(--crema)]">Reservar</button>
+            </div>
+            <p class="mt-3 text-sm font-medium" data-estado>Demo: no se envía ningún dato.</p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- LA NOCHE -->
+    <section id="noche" class="scroll-mt-20 border-y border-linea bg-superficie/50 py-24">
+      <div class="mx-auto max-w-6xl px-5">
+        <p data-reveal class="font-mono text-xs uppercase tracking-[.2em] text-acento">// cómo es una noche</p>
+        <h2 data-reveal style="--d:1" class="mt-3 max-w-3xl text-4xl font-extrabold tracking-tight sm:text-5xl">Tres horas que se pasan volando</h2>
+        <ol class="agenda relative mt-14 grid gap-6 md:grid-cols-5">
+          <span class="riel absolute left-0 right-0 top-[22px] hidden h-[2px] bg-linea md:block" aria-hidden="true"><span class="relleno-a block h-full origin-left bg-marca"></span></span>
+          {agenda.map((a, i) => (
+            <li data-reveal style={`--d:${i}`} class="relative">
+              <span class="relative z-10 inline-flex rounded-full border border-linea bg-fondo px-3 py-2 font-mono text-sm font-bold text-marca">{a.hora}</span>
+              <h3 class="mt-5 text-xl font-bold">{a.titulo}</h3>
+              <p class="mt-2 text-[15px] text-suave">{a.texto}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <!-- DÓNDE -->
+    <section id="donde" class="mx-auto grid max-w-6xl scroll-mt-20 items-center gap-10 px-5 py-24 lg:grid-cols-2">
+      <div>
+        <p data-reveal class="font-mono text-xs uppercase tracking-[.2em] text-acento">// dónde nos juntamos</p>
+        <h2 data-reveal style="--d:1" class="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">Calle Baker 133, Providencia</h2>
+        <p data-reveal style="--d:2" class="mt-5 text-lg text-suave">A pasos del metro. Hay estacionamiento para bicicletas, enchufes en todas las mesas y wifi que sí funciona.</p>
+        <dl data-reveal style="--d:3" class="mt-8 grid grid-cols-2 gap-4">
+          <div class="rounded-2xl border border-linea p-5"><dt class="text-sm text-suave">Días</dt><dd class="mt-1 font-display text-xl font-bold">Martes y viernes</dd></div>
+          <div class="rounded-2xl border border-linea p-5"><dt class="text-sm text-suave">Horario</dt><dd class="mt-1 font-display text-xl font-bold">19:00 a 22:00</dd></div>
+        </dl>
+      </div>
+      <div data-reveal="zoom" class="mapa relative aspect-[4/3] overflow-hidden rounded-[32px] border border-linea bg-superficie">
+        <svg viewBox="0 0 400 300" class="absolute inset-0 size-full" aria-hidden="true">
+          <g stroke="var(--linea)" stroke-width="14" fill="none" stroke-linecap="round">
+            <path d="M-10 80h420M-10 210h420M90-10v320M260-10v320" /><path d="M-10 290 410 20" stroke-width="22" stroke="#2a2119" />
+          </g>
+          <g stroke="var(--linea)" stroke-width="5" fill="none"><path d="M-10 145h420M175-10v320M340-10v320" /></g>
+          <rect x="190" y="95" width="56" height="100" rx="8" fill="#2a2119" />
+          <path d="M-10 290 410 20" stroke="var(--acento)" stroke-width="3" stroke-dasharray="10 10" class="metro" fill="none" />
+        </svg>
+        <div class="pin absolute left-[54%] top-[44%]">
+          <span class="onda absolute -inset-6 rounded-full bg-marca/30"></span>
+          <span class="relative grid size-12 place-items-center rounded-full bg-marca text-xl shadow-xl" aria-hidden="true">☕</span>
+        </div>
+        <p class="absolute bottom-4 left-4 rounded-full bg-fondo/80 px-4 py-2 text-sm backdrop-blur">Calle Baker 133</p>
+      </div>
+    </section>
+
+    <!-- EVENTOS -->
+    <section id="eventos" class="scroll-mt-20 border-t border-linea py-24">
+      <div class="mx-auto flex max-w-6xl flex-wrap items-end justify-between gap-6 px-5">
+        <div>
+          <p data-reveal class="font-mono text-xs uppercase tracking-[.2em] text-acento">// eventos anteriores</p>
+          <h2 data-reveal style="--d:1" class="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">Lo que ya pasó por la cafetera</h2>
+        </div>
+        <div class="flex gap-2" data-reveal style="--d:2">
+          <button class="carrusel-btn grid size-12 place-items-center rounded-full border border-linea transition hover:bg-superficie" data-dir="-1" aria-label="Anterior">←</button>
+          <button class="carrusel-btn grid size-12 place-items-center rounded-full border border-linea transition hover:bg-superficie" data-dir="1" aria-label="Siguiente">→</button>
+        </div>
+      </div>
+      <ul id="carrusel" class="carrusel mx-auto mt-12 flex max-w-6xl snap-x snap-mandatory gap-6 overflow-x-auto px-5 pb-6">
+        {eventos.map((e, i) => (
+          <li data-reveal style={`--d:${i}`} class="w-[min(85vw,420px)] shrink-0 snap-start">
+            <a href={`${base}meet-and-coffee/eventos/${e.slug}/`} class="group block overflow-hidden rounded-[28px] border border-linea bg-superficie transition duration-500 hover:-translate-y-1.5 hover:border-suave/50">
+              <div class="aspect-[400/260] overflow-hidden" transition:name={`portada-${e.slug}`}>
+                <Portada motivo={e.motivo} colores={e.colores} titulo={e.titulo} class="size-full transition duration-700 group-hover:scale-105" />
+              </div>
+              <div class="p-7">
+                <p class="font-mono text-xs text-suave">{e.fecha}</p>
+                <h3 class="mt-2 text-2xl font-bold" transition:name={`titulo-${e.slug}`}>{e.titulo}</h3>
+                <p class="mt-2 text-suave">{e.bajada}</p>
+                <span class="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-marca">Ver el resumen <span class="transition group-hover:translate-x-1">→</span></span>
+              </div>
+            </a>
+          </li>
+        ))}
+        <li class="w-[min(85vw,420px)] shrink-0 snap-start" data-reveal style="--d:3">
+          <a href="#propon" class="grid h-full min-h-[300px] place-items-center rounded-[28px] border-2 border-dashed border-linea p-8 text-center transition hover:border-marca">
+            <span><span class="block text-5xl text-marca">+</span><span class="mt-3 block font-display text-2xl font-bold">Tu charla podría ir aquí</span><span class="mt-2 block text-suave">Propón un tema</span></span>
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <!-- PROPÓN UNA CHARLA -->
+    <section id="propon" class="scroll-mt-20 px-5 pb-24">
+      <div class="mx-auto grid max-w-6xl gap-10 rounded-[36px] border border-linea bg-superficie p-8 sm:p-14 lg:grid-cols-2">
+        <div>
+          <p data-reveal class="font-mono text-xs uppercase tracking-[.2em] text-acento">// call for speakers</p>
+          <h2 data-reveal style="--d:1" class="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">¿Tienes algo que contar?</h2>
+          <p data-reveal style="--d:2" class="mt-5 text-lg text-suave">No hace falta ser experto. Las mejores charlas son las de alguien que resolvió un problema de verdad y quiere contar cómo.</p>
+        </div>
+        <form id="form-propuesta" class="space-y-4" novalidate>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div><label for="p-nombre" class="mb-1.5 block text-sm font-semibold">Nombre</label><input id="p-nombre" required class="w-full rounded-2xl border border-linea bg-fondo px-4 py-3 outline-none focus:border-marca" /></div>
+            <div><label for="p-correo" class="mb-1.5 block text-sm font-semibold">Correo</label><input id="p-correo" type="email" required class="w-full rounded-2xl border border-linea bg-fondo px-4 py-3 outline-none focus:border-marca" /></div>
+          </div>
+          <div><label for="p-titulo" class="mb-1.5 block text-sm font-semibold">Título de la charla</label><input id="p-titulo" required class="w-full rounded-2xl border border-linea bg-fondo px-4 py-3 outline-none focus:border-marca" /></div>
+          <fieldset><legend class="mb-2 text-sm font-semibold">Nivel</legend>
+            <div class="flex flex-wrap gap-2">
+              {['Principiante', 'Intermedio', 'Avanzado'].map((n, i) => (
+                <label class="cursor-pointer rounded-full border border-linea px-4 py-2 text-sm font-semibold transition has-[:checked]:border-marca has-[:checked]:bg-marca has-[:checked]:text-[var(--espresso)]"><input type="radio" name="nivel" value={n} class="sr-only" checked={i === 0} />{n}</label>
+              ))}
+            </div>
+          </fieldset>
+          <p id="p-error" class="hidden text-sm font-semibold text-marca" role="alert">Completa nombre, correo y título.</p>
+          <button class="w-full rounded-full bg-marca py-4 font-semibold text-[var(--espresso)] transition hover:bg-marca-fuerte">Enviar propuesta</button>
+          <p class="text-center text-xs text-suave">Sitio de demostración: este formulario no envía datos.</p>
+        </form>
+      </div>
+    </section>
+
+    <!-- PREGUNTAS -->
+    <section class="mx-auto grid grid-cols-1 max-w-6xl gap-12 px-5 pb-24 lg:grid-cols-[1fr_1.4fr]">
+      <h2 data-reveal class="text-4xl font-extrabold tracking-tight sm:text-5xl">Preguntas frecuentes</h2>
+      <div class="divide-y divide-linea border-y border-linea">
+        {preguntas.map((q, i) => (
+          <details class="pregunta" data-reveal style={`--d:${i}`} name="faq-meet">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-6 py-6 font-display text-xl font-semibold">{q.p}<span class="icono grid size-9 shrink-0 place-items-center rounded-full bg-marca/15 text-2xl text-marca">+</span></summary>
+            <p class="pb-6 pr-12 leading-relaxed text-suave">{q.r}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+  </main>
+  <Pie />
+</Base>
+
+<style>
+  .brillo { background: radial-gradient(closest-side, var(--marca), transparent); }
+  .punto { animation: punto 2s ease-in-out infinite; }
+  @keyframes punto { 50% { opacity: .3; } }
+  .rotador > span { grid-area: 1 / 1; animation: rotar calc(var(--n) * 2.2s) infinite; animation-delay: calc(var(--i) * 2.2s); opacity: 0; }
+  @keyframes rotar { 0% { opacity: 0; transform: translateY(100%); } 4%, 18% { opacity: 1; transform: none; } 22%, 100% { opacity: 0; transform: translateY(-100%); } }
+  .onda { animation: onda 2s ease-out infinite; }
+  @keyframes onda { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+  .metro { animation: metro 3s linear infinite; }
+  @keyframes metro { to { stroke-dashoffset: -80; } }
+  .carrusel { scrollbar-width: none; }
+  .carrusel::-webkit-scrollbar { display: none; }
+  .relleno-a { transform: scaleX(1); }
+  @supports (animation-timeline: view()) {
+    .relleno-a { animation: llenar-a linear both; animation-timeline: view(); animation-range: entry 20% cover 55%; }
+    @keyframes llenar-a { from { transform: scaleX(0); } }
+  }
+  @media (prefers-reduced-motion: reduce) { .rotador > span:first-child { opacity: 1; } }
+</style>
+
+<script>
+  function proximaSesion() {
+    // Hora actual en Santiago, como fecha "de pared"
+    const ahora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+    for (let d = 0; d < 8; d++) {
+      const c = new Date(ahora); c.setDate(ahora.getDate() + d); c.setHours(19, 0, 0, 0);
+      if ((c.getDay() === 2 || c.getDay() === 5) && c > ahora) return { objetivo: c, ahora };
+    }
+    return null;
+  }
+  let reloj: number | undefined;
+  function iniciarMeet() {
+    clearInterval(reloj);
+    const caja = document.getElementById('cuenta');
+    if (caja) {
+      const pintar = () => {
+        const s = proximaSesion(); if (!s) return;
+        let ms = s.objetivo.getTime() - s.ahora.getTime();
+        const v = { días: Math.floor(ms / 864e5), horas: Math.floor(ms / 36e5) % 24, min: Math.floor(ms / 6e4) % 60, seg: Math.floor(ms / 1e3) % 60 };
+        for (const [u, n] of Object.entries(v)) caja.querySelector(`[data-u="${u}"]`)!.textContent = String(n).padStart(2, '0');
+        caja.querySelector('[data-cuando]')!.textContent = `${s.objetivo.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' })} a las 19:00`;
+      };
+      pintar(); reloj = window.setInterval(pintar, 1000);
+    }
+    // Carrusel con botones
+    const carrusel = document.getElementById('carrusel');
+    document.querySelectorAll<HTMLButtonElement>('.carrusel-btn').forEach((b) =>
+      b.addEventListener('click', () => carrusel?.scrollBy({ left: Number(b.dataset.dir) * 440, behavior: 'smooth' })),
+    );
+    // Reserva (demo)
+    const reserva = document.querySelector<HTMLFormElement>('#form-reserva');
+    reserva?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const estado = reserva.querySelector('[data-estado]')!;
+      estado.textContent = '¡Listo! Te esperamos con café. (Demo: no se envió nada.)';
+      reserva.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.03)' }, { transform: 'scale(1)' }], { duration: 400 });
+    });
+    // Propuesta de charla (demo)
+    const prop = document.querySelector<HTMLFormElement>('#form-propuesta');
+    prop?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const ok = (['p-nombre', 'p-correo', 'p-titulo'] as const).every((id) => { const i = document.getElementById(id) as HTMLInputElement; return i.value.trim() && i.checkValidity(); });
+      document.getElementById('p-error')!.classList.toggle('hidden', ok);
+      if (ok) prop.innerHTML = '<p class="py-12 text-center font-display text-3xl font-bold">¡Gracias! Te escribiremos pronto.</p><p class="text-center text-suave">Demo: la propuesta no se envió.</p>';
+    });
+  }
+  document.addEventListener('astro:page-load', iniciarMeet);
+</script>

@@ -1,0 +1,28 @@
+---
+const base = import.meta.env.BASE_URL;
+const raiz = `${base}meet-and-coffee/`;
+const enlaces = [['Próxima charla', 'proxima'], ['La noche', 'noche'], ['Dónde', 'donde'], ['Eventos', 'eventos'], ['Propón una charla', 'propon']];
+---
+<header class="sticky top-0 z-50 border-b border-linea/60 bg-fondo/75 backdrop-blur-md">
+  <nav class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3" aria-label="Principal">
+    <a href={raiz} class="flex items-center gap-2.5 font-display text-lg font-bold tracking-tight">
+      <img src={`${base}favicon-meet.svg`} alt="" width="36" height="36" class="rounded-xl ring-1 ring-linea" /> Meet &amp; Coffee
+    </a>
+    <ul class="hidden items-center gap-7 text-sm font-medium text-suave lg:flex">
+      {enlaces.map(([t, h]) => <li><a class="transition hover:text-tinta" href={`${raiz}#${h}`}>{t}</a></li>)}
+    </ul>
+    <a href={`${raiz}#proxima`} class="hidden rounded-full bg-marca px-5 py-2.5 text-sm font-semibold text-[var(--espresso)] transition hover:bg-marca-fuerte lg:inline-flex">Reservar mi lugar</a>
+    <button class="rounded-full border border-linea px-4 py-2 text-sm font-medium lg:hidden" popovertarget="menu-meet">Menú</button>
+    <div id="menu-meet" popover class="menu-meet m-0 ml-auto h-dvh w-[min(84vw,320px)] bg-superficie p-6 text-tinta shadow-2xl">
+      <button popovertarget="menu-meet" popovertargetaction="hide" class="mb-8 text-sm text-suave">Cerrar ✕</button>
+      <ul class="space-y-5 font-display text-2xl font-semibold">
+        {enlaces.map(([t, h]) => <li><a href={`${raiz}#${h}`}>{t}</a></li>)}
+      </ul>
+    </div>
+  </nav>
+</header>
+<style>
+  .menu-meet:popover-open { animation: entrar-m .4s var(--ease-salida); }
+  .menu-meet::backdrop { background: rgb(0 0 0 / .5); backdrop-filter: blur(4px); }
+  @keyframes entrar-m { from { transform: translateX(100%); } }
+</style>
