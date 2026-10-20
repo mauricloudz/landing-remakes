@@ -41,9 +41,7 @@ const jsonLd = {
           </h1>
           <p data-reveal style="--d:3" class="mt-7 max-w-xl text-lg leading-relaxed text-suave">
             Charlas, eventos y simposios sobre{' '}
-            <span class="sr-only">{rotativos.join(', ')},</span><span class="rotador relative inline-grid h-[1.5em] overflow-hidden align-bottom font-semibold text-marca" aria-hidden="true">
-              {rotativos.map((r, i) => <span style={`--i:${i};--n:${rotativos.length}`}>{r}</span>)}
-            </span>
+            <span class="sr-only">{rotativos.join(', ')},</span><span class="rotador font-semibold text-marca" aria-hidden="true" data-palabras={JSON.stringify(rotativos)}><span class="palabra-r">{rotativos[0]}</span></span>{' '}
             para quien recién empieza y para quien lleva años en esto. Gratis.
           </p>
           <div data-reveal style="--d:4" class="mt-9 flex flex-wrap gap-3">
@@ -238,8 +236,11 @@ const jsonLd = {
   .brillo { background: radial-gradient(closest-side, var(--marca), transparent); }
   .punto { animation: punto 2s ease-in-out infinite; }
   @keyframes punto { 50% { opacity: .3; } }
-  .rotador > span { grid-area: 1 / 1; animation: rotar calc(var(--n) * 2.2s) infinite; animation-delay: calc(var(--i) * 2.2s); opacity: 0; }
-  @keyframes rotar { 0% { opacity: 0; transform: translateY(100%); } 4%, 18% { opacity: 1; transform: none; } 22%, 100% { opacity: 0; transform: translateY(-100%); } }
+  /* La caja se ajusta al ancho de cada palabra, así nunca queda un hueco ni un choque */
+  .rotador { display: inline-block; vertical-align: bottom; height: 1.5em; overflow: hidden; white-space: nowrap; transition: width .5s var(--ease-salida); }
+  .palabra-r { display: inline-block; transition: transform .45s var(--ease-salida), opacity .45s var(--ease-salida); }
+  .palabra-r.saliendo { transform: translateY(-100%); opacity: 0; }
+  .palabra-r.entrando { transform: translateY(100%); opacity: 0; transition: none; }
   .onda { animation: onda 2s ease-out infinite; }
   @keyframes onda { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
   .metro { animation: metro 3s linear infinite; }
@@ -251,7 +252,6 @@ const jsonLd = {
     .relleno-a { animation: llenar-a linear both; animation-timeline: view(); animation-range: entry 20% cover 55%; }
     @keyframes llenar-a { from { transform: scaleX(0); } }
   }
-  @media (prefers-reduced-motion: reduce) { .rotador > span:first-child { opacity: 1; } }
 </style>
 
 <script>
@@ -265,8 +265,32 @@ const jsonLd = {
     return null;
   }
   let reloj: number | undefined;
+  let rotacion: number | undefined;
+  function iniciarRotador() {
+    clearInterval(rotacion);
+    const caja = document.querySelector<HTMLElement>('.rotador');
+    const palabra = caja?.querySelector<HTMLElement>('.palabra-r');
+    if (!caja || !palabra) return;
+    const palabras: string[] = JSON.parse(caja.dataset.palabras!);
+    const ajustar = () => { caja.style.width = `${palabra.offsetWidth}px`; };
+    ajustar();
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let i = 0;
+    rotacion = window.setInterval(() => {
+      palabra.classList.add('saliendo');
+      setTimeout(() => {
+        i = (i + 1) % palabras.length;
+        palabra.classList.replace('saliendo', 'entrando');
+        palabra.textContent = palabras[i];
+        ajustar();
+        void palabra.offsetWidth; // fuerza el reflujo antes de animar la entrada
+        palabra.classList.remove('entrando');
+      }, 300);
+    }, 2400);
+  }
   function iniciarMeet() {
     clearInterval(reloj);
+    iniciarRotador();
     const caja = document.getElementById('cuenta');
     if (caja) {
       const pintar = () => {
