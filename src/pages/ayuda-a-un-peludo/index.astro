@@ -1,0 +1,398 @@
+---
+import '@fontsource-variable/fraunces';
+import Base from '../../layouts/Base.astro';
+import Retrato from '../../components/peludo/Retrato.astro';
+import Logo from '../../components/peludo/Logo.astro';
+import Huella from '../../components/Huella.astro';
+import Palabras from '../../components/Palabras.astro';
+import { peludos, equipo } from '../../data/peludos';
+
+const base = import.meta.env.BASE_URL;
+const perros = peludos.filter((p) => p.especie === 'perro').length;
+const gatos = peludos.length - perros;
+const fondos = ['var(--menta)', 'var(--rosa)', '#f3e6c4', '#dfe7f5', '#f6d6cf', '#cfe9e3'];
+
+const jsonLd = {
+  '@context': 'https://schema.org', '@type': 'NGO', name: 'Ayuda a un Peludo',
+  description: 'ONG de rescate y adopción responsable de perros y gatos.',
+  url: new URL(`${base}ayuda-a-un-peludo/`, Astro.site).toString(),
+};
+
+const ayudas = [
+  { titulo: 'Adopta', texto: 'Dale un hogar definitivo a uno de nuestros peludos. Te acompañamos antes, durante y después.', icono: 'M12 21s-7-4.4-9.3-9A5.4 5.4 0 0 1 12 6a5.4 5.4 0 0 1 9.3 6c-2.3 4.6-9.3 9-9.3 9z' },
+  { titulo: 'Sé hogar temporal', texto: 'Recibe a un peludo unas semanas mientras encuentra familia. Nosotros cubrimos alimento y veterinario.', icono: 'M3 11 12 3l9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z' },
+  { titulo: 'Únete como voluntario', texto: 'Paseos, baños, jornadas de adopción o difusión. Cada hora suma.', icono: 'M7 11V7a5 5 0 0 1 10 0v4M5 11h14v10H5z' },
+  { titulo: 'Dona', texto: 'Alimento, mantas, remedios o un aporte mensual. Todo llega directo a los peludos.', icono: 'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6' },
+];
+
+const pasos = [
+  { t: 'Conócelo', d: 'Mira las fichas, haz el test y elige al peludo que calza con tu vida.' },
+  { t: 'Postula', d: 'Cuéntanos de tu hogar y tu rutina. Respondemos en menos de 48 horas.' },
+  { t: 'Visítalo', d: 'Coordinamos un encuentro para que se conozcan sin apuro.' },
+  { t: 'Llévalo a casa', d: 'Firmamos un compromiso de adopción responsable y te acompañamos el primer mes.' },
+];
+
+const preguntas = [
+  { p: '¿Adoptar tiene costo?', r: 'No. Solo pedimos un compromiso de tenencia responsable. Todos se entregan con vacunas al día y microchip.' },
+  { p: '¿Qué pasa si no funciona?', r: 'Si la convivencia no resulta, el peludo vuelve con nosotros. Nunca debe quedar en la calle ni pasar a terceros sin avisarnos.' },
+  { p: '¿Puedo adoptar si vivo en departamento?', r: 'Sí. En cada ficha indicamos qué peludos se adaptan bien a espacios pequeños.' },
+  { p: '¿Por qué algunos no están esterilizados?', r: 'Son cachorros todavía muy pequeños. La esterilización se coordina con la familia cuando tienen la edad adecuada.' },
+];
+---
+<Base titulo="Ayuda a un Peludo · Adopta un perro o un gato" descripcion="ONG de rescate de perros y gatos. Conoce a los peludos que buscan familia, descubre cuál calza contigo y aprende cómo ayudar." tema="peludo" jsonLd={jsonLd}>
+  <header class="sticky top-0 z-50 border-b border-linea/70 bg-fondo/80 backdrop-blur-md">
+    <nav class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3" aria-label="Principal">
+      <a href={`${base}ayuda-a-un-peludo/`} class="flex items-center gap-2.5 font-display text-lg font-semibold">
+        <Logo class="size-10" /> Ayuda a un Peludo
+      </a>
+      <ul class="hidden items-center gap-7 text-sm font-medium text-suave md:flex">
+        <li><a class="hover:text-tinta" href="#adopta">Adopta</a></li>
+        <li><a class="hover:text-tinta" href="#test">¿Cuál es para ti?</a></li>
+        <li><a class="hover:text-tinta" href="#ayuda">Cómo ayudar</a></li>
+        <li><a class="hover:text-tinta" href="#equipo">Equipo</a></li>
+        <li><a class="hover:text-tinta" href="#preguntas">Preguntas</a></li>
+      </ul>
+      <a href="#contacto" class="hidden rounded-full bg-marca px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-marca-fuerte md:inline-flex">Quiero adoptar</a>
+      <button class="rounded-full border border-linea px-4 py-2 text-sm font-medium md:hidden" popovertarget="menu-movil" aria-label="Abrir menú">Menú</button>
+      <div id="menu-movil" popover class="menu-movil m-0 ml-auto h-dvh w-[min(84vw,320px)] bg-fondo p-6 shadow-2xl">
+        <button popovertarget="menu-movil" popovertargetaction="hide" class="mb-8 text-sm font-medium text-suave">Cerrar ✕</button>
+        <ul class="space-y-5 font-display text-2xl">
+          <li><a href="#adopta">Adopta</a></li><li><a href="#test">¿Cuál es para ti?</a></li><li><a href="#ayuda">Cómo ayudar</a></li>
+          <li><a href="#equipo">Equipo</a></li><li><a href="#preguntas">Preguntas</a></li><li><a href="#contacto" class="text-marca">Quiero adoptar</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main id="contenido">
+    <!-- HERO -->
+    <section class="relative overflow-hidden">
+      <div class="mx-auto grid grid-cols-1 max-w-6xl items-center gap-12 px-5 pb-20 pt-14 md:grid-cols-[1.1fr_1fr] md:pt-24">
+        <div>
+          <p data-reveal class="mb-5 inline-flex items-center gap-2 rounded-full bg-[var(--rosa)] px-4 py-1.5 text-sm font-semibold text-marca-fuerte">
+            <Huella class="size-4" /> ONG de rescate de animalitos
+          </p>
+          <h1 class="text-5xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl">
+            <Palabras texto="Cada peludo merece un hogar donde lo esperen." />
+          </h1>
+          <p data-reveal style="--d:3" class="mt-6 max-w-xl text-lg leading-relaxed text-suave">
+            Los rescatamos de la calle, los sanamos y les buscamos la familia que merecen. Hoy hay <strong class="text-tinta">{perros} perros y {gatos} gatos</strong> esperando a alguien como tú.
+          </p>
+          <div data-reveal style="--d:4" class="mt-9 flex flex-wrap gap-3">
+            <a href="#adopta" class="group inline-flex items-center gap-2 rounded-full bg-marca px-7 py-3.5 font-semibold text-white shadow-lg shadow-marca/25 transition hover:-translate-y-0.5 hover:bg-marca-fuerte">
+              Conocer a los peludos <span class="transition group-hover:translate-x-1">→</span>
+            </a>
+            <a href="#test" class="inline-flex items-center rounded-full border-2 border-tinta/15 px-7 py-3.5 font-semibold transition hover:border-tinta/40">Hacer el test</a>
+          </div>
+        </div>
+        <div class="relative mx-auto aspect-square w-full max-w-[460px]" data-reveal="zoom">
+          <div class="mancha absolute inset-4 bg-[var(--mostaza)]/40"></div>
+          <Retrato peludo={peludos[0]} sufijo="hero" fondo="var(--menta)" class="absolute left-0 top-6 w-[62%] drop-shadow-xl flotar" />
+          <Retrato peludo={peludos[3]} sufijo="hero" fondo="var(--rosa)" class="absolute bottom-2 right-0 w-[56%] drop-shadow-xl flotar [animation-delay:-2s]" />
+          <Huella class="parallax absolute -left-4 bottom-10 size-10 text-marca/70" style="--p-desde:60px;--p-hasta:-60px" />
+          <Huella class="parallax absolute right-6 top-0 size-8 rotate-12 text-[var(--acento)]/70" style="--p-desde:-30px;--p-hasta:50px" />
+          <Huella class="parallax absolute left-1/2 top-1/2 size-6 -rotate-12 text-[var(--ciruela)]/40" style="--p-desde:20px;--p-hasta:-80px" />
+          <span class="corazon absolute right-[38%] top-[30%] text-3xl text-marca" aria-hidden="true">♥</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- MARQUESINA -->
+    <div class="overflow-hidden border-y border-linea bg-[var(--ciruela)] py-4 text-fondo" aria-hidden="true">
+      <div class="marquesina gap-10 font-display text-2xl italic" style="--vel:40s">
+        {[0, 1].map(() => ['Adopta', 'Apadrina', 'Sé voluntario', 'Hogar temporal', 'Dona', 'Difunde'].map((t) => (
+          <span class="flex items-center gap-10 whitespace-nowrap">{t}<Huella class="size-5 text-[var(--mostaza)]" /></span>
+        )))}
+      </div>
+    </div>
+
+    <!-- PELUDOS -->
+    <section id="adopta" class="mx-auto max-w-6xl scroll-mt-20 px-5 py-24">
+      <div class="flex flex-wrap items-end justify-between gap-6">
+        <div>
+          <p data-reveal class="font-semibold uppercase tracking-[.18em] text-marca text-xs">En adopción</p>
+          <h2 data-reveal style="--d:1" class="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Ellos te están esperando</h2>
+        </div>
+        <fieldset data-reveal style="--d:2" class="filtros flex rounded-full border border-linea bg-superficie p-1 text-sm font-semibold">
+          <legend class="sr-only">Filtrar por especie</legend>
+          {[['todos', `Todos (${peludos.length})`], ['perro', `Perros (${perros})`], ['gato', `Gatos (${gatos})`]].map(([v, l], i) => (
+            <label class="cursor-pointer rounded-full px-4 py-2 transition has-[:checked]:bg-tinta has-[:checked]:text-fondo">
+              <input type="radio" name="filtro" value={v} class="sr-only" checked={i === 0} />{l}
+            </label>
+          ))}
+        </fieldset>
+      </div>
+
+      <ul class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" id="lista-peludos">
+        {peludos.map((p, i) => (
+          <li data-especie={p.especie} data-reveal style={`--d:${i % 3}; view-transition-name: peludo-${p.id}`}
+              class="tarjeta group flex flex-col rounded-[28px] border border-linea bg-superficie p-5 transition-shadow duration-500 hover:shadow-[0_24px_60px_-28px_rgba(61,42,61,.45)]">
+            <div class="overflow-hidden rounded-[22px]" style={`background:${fondos[i]}`}>
+              <Retrato peludo={p} fondo={fondos[i]} class="mx-auto w-full max-w-[260px] transition duration-700 group-hover:scale-[1.04]" />
+            </div>
+            <div class="mt-5 flex items-center justify-between">
+              <h3 class="text-2xl font-semibold">{p.nombre}</h3>
+              <span class="rounded-full bg-fondo px-3 py-1 text-xs font-semibold text-suave">{p.especie === 'perro' ? 'Perro' : 'Gato'}</span>
+            </div>
+            <p class="mt-2 flex-1 text-[15px] leading-relaxed text-suave">{p.personalidad}</p>
+            <dl class="mt-5 grid grid-cols-3 gap-2 text-center text-xs">
+              <div class="rounded-2xl bg-fondo px-2 py-2.5"><dt class="text-suave">Edad</dt><dd class="mt-0.5 font-semibold">{p.edad}</dd></div>
+              <div class="rounded-2xl bg-fondo px-2 py-2.5"><dt class="text-suave">Género</dt><dd class="mt-0.5 font-semibold">{p.genero}</dd></div>
+              <div class="rounded-2xl bg-fondo px-2 py-2.5"><dt class="text-suave">Esterilizado</dt><dd class="mt-0.5 font-semibold">{p.esterilizado ? 'Sí' : 'Aún no'}</dd></div>
+            </dl>
+            <p class="mt-3 font-mono text-[11px] text-suave">Chip N° {p.chip}</p>
+            <a href="#contacto" data-adoptar={p.nombre} class="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-tinta px-5 py-3 text-sm font-semibold text-fondo transition hover:bg-marca">
+              Quiero conocer a {p.nombre}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- TEST -->
+    <section id="test" class="scroll-mt-20 bg-[var(--ciruela)] py-24 text-fondo">
+      <div class="mx-auto grid grid-cols-1 max-w-6xl gap-12 px-5 lg:grid-cols-[1fr_1.1fr]">
+        <div>
+          <p data-reveal class="text-xs font-semibold uppercase tracking-[.18em] text-[var(--mostaza)]">Test de 20 segundos</p>
+          <h2 data-reveal style="--d:1" class="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">¿Qué peludo es para ti?</h2>
+          <p data-reveal style="--d:2" class="mt-5 max-w-md text-lg text-fondo/75">Tres preguntas sobre tu vida y te mostramos con quién harías mejor equipo.</p>
+          <div id="resultado" class="mt-10 hidden" aria-live="polite">
+            <p class="mb-4 font-semibold text-[var(--mostaza)]">Tu mejor compañía:</p>
+            <div class="grid grid-cols-2 gap-4">
+              {peludos.map((p, i) => (
+                <div data-resultado={p.id} class="resultado hidden rounded-3xl bg-fondo p-4 text-tinta">
+                  <Retrato peludo={p} sufijo="test" fondo={fondos[i]} class="w-full" />
+                  <p class="mt-3 font-display text-xl font-semibold">{p.nombre}</p>
+                  <p class="text-sm text-suave">{p.edad} · {p.especie === 'perro' ? 'Perro' : 'Gato'}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <form id="form-test" data-peludos={JSON.stringify(peludos.map(({ id, especie, energia, espacio }) => ({ id, especie, energia, espacio })))} class="space-y-8 rounded-[32px] bg-fondo/5 p-6 ring-1 ring-fondo/15 sm:p-9" data-reveal="der">
+          {[
+            { n: 'espacio', q: '¿Dónde vives?', o: [['depto', 'Departamento'], ['casa', 'Casa con patio']] },
+            { n: 'energia', q: '¿Cómo es tu ritmo?', o: [['tranquilo', 'Tranquilo, de sofá'], ['activo', 'Activo, de paseos']] },
+            { n: 'especie', q: '¿Qué prefieres?', o: [['perro', 'Perro'], ['gato', 'Gato'], ['cualquiera', 'Me da igual']] },
+          ].map((g, gi) => (
+            <fieldset>
+              <legend class="mb-3 font-display text-xl"><span class="mr-2 text-[var(--mostaza)]">0{gi + 1}</span>{g.q}</legend>
+              <div class="flex flex-wrap gap-2.5">
+                {g.o.map(([v, l]) => (
+                  <label class="cursor-pointer rounded-full border border-fondo/25 px-5 py-2.5 text-sm font-semibold transition hover:border-fondo/60 has-[:checked]:border-[var(--mostaza)] has-[:checked]:bg-[var(--mostaza)] has-[:checked]:text-[var(--ciruela)]">
+                    <input type="radio" name={g.n} value={v} required class="sr-only" />{l}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ))}
+          <button class="w-full rounded-full bg-marca py-4 font-semibold text-white transition hover:brightness-110">Ver mi resultado</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- PROCESO -->
+    <section class="mx-auto max-w-6xl px-5 py-24">
+      <div class="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_1.3fr]">
+        <div class="lg:sticky lg:top-28 lg:self-start">
+          <p data-reveal class="text-xs font-semibold uppercase tracking-[.18em] text-marca">Adopción responsable</p>
+          <h2 data-reveal style="--d:1" class="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Cuatro pasos y un nuevo integrante en la familia</h2>
+        </div>
+        <ol class="proceso relative space-y-6 pl-14">
+          <span class="linea absolute left-[19px] top-2 bottom-2 w-[3px] rounded bg-linea" aria-hidden="true"><span class="relleno block h-full w-full origin-top rounded bg-marca"></span></span>
+          {pasos.map((s, i) => (
+            <li data-reveal style={`--d:${i}`} class="relative rounded-3xl border border-linea bg-superficie p-7">
+              <span class="absolute -left-14 top-6 grid size-10 place-items-center rounded-full bg-marca font-display text-lg font-semibold text-white">{i + 1}</span>
+              <h3 class="text-2xl font-semibold">{s.t}</h3>
+              <p class="mt-2 text-suave">{s.d}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <!-- CÓMO AYUDAR -->
+    <section id="ayuda" class="scroll-mt-20 bg-superficie py-24">
+      <div class="mx-auto max-w-6xl px-5">
+        <p data-reveal class="text-xs font-semibold uppercase tracking-[.18em] text-marca">Cómo ayudar</p>
+        <h2 data-reveal style="--d:1" class="mt-3 max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">No necesitas adoptar para cambiarle la vida a un peludo</h2>
+        <div class="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {ayudas.map((a, i) => (
+            <article data-reveal style={`--d:${i}`} class="group rounded-[28px] border border-linea bg-fondo p-7 transition duration-500 hover:-translate-y-2 hover:border-marca/40">
+              <span class="grid size-12 place-items-center rounded-2xl bg-marca/10 text-marca transition duration-500 group-hover:rotate-[-8deg] group-hover:bg-marca group-hover:text-white">
+                <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={a.icono} /></svg>
+              </span>
+              <h3 class="mt-6 text-xl font-semibold">{a.titulo}</h3>
+              <p class="mt-2 text-[15px] leading-relaxed text-suave">{a.texto}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- EQUIPO -->
+    <section id="equipo" class="mx-auto max-w-6xl scroll-mt-20 px-5 py-24">
+      <p data-reveal class="text-xs font-semibold uppercase tracking-[.18em] text-marca">Nuestro equipo</p>
+      <h2 data-reveal style="--d:1" class="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Las personas detrás de cada rescate</h2>
+      <ul class="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {equipo.map((m, i) => (
+          <li data-reveal style={`--d:${i}`} class="rounded-[28px] border border-linea bg-superficie p-7">
+            <span class="grid size-16 place-items-center rounded-full font-display text-xl font-semibold text-white" style={`background:${m.color}`} aria-hidden="true">
+              {m.nombre.split(' ').map((w) => w[0]).slice(0, 2).join('')}
+            </span>
+            <h3 class="mt-5 text-xl font-semibold">{m.nombre}</h3>
+            <p class="text-sm font-semibold text-marca">{m.rol}</p>
+            <p class="mt-3 text-[15px] leading-relaxed text-suave">{m.texto}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- PREGUNTAS -->
+    <section id="preguntas" class="scroll-mt-20 border-t border-linea py-24">
+      <div class="mx-auto grid grid-cols-1 max-w-6xl gap-12 px-5 lg:grid-cols-[1fr_1.4fr]">
+        <h2 data-reveal class="text-4xl font-semibold tracking-tight sm:text-5xl">Preguntas frecuentes</h2>
+        <div class="divide-y divide-linea border-y border-linea">
+          {preguntas.map((q, i) => (
+            <details class="pregunta group" data-reveal style={`--d:${i}`} name="faq">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-6 py-6 font-display text-xl font-medium">
+                {q.p}<span class="icono grid size-9 shrink-0 place-items-center rounded-full bg-marca/10 text-2xl text-marca">+</span>
+              </summary>
+              <p class="pb-6 pr-12 leading-relaxed text-suave">{q.r}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACTO -->
+    <section id="contacto" class="scroll-mt-20 px-5 pb-24">
+      <div class="mx-auto grid max-w-6xl overflow-hidden rounded-[36px] bg-marca text-white lg:grid-cols-2">
+        <div class="relative p-9 sm:p-14">
+          <h2 data-reveal class="text-4xl font-semibold tracking-tight sm:text-5xl">Escríbenos</h2>
+          <p data-reveal style="--d:1" class="mt-4 max-w-md text-lg text-white/85">Para adoptar, ser hogar temporal o sumarte como voluntario. Respondemos en menos de 48 horas.</p>
+          <Huella class="parallax absolute -bottom-6 right-8 size-40 text-white/10" style="--p-desde:40px;--p-hasta:-40px" />
+        </div>
+        <div class="bg-fondo p-9 text-tinta sm:p-14">
+          <form id="form-contacto" class="space-y-5" novalidate>
+            <div>
+              <label for="c-nombre" class="mb-1.5 block text-sm font-semibold">Nombre</label>
+              <input id="c-nombre" name="nombre" required autocomplete="name" class="w-full rounded-2xl border border-linea bg-superficie px-4 py-3 outline-none transition focus:border-marca" />
+            </div>
+            <div>
+              <label for="c-correo" class="mb-1.5 block text-sm font-semibold">Correo</label>
+              <input id="c-correo" name="correo" type="email" required autocomplete="email" class="w-full rounded-2xl border border-linea bg-superficie px-4 py-3 outline-none transition focus:border-marca" />
+            </div>
+            <div>
+              <label for="c-motivo" class="mb-1.5 block text-sm font-semibold">Motivo</label>
+              <select id="c-motivo" name="motivo" class="w-full rounded-2xl border border-linea bg-superficie px-4 py-3 outline-none transition focus:border-marca">
+                <option>Quiero adoptar</option>
+                {peludos.map((p) => <option>Quiero adoptar a {p.nombre}</option>)}
+                <option>Hogar temporal</option><option>Voluntariado</option><option>Donaciones</option>
+              </select>
+            </div>
+            <div>
+              <label for="c-mensaje" class="mb-1.5 block text-sm font-semibold">Mensaje</label>
+              <textarea id="c-mensaje" name="mensaje" rows="3" class="w-full rounded-2xl border border-linea bg-superficie px-4 py-3 outline-none transition focus:border-marca"></textarea>
+            </div>
+            <p id="c-error" class="hidden text-sm font-semibold text-marca" role="alert">Revisa tu nombre y tu correo.</p>
+            <button class="w-full rounded-full bg-tinta py-4 font-semibold text-fondo transition hover:bg-marca">Enviar</button>
+            <p class="text-center text-xs text-suave">Sitio de demostración: este formulario no envía datos.</p>
+          </form>
+          <div id="c-exito" class="hidden py-10 text-center" aria-live="polite">
+            <svg viewBox="0 0 52 52" class="exito mx-auto size-20" aria-hidden="true"><circle cx="26" cy="26" r="24" fill="none" stroke="var(--acento)" stroke-width="3" /><path d="m15 27 7 7 15-15" fill="none" stroke="var(--acento)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            <p class="mt-5 font-display text-2xl font-semibold">¡Gracias, <span id="c-quien"></span>!</p>
+            <p class="mt-2 text-suave">En una ONG real, aquí te escribiríamos en menos de 48 horas.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-linea bg-[var(--ciruela)] px-5 py-12 text-fondo/80">
+    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6 text-sm">
+      <p class="flex items-center gap-3"><Logo class="size-9" /> Ayuda a un Peludo · Sitio de demostración. La ONG y las personas son ficticias.</p>
+      <a href={base} class="font-semibold text-[var(--mostaza)] hover:underline">← Ver el antes y después</a>
+    </div>
+  </footer>
+</Base>
+
+<style>
+  .mancha { border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%; animation: mancha 14s ease-in-out infinite; }
+  @keyframes mancha { 50% { border-radius: 58% 42% 38% 62% / 55% 38% 62% 45%; transform: rotate(8deg) scale(1.04); } }
+  .flotar { animation: flotar 6s ease-in-out infinite; }
+  @keyframes flotar { 50% { translate: 0 -14px; } }
+  .corazon { animation: latido 1.6s ease-in-out infinite; }
+  @keyframes latido { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.25); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } }
+  .menu-movil:popover-open { animation: entrar .4s var(--ease-salida); }
+  .menu-movil::backdrop { background: rgb(43 29 43 / .4); backdrop-filter: blur(4px); }
+  @keyframes entrar { from { transform: translateX(100%); } }
+  .tarjeta[hidden] { display: none; }
+  .exito circle { stroke-dasharray: 151; stroke-dashoffset: 151; animation: trazo .7s ease forwards; }
+  .exito path { stroke-dasharray: 36; stroke-dashoffset: 36; animation: trazo .4s .55s ease forwards; }
+  @keyframes trazo { to { stroke-dashoffset: 0; } }
+  .resultado:not(.hidden) { animation: aparecer .6s var(--ease-salida) both; }
+  .resultado:not(.hidden) + .resultado:not(.hidden) { animation-delay: .12s; }
+  @keyframes aparecer { from { opacity: 0; transform: translateY(20px) scale(.95); } }
+  @supports (animation-timeline: view()) {
+    .proceso .relleno { animation: llenar linear both; animation-timeline: view(); animation-range: entry 30% cover 70%; }
+    @keyframes llenar { from { transform: scaleY(0); } }
+  }
+</style>
+
+<script>
+  function iniciarPeludo() {
+    // Filtro con transición animada entre estados
+    const tarjetas = document.querySelectorAll<HTMLElement>('#lista-peludos > li');
+    document.querySelectorAll<HTMLInputElement>('input[name="filtro"]').forEach((r) =>
+      r.addEventListener('change', () => {
+        const aplicar = () => tarjetas.forEach((t) => { t.hidden = r.value !== 'todos' && t.dataset.especie !== r.value; t.classList.add('visible'); });
+        const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+        doc.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches ? doc.startViewTransition(aplicar) : aplicar();
+      }),
+    );
+
+    // "Quiero conocer a X" preselecciona el motivo del formulario
+    const motivo = document.querySelector<HTMLSelectElement>('#c-motivo');
+    document.querySelectorAll<HTMLAnchorElement>('[data-adoptar]').forEach((a) =>
+      a.addEventListener('click', () => { if (motivo) motivo.value = `Quiero adoptar a ${a.dataset.adoptar}`; }),
+    );
+
+    // Test de compatibilidad
+    const formTest = document.querySelector<HTMLFormElement>('#form-test');
+    if (!formTest) return;
+    const datos = JSON.parse(formTest.dataset.peludos!) as { id: string; especie: string; energia: string; espacio: string }[];
+    formTest.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const f = new FormData(formTest);
+      const puntaje = (p: (typeof datos)[number]) =>
+        (p.espacio === f.get('espacio') || f.get('espacio') === 'casa' ? 2 : 0) +
+        (p.energia === f.get('energia') ? 2 : 0) +
+        (f.get('especie') === 'cualquiera' || p.especie === f.get('especie') ? 3 : -5);
+      const mejores = [...datos].sort((a, b) => puntaje(b) - puntaje(a)).slice(0, 2).map((p) => p.id);
+      document.querySelectorAll<HTMLElement>('[data-resultado]').forEach((el) => {
+        const pos = mejores.indexOf(el.dataset.resultado!);
+        el.classList.toggle('hidden', pos < 0);
+        el.style.order = String(pos);
+      });
+      const caja = document.getElementById('resultado')!;
+      caja.classList.remove('hidden');
+      if (innerWidth < 1024) caja.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    // Formulario de contacto (demo, no envía datos)
+    const form = document.querySelector<HTMLFormElement>('#form-contacto');
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nombre = form.querySelector<HTMLInputElement>('#c-nombre')!;
+      const correo = form.querySelector<HTMLInputElement>('#c-correo')!;
+      const ok = nombre.value.trim().length > 1 && correo.checkValidity() && correo.value.length > 3;
+      document.getElementById('c-error')!.classList.toggle('hidden', ok);
+      if (!ok) return;
+      document.getElementById('c-quien')!.textContent = nombre.value.trim().split(' ')[0];
+      form.classList.add('hidden');
+      document.getElementById('c-exito')!.classList.remove('hidden');
+    });
+  }
+  document.addEventListener('astro:page-load', iniciarPeludo);
+</script>

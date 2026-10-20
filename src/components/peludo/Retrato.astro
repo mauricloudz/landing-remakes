@@ -1,0 +1,64 @@
+---
+// Retrato ilustrado y paramétrico de un perro o un gato, con parpadeo animado.
+import type { Peludo } from '../../data/peludos';
+interface Props { peludo: Pick<Peludo, 'especie' | 'ilustracion' | 'nombre'>; class?: string; fondo?: string; sufijo?: string }
+const { peludo, class: clase = '', fondo = 'var(--menta)', sufijo = 'a' } = Astro.props;
+const { pelaje, detalle, orejas = 'caidas', mancha, rayas } = peludo.ilustracion;
+const id = `r-${peludo.nombre.toLowerCase().replace(/[^a-z]/g, '')}-${sufijo}`;
+---
+<svg viewBox="0 0 200 200" class:list={['retrato', clase]} role="img" aria-label={`Ilustración de ${peludo.nombre}`}>
+  <defs><clipPath id={id}><circle cx="100" cy="100" r="96" /></clipPath></defs>
+  <circle cx="100" cy="100" r="96" fill={fondo} />
+  <g clip-path={`url(#${id})`}>
+    {peludo.especie === 'perro' ? (
+      <g>
+        <path d="M60 200c0-40 18-62 40-62s40 22 40 62z" fill={pelaje} />
+        {orejas === 'caidas' ? (
+          <>
+            <g class="oreja oreja-i"><ellipse cx="52" cy="92" rx="20" ry="38" transform="rotate(18 52 92)" fill={pelaje} style="filter:brightness(.8)" /></g>
+            <g class="oreja oreja-d"><ellipse cx="148" cy="92" rx="20" ry="38" transform="rotate(-18 148 92)" fill={pelaje} style="filter:brightness(.8)" /></g>
+          </>
+        ) : (
+          <>
+            <path d="M52 78 66 30 92 64z" fill={pelaje} style="filter:brightness(.85)" class="oreja oreja-i" />
+            <path d="M148 78 134 30 108 64z" fill={pelaje} style="filter:brightness(.85)" class="oreja oreja-d" />
+          </>
+        )}
+        <rect x="56" y="56" width="88" height="92" rx="44" fill={pelaje} />
+        {mancha && <ellipse cx="80" cy="88" rx="17" ry="15" fill={detalle} opacity=".9" />}
+        <ellipse cx="100" cy="122" rx="30" ry="24" fill={detalle} />
+        <g class="ojos"><circle cx="81" cy="92" r="6.5" fill="#1d1418" /><circle cx="119" cy="92" r="6.5" fill="#1d1418" />
+          <circle cx="83" cy="90" r="2" fill="#fff" /><circle cx="121" cy="90" r="2" fill="#fff" /></g>
+        <path d="M90 112c0-5 20-5 20 0 0 6-6 10-10 10s-10-4-10-10z" fill="#1d1418" />
+        <path d="M100 122v6m-9 2c4 4 14 4 18 0" stroke="#1d1418" stroke-width="2.5" fill="none" stroke-linecap="round" />
+        <path d="M96 134c0 8 8 8 8 0" fill="#e86a7a" class="lengua" />
+      </g>
+    ) : (
+      <g>
+        <path d="M62 200c0-38 16-60 38-60s38 22 38 60z" fill={pelaje} />
+        <path d="M56 86 60 28 98 60z" fill={pelaje} class="oreja oreja-i" /><path d="M144 86 140 28 102 60z" fill={pelaje} class="oreja oreja-d" />
+        <path d="M64 74 66 44 86 62z" fill="#f2a7a0" /><path d="M136 74 134 44 114 62z" fill="#f2a7a0" />
+        <ellipse cx="100" cy="104" rx="50" ry="44" fill={pelaje} />
+        {rayas && <g fill={detalle} opacity=".35"><path d="M92 62h4v18h-4zM104 62h4v18h-4z" /><path d="M52 98h18v4H52zM130 98h18v4h-18z" /></g>}
+        <ellipse cx="100" cy="122" rx="24" ry="17" fill={detalle} />
+        <g class="ojos"><ellipse cx="80" cy="98" rx="8" ry="9" fill="#c9e265" /><ellipse cx="120" cy="98" rx="8" ry="9" fill="#c9e265" />
+          <ellipse cx="80" cy="98" rx="2.6" ry="7" fill="#1d1418" /><ellipse cx="120" cy="98" rx="2.6" ry="7" fill="#1d1418" /></g>
+        <path d="M95 114h10l-5 6z" fill="#e88b93" />
+        <path d="M100 120v4m-7 2c3 3 11 3 14 0" stroke="#1d1418" stroke-width="2.2" fill="none" stroke-linecap="round" />
+        <g stroke="#1d1418" stroke-width="1.6" stroke-linecap="round" opacity=".55"><path d="M72 120 46 114M72 125 46 128M128 120l26-6M128 125l26 3" /></g>
+      </g>
+    )}
+  </g>
+</svg>
+
+<style>
+  .retrato .ojos { transform-box: fill-box; transform-origin: center; animation: parpadeo 5.5s infinite; }
+  .retrato .oreja { transform-box: fill-box; }
+  .retrato:hover .oreja-i { animation: oreja-i .5s ease-in-out 2; transform-origin: 80% 10%; }
+  .retrato:hover .oreja-d { animation: oreja-d .5s ease-in-out 2; transform-origin: 20% 10%; }
+  .retrato .lengua { transform-box: fill-box; transform-origin: top; transform: scaleY(0); transition: transform .3s; }
+  .retrato:hover .lengua { transform: scaleY(1); }
+  @keyframes parpadeo { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+  @keyframes oreja-i { 50% { rotate: -10deg; } }
+  @keyframes oreja-d { 50% { rotate: 10deg; } }
+</style>
