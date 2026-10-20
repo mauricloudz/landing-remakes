@@ -40,8 +40,9 @@ const jsonLd = {
             <Palabras texto="Lo último en tecnología, con un café en la mano." />
           </h1>
           <p data-reveal style="--d:3" class="mt-7 max-w-xl text-lg leading-relaxed text-suave">
-            Charlas, eventos y simposios sobre{' '}
-            <span class="sr-only">{rotativos.join(', ')},</span><span class="rotador font-semibold text-marca" aria-hidden="true" data-palabras={JSON.stringify(rotativos)}><span class="palabra-r">{rotativos[0]}</span></span>{' '}
+            Charlas, eventos y simposios sobre
+            <span class="sr-only">{rotativos.join(', ')},</span>
+            <span class="rotador my-1.5 block font-display text-3xl font-extrabold tracking-tight text-marca sm:text-4xl" aria-hidden="true" data-palabras={JSON.stringify(rotativos)}><span class="palabra-r">{rotativos[0]}</span></span>
             para quien recién empieza y para quien lleva años en esto. Gratis.
           </p>
           <div data-reveal style="--d:4" class="mt-9 flex flex-wrap gap-3">
@@ -236,8 +237,8 @@ const jsonLd = {
   .brillo { background: radial-gradient(closest-side, var(--marca), transparent); }
   .punto { animation: punto 2s ease-in-out infinite; }
   @keyframes punto { 50% { opacity: .3; } }
-  /* La caja se ajusta al ancho de cada palabra, así nunca queda un hueco ni un choque */
-  .rotador { display: inline-block; vertical-align: bottom; height: 1.5em; overflow: hidden; white-space: nowrap; transition: width .5s var(--ease-salida); }
+  /* La palabra rotativa vive en su propia línea: al cambiar de largo no reacomoda el párrafo */
+  .rotador { height: 1.2em; line-height: 1.2; overflow: hidden; white-space: nowrap; }
   .palabra-r { display: inline-block; transition: transform .45s var(--ease-salida), opacity .45s var(--ease-salida); }
   .palabra-r.saliendo { transform: translateY(-100%); opacity: 0; }
   .palabra-r.entrando { transform: translateY(100%); opacity: 0; transition: none; }
@@ -272,8 +273,6 @@ const jsonLd = {
     const palabra = caja?.querySelector<HTMLElement>('.palabra-r');
     if (!caja || !palabra) return;
     const palabras: string[] = JSON.parse(caja.dataset.palabras!);
-    const ajustar = () => { caja.style.width = `${palabra.offsetWidth}px`; };
-    ajustar();
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     let i = 0;
     rotacion = window.setInterval(() => {
@@ -282,7 +281,6 @@ const jsonLd = {
         i = (i + 1) % palabras.length;
         palabra.classList.replace('saliendo', 'entrando');
         palabra.textContent = palabras[i];
-        ajustar();
         void palabra.offsetWidth; // fuerza el reflujo antes de animar la entrada
         palabra.classList.remove('entrando');
       }, 300);
