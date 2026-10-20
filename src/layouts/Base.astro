@@ -1,0 +1,46 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import '../styles/global.css';
+import '@fontsource-variable/inter';
+
+interface Props {
+  titulo: string;
+  descripcion: string;
+  tema: 'galeria' | 'peludo' | 'meet';
+  imagen?: string;
+  jsonLd?: Record<string, unknown>;
+}
+const { titulo, descripcion, tema, imagen, jsonLd } = Astro.props;
+const canonica = new URL(Astro.url.pathname, Astro.site);
+const og = imagen ? new URL(imagen, Astro.site) : undefined;
+const colores = { galeria: '#f6f5f1', peludo: '#fbf6ee', meet: '#14100d' };
+---
+<!doctype html>
+<html lang="es" class={`tema-${tema}`}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titulo}</title>
+    <meta name="description" content={descripcion} />
+    <link rel="canonical" href={canonica} />
+    <meta name="theme-color" content={colores[tema]} />
+    <link rel="icon" href={`${import.meta.env.BASE_URL}favicon-${tema}.svg`} type="image/svg+xml" />
+    <link rel="sitemap" href={`${import.meta.env.BASE_URL}sitemap-index.xml`} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_CL" />
+    <meta property="og:title" content={titulo} />
+    <meta property="og:description" content={descripcion} />
+    <meta property="og:url" content={canonica} />
+    {og && <meta property="og:image" content={og} />}
+    <meta name="twitter:card" content={og ? 'summary_large_image' : 'summary'} />
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+    <ClientRouter />
+    <slot name="head" />
+  </head>
+  <body class="font-cuerpo">
+    <div class="progreso" aria-hidden="true"></div>
+    <a href="#contenido" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-full focus:bg-tinta focus:px-5 focus:py-3 focus:text-fondo">Saltar al contenido</a>
+    <slot />
+    <script>import '../scripts/movimiento.ts';</script>
+  </body>
+</html>

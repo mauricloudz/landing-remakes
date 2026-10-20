@@ -1,0 +1,10 @@
+---
+// Divide un texto en palabras para animarlas una por una.
+// El lector de pantalla recibe la frase completa en un texto oculto.
+interface Props { texto: string; class?: string }
+const { texto, class: clase = '' } = Astro.props;
+const palabras = texto.split(' ');
+---
+<span class="sr-only">{texto}</span><span class:list={['palabras', clase]} aria-hidden="true">
+  {palabras.map((p, i) => <span style={`--i:${i}`}>{p}&nbsp;</span>)}
+</span>

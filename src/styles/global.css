@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/* ---------- Temas: cada sitio define sus tokens en <html class="tema-*"> ---------- */
+@theme inline {
+  --color-fondo: var(--fondo);
+  --color-superficie: var(--superficie);
+  --color-tinta: var(--tinta);
+  --color-suave: var(--suave);
+  --color-marca: var(--marca);
+  --color-marca-fuerte: var(--marca-fuerte);
+  --color-acento: var(--acento);
+  --color-linea: var(--linea);
+  --font-display: var(--fuente-display);
+  --font-cuerpo: var(--fuente-cuerpo);
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  --ease-salida: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tema-galeria {
+  --fondo: #f6f5f1; --superficie: #ffffff; --tinta: #16181d; --suave: #5b6070;
+  --marca: #2f5bea; --marca-fuerte: #1e3fb0; --acento: #0b7f3f; --linea: #e3e1da;
+  --fuente-display: "Inter Variable", system-ui, sans-serif;
+  --fuente-cuerpo: "Inter Variable", system-ui, sans-serif;
+}
+.tema-peludo {
+  --fondo: #fbf6ee; --superficie: #ffffff; --tinta: #2b1d2b; --suave: #6b5a63;
+  --marca: #c2412f; --marca-fuerte: #9c2f20; --acento: #1f8f8a; --linea: #eadfce;
+  --ciruela: #3d2a3d; --mostaza: #e9b949; --menta: #cfe9e3; --rosa: #f6d6cf;
+  --fuente-display: "Fraunces Variable", Georgia, serif;
+  --fuente-cuerpo: "Inter Variable", system-ui, sans-serif;
+}
+.tema-meet {
+  --fondo: #14100d; --superficie: #1f1914; --tinta: #f6ede3; --suave: #b9a999;
+  --marca: #f29a4a; --marca-fuerte: #ffb36b; --acento: #7fd1b9; --linea: #3a2f26;
+  --crema: #f6ede3; --espresso: #0d0a08;
+  --fuente-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --fuente-cuerpo: "Inter Variable", system-ui, sans-serif;
+}
+
+@layer base {
+  html { overflow-x: clip; background: var(--fondo); color: var(--tinta); font-family: var(--fuente-cuerpo); -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+  body { min-height: 100dvh; overflow-x: clip; }
+  h1, h2, h3, h4 { font-family: var(--fuente-display); text-wrap: balance; }
+  p { text-wrap: pretty; }
+  :focus-visible { outline: 3px solid var(--acento); outline-offset: 3px; border-radius: 6px; }
+  ::selection { background: var(--marca); color: #fff; }
+}
+
+/* ---------- Animaciones al hacer scroll ---------- */
+[data-reveal] {
+  opacity: 0;
+  transform: translate3d(var(--rx, 0), var(--ry, 28px), 0) scale(var(--rs, 1));
+  transition: opacity .8s var(--ease-salida), transform .9s var(--ease-salida);
+  transition-delay: calc(var(--d, 0) * 90ms);
+}
+[data-reveal="izq"] { --rx: -40px; --ry: 0; }
+[data-reveal="der"] { --rx: 40px; --ry: 0; }
+/* En pantallas angostas, todo entra desde abajo para no desbordar a lo ancho */
+@media (max-width: 767px) { [data-reveal="izq"], [data-reveal="der"] { --rx: 0; --ry: 28px; } }
+[data-reveal="zoom"] { --ry: 0; --rs: .92; }
+[data-reveal].visible { opacity: 1; transform: none; }
+
+/* Barra de progreso de lectura: animación ligada al scroll, sin JavaScript */
+.progreso { position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 60; background: var(--marca); transform-origin: 0 50%; transform: scaleX(0); pointer-events: none; }
+@supports (animation-timeline: scroll()) {
+  .progreso { animation: progreso linear both; animation-timeline: scroll(root); }
+  @keyframes progreso { to { transform: scaleX(1); } }
+  /* Parallax suave para elementos decorativos */
+  .parallax { animation: parallax linear both; animation-timeline: view(); animation-range: entry 0% exit 100%; }
+  @keyframes parallax { from { transform: translateY(var(--p-desde, 40px)); } to { transform: translateY(var(--p-hasta, -40px)); } }
+}
+
+/* Texto que se revela palabra por palabra */
+.palabras > span { display: inline-block; opacity: 0; transform: translateY(.45em) rotate(2deg); transition: opacity .7s var(--ease-salida), transform .8s var(--ease-salida); transition-delay: calc(var(--i) * 55ms); }
+.visible .palabras > span, .palabras.visible > span { opacity: 1; transform: none; }
+
+/* Marquesina infinita */
+.marquesina { display: flex; width: max-content; animation: marquesina var(--vel, 35s) linear infinite; }
+.marquesina:hover { animation-play-state: paused; }
+@keyframes marquesina { to { transform: translateX(-50%); } }
+
+/* Acordeón de preguntas con altura animada */
+details.pregunta::details-content { block-size: 0; overflow: clip; transition: block-size .45s var(--ease-salida), content-visibility .45s allow-discrete; }
+details.pregunta[open]::details-content { block-size: auto; }
+details.pregunta summary::-webkit-details-marker { display: none; }
+details.pregunta .icono { transition: transform .35s var(--ease-salida); }
+details.pregunta[open] .icono { transform: rotate(45deg); }
+:root { interpolate-size: allow-keywords; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  [data-reveal], .palabras > span { opacity: 1 !important; transform: none !important; }
+  .marquesina { animation: none !important; }
+}
+
+/* Permite animar la posición del comparador */
+@property --pos { syntax: '<percentage>'; inherits: true; initial-value: 50%; }
