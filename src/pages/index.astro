@@ -1,0 +1,121 @@
+---
+import Base from '../layouts/Base.astro';
+import Comparador from '../components/galeria/Comparador.astro';
+import Palabras from '../components/Palabras.astro';
+import { Image } from 'astro:assets';
+import { proyectos } from '../data/galeria';
+import peludoAntesD from '../assets/galeria/peludo-antes-desktop.png';
+import peludoDespuesD from '../assets/galeria/peludo-despues-desktop.png';
+import peludoAntesM from '../assets/galeria/peludo-antes-movil.png';
+import peludoDespuesM from '../assets/galeria/peludo-despues-movil.png';
+import meetAntesD from '../assets/galeria/meet-antes-desktop.png';
+import meetDespuesD from '../assets/galeria/meet-despues-desktop.png';
+import meetAntesM from '../assets/galeria/meet-antes-movil.png';
+import meetDespuesM from '../assets/galeria/meet-despues-movil.png';
+
+const base = import.meta.env.BASE_URL;
+const imagenes = {
+  peludo: { ad: peludoAntesD, dd: peludoDespuesD, am: peludoAntesM, dm: peludoDespuesM },
+  meet: { ad: meetAntesD, dd: meetDespuesD, am: meetAntesM, dm: meetDespuesM },
+} as const;
+const filas = [
+  ['Rendimiento', 'rendimiento'], ['Accesibilidad', 'accesibilidad'], ['Buenas prácticas', 'practicas'], ['SEO', 'seo'],
+] as const;
+const decisiones = [
+  { t: 'Ilustraciones propias en vez de fotos de stock', d: 'Las fotos originales eran miniaturas de origen incierto. Ahora todo es SVG hecho a medida: pesa casi nada y se puede animar.' },
+  { t: 'Animaciones que respetan a quien no las quiere', d: 'Todo el movimiento se desactiva si el sistema pide movimiento reducido. La barra de progreso y el parallax usan animaciones ligadas al scroll, sin JavaScript.' },
+  { t: 'Casi cero JavaScript', d: 'Astro entrega HTML estático. El poco JavaScript que hay se usa en el filtro, el test, la cuenta regresiva y los formularios.' },
+  { t: 'Transiciones entre páginas', d: 'Al abrir un evento, la portada y el título viajan desde la tarjeta hasta su nueva posición.' },
+  { t: 'Accesibilidad medida', d: 'Contraste, foco visible, navegación por teclado, textos alternativos y un enlace para saltar al contenido.' },
+  { t: 'SEO listo', d: 'Metadatos, Open Graph, datos estructurados de schema.org, sitemap y URLs canónicas en cada página.' },
+];
+---
+<Base titulo="Landing remakes · Antes y después" descripcion="Dos landings que hice como estudiante, reconstruidas y mejoradas con un stack moderno. Compara el antes y el después con métricas reales." tema="galeria">
+  <main id="contenido">
+    <section class="mx-auto max-w-6xl px-5 pb-16 pt-20 sm:pt-28">
+      <p data-reveal class="inline-flex items-center gap-2 rounded-full border border-linea bg-superficie px-4 py-1.5 text-sm font-medium text-suave">
+        <span class="size-2 rounded-full bg-acento"></span> Proyecto de <a href="https://github.com/mauricloudz" class="font-semibold text-tinta hover:underline">Mauricio Poblete</a>
+      </p>
+      <h1 class="mt-6 max-w-4xl text-5xl font-bold leading-[1.02] tracking-tight sm:text-7xl">
+        <Palabras texto="Mis landings de estudiante, rehechas y mejoradas." />
+      </h1>
+      <p data-reveal style="--d:3" class="mt-7 max-w-2xl text-lg leading-relaxed text-suave sm:text-xl">
+        Tomé dos sitios que hice mientras aprendía y los reconstruí con un stack moderno y un flujo de desarrollo asistido por IA. Mismo contenido de base, mucho más sitio. Desliza para comparar.
+      </p>
+    </section>
+
+    {proyectos.map((p, i) => {
+      const img = imagenes[p.id as keyof typeof imagenes];
+      return (
+        <section class="border-t border-linea py-20" id={p.id}>
+          <div class="mx-auto max-w-6xl px-5">
+            <div class="flex flex-wrap items-end justify-between gap-6">
+              <div>
+                <p data-reveal class="text-sm font-semibold text-marca">0{i + 1} · {p.tipo} · original de {p.anio}</p>
+                <h2 data-reveal style="--d:1" class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">{p.nombre}</h2>
+              </div>
+              <a data-reveal style="--d:2" href={`${base}${p.ruta}`} class="group inline-flex items-center gap-2 rounded-full bg-tinta px-6 py-3 font-semibold text-fondo transition hover:bg-marca">
+                Ver el sitio nuevo <span class="transition group-hover:translate-x-1">→</span>
+              </a>
+            </div>
+
+            <div data-reveal="zoom" class="mt-10 overflow-hidden rounded-3xl border border-linea shadow-[0_40px_80px_-40px_rgba(22,24,29,.35)]">
+              <Comparador antes={img.ad} despues={img.dd} nombre={p.nombre} />
+            </div>
+
+            <div class="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[1.25fr_1fr_.75fr]">
+              <div data-reveal class="rounded-3xl border border-linea bg-superficie p-7">
+                <h3 class="text-lg font-semibold">Métricas en móvil</h3>
+                <table class="mt-4 w-full text-sm">
+                  <thead><tr class="text-left text-suave"><th class="pb-2 font-medium">Lighthouse</th><th class="pb-2 pl-4 text-right font-medium">Antes</th><th class="pb-2 pl-4 text-right font-medium">Después</th></tr></thead>
+                  <tbody class="divide-y divide-linea">
+                    {filas.map(([etiqueta, k]) => (
+                      <tr><td class="py-2.5">{etiqueta}</td><td class="whitespace-nowrap py-2.5 pl-4 text-right tabular-nums text-suave">{p.antes[k]}</td><td class="whitespace-nowrap py-2.5 pl-4 text-right font-semibold tabular-nums text-acento">{p.despues[k]}</td></tr>
+                    ))}
+                    <tr><td class="py-2.5">Carga del contenido principal</td><td class="whitespace-nowrap py-2.5 pl-4 text-right tabular-nums text-suave">{p.antes.lcp}</td><td class="whitespace-nowrap py-2.5 pl-4 text-right font-semibold tabular-nums text-acento">{p.despues.lcp}</td></tr>
+                    <tr><td class="py-2.5">Peso de la página</td><td class="whitespace-nowrap py-2.5 pl-4 text-right tabular-nums text-suave"><span class="whitespace-nowrap">{p.antes.peso.toLocaleString('es-CL')} KB</span></td><td class="whitespace-nowrap py-2.5 pl-4 text-right font-semibold tabular-nums text-acento">{p.despues.peso} KB</td></tr>
+                    <tr><td class="py-2.5">Ancho en un teléfono de 390 px</td><td class="whitespace-nowrap py-2.5 pl-4 text-right tabular-nums text-suave">{p.antes.anchoMovil} px</td><td class="whitespace-nowrap py-2.5 pl-4 text-right font-semibold tabular-nums text-acento">{p.despues.anchoMovil} px</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div data-reveal style="--d:1" class="rounded-3xl border border-linea bg-superficie p-7">
+                <h3 class="text-lg font-semibold">Lo que no existía</h3>
+                <ul class="mt-4 space-y-3 text-[15px]">
+                  {p.novedades.map((n) => <li class="flex gap-3"><span class="mt-0.5 text-marca">✦</span>{n}</li>)}
+                </ul>
+              </div>
+              <div data-reveal style="--d:2" class="grid grid-cols-2 gap-3">
+                <figure><Image src={img.am} alt={`${p.nombre} original en un teléfono`} width={390} class="rounded-2xl border border-linea" loading="lazy" /><figcaption class="mt-2 text-center text-xs text-suave">Antes, en móvil</figcaption></figure>
+                <figure><Image src={img.dm} alt={`${p.nombre} nuevo en un teléfono`} width={390} class="rounded-2xl border border-linea" loading="lazy" /><figcaption class="mt-2 text-center text-xs text-suave">Después, en móvil</figcaption></figure>
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    })}
+
+    <section class="border-t border-linea bg-tinta py-24 text-fondo">
+      <div class="mx-auto max-w-6xl px-5">
+        <h2 data-reveal class="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl">Cómo está hecho</h2>
+        <div class="mt-14 grid grid-cols-1 gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+          {decisiones.map((d, i) => (
+            <div data-reveal style={`--d:${i % 3}`}>
+              <span class="font-mono text-sm text-acento">0{i + 1}</span>
+              <h3 class="mt-2 text-xl font-semibold">{d.t}</h3>
+              <p class="mt-2 leading-relaxed text-fondo/70">{d.d}</p>
+            </div>
+          ))}
+        </div>
+        <div data-reveal class="mt-16 flex flex-wrap gap-2">
+          {['Astro 7', 'Tailwind CSS 4', 'TypeScript', 'SVG animado', 'View Transitions', 'Scroll-driven animations', 'GitHub Actions', 'GitHub Pages'].map((t) => <span class="rounded-full border border-fondo/20 px-4 py-2 text-sm">{t}</span>)}
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="px-5 py-12">
+    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 text-sm text-suave">
+      <p>Hecho por Mauricio Poblete · Desarrollo de productos web y automatización con IA</p>
+      <p class="flex gap-5"><a class="hover:text-tinta" href="https://github.com/mauricloudz">GitHub</a><a class="hover:text-tinta" href="https://www.linkedin.com/in/mauricio-poblete-saez-b089569a">LinkedIn</a><a class="hover:text-tinta" href="mailto:mpoblete.s3@gmail.com">Correo</a></p>
+    </div>
+  </footer>
+</Base>

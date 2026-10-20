@@ -1,0 +1,42 @@
+---
+// Comparador antes/después: se arrastra la barra o se usan las flechas del teclado.
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+interface Props { antes: ImageMetadata; despues: ImageMetadata; nombre: string; ancho?: number; class?: string }
+const { antes, despues, nombre, ancho = 1440, class: clase = '' } = Astro.props;
+---
+<div class:list={['comparador relative select-none overflow-hidden', clase]} style="--pos:50%">
+  <Image src={antes} alt={`${nombre}, versión original`} width={ancho} class="block h-auto w-full" loading="lazy" />
+  <div class="despues absolute inset-0">
+    <Image src={despues} alt={`${nombre}, versión nueva`} width={ancho} class="block h-auto w-full" loading="lazy" />
+  </div>
+  <span class="etiqueta left-3">Antes</span><span class="etiqueta right-3">Después</span>
+  <div class="barra pointer-events-none absolute inset-y-0" aria-hidden="true"><span class="tirador">⟷</span></div>
+  <input type="range" min="0" max="100" value="50" aria-label={`Comparar antes y después de ${nombre}`} class="absolute inset-0 size-full cursor-ew-resize opacity-0" />
+</div>
+<style>
+  .despues { clip-path: inset(0 0 0 var(--pos)); }
+  .barra { left: var(--pos); width: 3px; translate: -50% 0; background: #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / .15), 0 0 24px rgb(0 0 0 / .35); }
+  .tirador { position: absolute; top: 50%; left: 50%; translate: -50% -50%; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; background: #fff; color: #16181d; font-weight: 700; box-shadow: 0 6px 20px rgb(0 0 0 / .3); transition: scale .2s; }
+  .comparador:hover .tirador, .comparador:has(input:focus-visible) .tirador { scale: 1.12; }
+  .comparador:has(input:focus-visible) { outline: 3px solid var(--marca); outline-offset: 4px; }
+  .etiqueta { position: absolute; top: .75rem; z-index: 2; border-radius: 999px; background: rgb(22 24 29 / .78); color: #fff; padding: .3rem .8rem; font-size: .75rem; font-weight: 600; backdrop-filter: blur(6px); pointer-events: none; }
+</style>
+<script>
+  function iniciarComparadores() {
+    document.querySelectorAll<HTMLElement>('.comparador').forEach((c) => {
+      const r = c.querySelector('input')!;
+      const pintar = () => c.style.setProperty('--pos', `${r.value}%`);
+      r.addEventListener('input', pintar); pintar();
+      // Pequeña animación inicial que invita a deslizar
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !c.dataset.listo) {
+        c.dataset.listo = '1';
+        new IntersectionObserver((e, o) => {
+          if (!e[0].isIntersecting) return; o.disconnect();
+          c.animate([{ '--pos': '50%' }, { '--pos': '28%' }, { '--pos': '68%' }, { '--pos': '50%' }] as Keyframe[], { duration: 1800, easing: 'ease-in-out' });
+        }, { threshold: 0.5 }).observe(c);
+      }
+    });
+  }
+  document.addEventListener('astro:page-load', iniciarComparadores);
+</script>
