@@ -44,8 +44,8 @@ const id = `g-${motivo}`;
   )}
 </svg>
 <style>
-  .portada .flota { animation: flota-p 7s ease-in-out infinite; transform-box: fill-box; }
-  .portada .pulso { stroke-dasharray: 6 8; animation: datos 1.6s linear infinite; }
+  .portada .flota { animation: flota-p 7s var(--encastre) infinite; transform-box: fill-box; }
+  .portada .pulso { stroke-dasharray: 6 8; animation: datos 1.6s var(--encastre) infinite; }
   @keyframes flota-p { 50% { translate: 0 -8px; } }
   @keyframes datos { to { stroke-dashoffset: -28; } }
 </style>

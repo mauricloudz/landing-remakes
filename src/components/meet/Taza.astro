@@ -1,20 +1,29 @@
 ---
+// Taza decorativa. La elipse del café queda en (120, 102) del viewBox: la escena de la portada
+// usa esa posición para hacer crecer el "zambullirse en el café".
 interface Props { class?: string }
 const { class: clase = '' } = Astro.props;
 ---
 <svg viewBox="0 0 240 240" class:list={['taza', clase]} aria-hidden="true">
-  <g fill="none" stroke="var(--crema)" stroke-width="6" stroke-linecap="round" opacity=".75">
-    <path class="vapor v1" d="M92 92c-14-18 14-26 0-46" /><path class="vapor v2" d="M120 86c-14-18 14-26 0-46" /><path class="vapor v3" d="M148 92c-14-18 14-26 0-46" />
+  <defs>
+    <linearGradient id="taza-cuerpo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f29a4a" /><stop offset="1" stop-color="#a9521a" /></linearGradient>
+  </defs>
+  <g fill="none" stroke="#f6ede3" stroke-width="5" stroke-linecap="round" opacity=".7">
+    <path class="vapor" d="M92 62c-12-14 12-22 0-38" /><path class="vapor v2" d="M120 56c-12-14 12-22 0-38" /><path class="vapor v3" d="M148 62c-12-14 12-22 0-38" />
   </g>
-  <ellipse cx="120" cy="206" rx="86" ry="14" fill="#000" opacity=".35" />
-  <path d="M176 128h10a26 26 0 0 1 0 52h-14" fill="none" stroke="var(--marca)" stroke-width="12" />
-  <path d="M52 112h136l-12 74a24 24 0 0 1-24 20H88a24 24 0 0 1-24-20z" fill="var(--marca)" />
-  <ellipse cx="120" cy="112" rx="68" ry="12" fill="#6b3a1d" />
-  <ellipse cx="120" cy="112" rx="56" ry="8" fill="#3b1f0f" />
-  <path d="M84 140h72" stroke="var(--espresso)" stroke-width="5" stroke-linecap="round" opacity=".25" />
+  <ellipse cx="120" cy="212" rx="100" ry="16" fill="#000" opacity=".45" />
+  <ellipse cx="120" cy="196" rx="100" ry="24" fill="#2a2018" stroke="#3a2f26" stroke-width="2" />
+  <path d="M188 112h12a26 26 0 0 1 0 50h-20" fill="none" stroke="#e08433" stroke-width="12" stroke-linecap="round" />
+  <path d="M46 100C46 160 70 202 120 202S194 160 194 100z" fill="url(#taza-cuerpo)" />
+  <ellipse cx="120" cy="100" rx="74" ry="26" fill="#ffb36b" />
+  <ellipse cx="120" cy="102" rx="64" ry="22" fill="#8a4a1d" />
+  <ellipse cx="120" cy="102" rx="58" ry="20" fill="#3b1f0f" />
+  <ellipse cx="104" cy="97" rx="20" ry="4" fill="#fff" opacity=".08" />
+  <path d="M80 150h80" stroke="#0d0a08" stroke-width="5" stroke-linecap="round" opacity=".22" />
 </svg>
 <style>
-  .vapor { stroke-dasharray: 60; animation: vapor 3.2s ease-in-out infinite; }
+  .taza { display: block; width: 100%; height: 100%; overflow: visible; }
+  .vapor { stroke-dasharray: 60; animation: vapor 3.2s var(--encastre) infinite; }
   .v2 { animation-delay: -1s; } .v3 { animation-delay: -2s; }
   @keyframes vapor { 0% { stroke-dashoffset: 60; opacity: 0; translate: 0 10px; } 40% { opacity: 1; } 100% { stroke-dashoffset: -60; opacity: 0; translate: 0 -14px; } }
 </style>

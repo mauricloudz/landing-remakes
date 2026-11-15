@@ -49,3 +49,9 @@ export const eventos: Evento[] = [
     temas: ['Scrum', 'Kanban', 'Retrospectivas', 'Métricas'],
   },
 ];
+
+// Enlaces de navegación compartidos por la cabecera y el pie
+export const enlaces = [['Próxima charla', 'proxima'], ['La noche', 'noche'], ['Dónde', 'donde'], ['Eventos', 'eventos'], ['Propón una charla', 'propon']];
+
+// Iniciales de un nombre ("Rafaela Valdez" → "RV")
+export const iniciales = (nombre: string) => nombre.split(' ').map((w) => w[0]).join('');

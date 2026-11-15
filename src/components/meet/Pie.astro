@@ -1,9 +1,68 @@
 ---
+// Pie compartido: "Fin." con créditos finales. Lo usan el índice (como última escena, con "escena")
+// y las páginas de evento (como pie normal). Lleva sus propios estilos porque lo usan ambas.
+import { enlaces } from '../../data/meet';
+interface Props { escena?: boolean }
+const { escena = false } = Astro.props;
 const base = import.meta.env.BASE_URL;
+const raiz = `${base}meet-and-coffee/`;
+const creditos = [['Café', 'La cafetera de siempre'], ['Charlas', 'Quienes se animaron a subir'], ['Conexión', 'Un wifi que sí funciona'], ['Locación', 'Calle Baker 133, Providencia']];
 ---
-<footer class="border-t border-linea px-5 py-12 text-sm text-suave">
-  <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6">
+<footer class:list={['fin', { 'en-escena': escena }]}>
+  <p class="fin-fn" data-ancla-entra="1"><span class="mask"><span class="sube">Fin<span>.</span></span></span></p>
+  <p class="fin-gr"><span class="revela">Gracias por quedarte hasta los créditos</span></p>
+  <slot />
+  <dl class="fin-cred revela">
+    {creditos.map(([t, d]) => <div><dt>{t}</dt><dd>{d}</dd></div>)}
+  </dl>
+  <nav class="fin-nav revela" aria-label="Pie">
+    {enlaces.map(([t, h]) => <a href={`${raiz}#${h}`}>{t}</a>)}
+  </nav>
+  <div class="fin-legal revela">
     <p>Meet &amp; Coffee · Sitio de demostración. La comunidad, las personas y los eventos son ficticios.</p>
-    <a href={base} class="font-semibold text-marca hover:underline">← Ver el antes y después</a>
+    <p class="fin-links"><a href={raiz}>↑ Volver al inicio</a><a href={base}>← Ver el antes y después</a></p>
   </div>
 </footer>
+<style>
+  .fin { background: var(--espresso); border-top: 1px solid var(--linea); padding: clamp(70px, 10vw, 140px) clamp(18px, 5vw, 72px) 50px; text-align: center; }
+  .fin-fn { font: 800 clamp(64px, 14vw, 220px)/.8 var(--fuente-display); letter-spacing: -.06em; color: var(--tinta); }
+  .fin-fn span { color: var(--marca); }
+  .fin-gr { margin-top: 26px; font: 500 13px "JetBrains Mono Variable", ui-monospace, monospace; letter-spacing: .2em; text-transform: uppercase; color: var(--suave); }
+  .fin-cred { margin: 56px auto 0; display: grid; max-width: 560px; gap: 22px; }
+  .fin-cred div { display: grid; gap: 4px; }
+  .fin-cred dt { font: 500 11px "JetBrains Mono Variable", ui-monospace, monospace; letter-spacing: .24em; text-transform: uppercase; color: var(--acento); }
+  .fin-cred dd { margin: 0; font: 700 22px var(--fuente-display); letter-spacing: -.02em; }
+  .fin-nav { margin-top: 56px; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 28px; font-size: 14px; font-weight: 500; color: var(--suave); }
+  .fin-nav a { transition: color .3s var(--friccion); }
+  .fin-nav a:hover { color: var(--tinta); }
+  .fin-legal { margin-top: 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; border-top: 1px solid var(--linea); padding-top: 26px; font-size: 13px; color: var(--suave); text-align: left; }
+  .fin-links { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+  .fin-links a { font-weight: 600; color: var(--marca); }
+  .fin-links a:hover { text-decoration: underline; }
+  @media (max-width: 820px) { .fin-legal { flex-direction: column; } }
+  /* Páginas de evento (no escena): el "Fin." y las líneas de crédito suben al entrar en pantalla.
+     Propiedades separadas (el minificador rompe el shorthand con animation-timeline). Sin soporte o con
+     movimiento reducido, el pie se ve completo. */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .fin:not(.en-escena) .fin-fn .sube {
+        animation-name: fin-sube;
+        animation-timeline: view();
+        animation-range-start: entry 0%;
+        animation-range-end: cover 35%;
+        animation-fill-mode: both;
+        animation-timing-function: var(--friccion);
+      }
+      .fin:not(.en-escena) .revela {
+        animation-name: fin-revela;
+        animation-timeline: view();
+        animation-range-start: entry 0%;
+        animation-range-end: cover 35%;
+        animation-fill-mode: both;
+        animation-timing-function: var(--friccion);
+      }
+    }
+  }
+  @keyframes fin-sube { from { transform: translateY(170%); } }
+  @keyframes fin-revela { from { clip-path: inset(100% 0 0 0); } }
+</style>
