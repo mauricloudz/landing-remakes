@@ -1,9 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
 import Comparador from '../components/galeria/Comparador.astro';
-import Palabras from '../components/Palabras.astro';
+import Marco from '../components/galeria/Marco.astro';
+import Metricas from '../components/galeria/Metricas.astro';
 import { Image } from 'astro:assets';
-import { proyectos } from '../data/galeria';
+import { proyectos, decisiones, tecnologias } from '../data/galeria';
 import peludoAntesD from '../assets/galeria/peludo-antes-desktop.png';
 import peludoDespuesD from '../assets/galeria/peludo-despues-desktop.png';
 import peludoAntesM from '../assets/galeria/peludo-antes-movil.png';
@@ -18,104 +19,1811 @@ const imagenes = {
   peludo: { ad: peludoAntesD, dd: peludoDespuesD, am: peludoAntesM, dm: peludoDespuesM },
   meet: { ad: meetAntesD, dd: meetDespuesD, am: meetAntesM, dm: meetDespuesM },
 } as const;
-const filas = [
-  ['Rendimiento', 'rendimiento'], ['Accesibilidad', 'accesibilidad'], ['Buenas prácticas', 'practicas'], ['SEO', 'seo'],
-] as const;
-const decisiones = [
-  { t: 'Ilustraciones propias en vez de fotos de stock', d: 'Las fotos originales eran miniaturas de origen incierto. Ahora todo es SVG hecho a medida: pesa casi nada y se puede animar.' },
-  { t: 'Animaciones que respetan a quien no las quiere', d: 'Todo el movimiento se desactiva si el sistema pide movimiento reducido. La barra de progreso y el parallax usan animaciones ligadas al scroll, sin JavaScript.' },
-  { t: 'Casi cero JavaScript', d: 'Astro entrega HTML estático. El poco JavaScript que hay se usa en el filtro, el test, la cuenta regresiva y los formularios.' },
-  { t: 'Transiciones entre páginas', d: 'Al abrir un evento, la portada y el título viajan desde la tarjeta hasta su nueva posición.' },
-  { t: 'Accesibilidad medida', d: 'Contraste, foco visible, navegación por teclado, textos alternativos y un enlace para saltar al contenido.' },
-  { t: 'SEO listo', d: 'Metadatos, Open Graph, datos estructurados de schema.org, sitemap y URLs canónicas en cada página.' },
+// Mismos anchos en todas las capturas de escritorio: el navegador reutiliza los archivos entre escenas.
+const anchosD = [640, 960, 1440];
+const anchosM = [230, 460, 780];
+const sizesVentana = '(min-width: 901px) min(26vw, 420px), 60vw';
+const sizesMarco = '(min-width: 1024px) 42vw, 94vw';
+const sizesMovil = '(min-width: 901px) min(15vw, 250px), 36vw';
+
+// Cinco escenas, en orden. El nombre lo lee el lector de pantalla en el navegador de escenas.
+const escenas = [
+  ['inicio', 'Portada'], ['peludo', 'Ayuda a un Peludo'], ['meet', 'Meet & Coffee'], ['como', 'Cómo está hecho'], ['autor', 'Autor'],
 ];
 ---
 <Base titulo="Landing remakes · Antes y después" descripcion="Dos landings que hice como estudiante, reconstruidas y mejoradas con un stack moderno. Compara el antes y el después con métricas reales." tema="galeria">
+  <Fragment slot="head">
+    <!-- Decide el modo escenas antes del primer pintado (mismas condiciones que el script del módulo: alto >= 560; el módulo añade histéresis al redimensionar).
+         Sin hash y con movimiento permitido, la portada se abre con su entrada (clase abriendo, 1,5 s). -->
+    <script is:inline>
+      (function () {
+        var h = document.documentElement;
+        var hash = location.hash.slice(1);
+        h.dataset.inicio = hash;
+        var mazo = !!document.startViewTransition && matchMedia('(prefers-reduced-motion: no-preference)').matches && innerHeight >= 560;
+        if (!mazo) return;
+        h.classList.add('escenas');
+        if (!hash) {
+          h.classList.add('abriendo');
+          setTimeout(function () { h.classList.remove('abriendo'); }, 1500);
+        }
+      })();
+    </script>
+  </Fragment>
+
+  <nav class="nav" aria-label="Principal">
+    <a class="brand" href="#inicio"><i aria-hidden="true"></i>Landing remakes</a>
+    <div class="lw">
+      <ul role="list">
+        <li><a href="#peludo"><span class="ext">Ayuda a un </span>Peludo</a></li>
+        <li><a href="#meet">Meet<span class="ext"> &amp; Coffee</span></a></li>
+        <li><a href="#como">Cómo<span class="ext"> está hecho</span></a></li>
+      </ul>
+    </div>
+  </nav>
+
   <main id="contenido">
-    <section class="mx-auto max-w-6xl px-5 pb-16 pt-20 sm:pt-28">
-      <p data-reveal class="inline-flex items-center gap-2 rounded-full border border-linea bg-superficie px-4 py-1.5 text-sm font-medium text-suave">
-        <span class="size-2 rounded-full bg-acento"></span> Proyecto de <a href="https://github.com/mauricloudz" class="font-semibold text-tinta hover:underline">Mauricio Poblete</a>
-      </p>
-      <h1 class="mt-6 max-w-4xl text-5xl font-bold leading-[1.02] tracking-tight sm:text-7xl">
-        <Palabras texto="Mis landings de estudiante, rehechas y mejoradas." />
-      </h1>
-      <p data-reveal style="--d:3" class="mt-7 max-w-2xl text-lg leading-relaxed text-suave sm:text-xl">
-        Tomé dos sitios que hice mientras aprendía y los reconstruí con un stack moderno y un flujo de desarrollo asistido por IA. Mismo contenido de base, mucho más sitio. Desliza para comparar.
-      </p>
+    <!-- 1 · INICIO: texto a la izquierda y dos ventanas inclinadas a la derecha. La píldora y cada ventana son anclas -->
+    <section id="inicio" class="diapo inicio activa" aria-labelledby="t-intro" data-reticula-viva>
+      <!-- Fondo: la retícula de puntos fija es de todas las escenas (.diapo::before); aquí solo va la capa de marca que se ve cerca del puntero (ver reticula.ts) -->
+      <div class="retic" aria-hidden="true"><i class="r2"></i></div>
+      <div class="plano">
+        <div class="in-texto">
+          <p class="pill" data-ancla-sale="2" data-hacia="peludo meet" data-sale="arriba"><i aria-hidden="true"></i><span class="rotulo">Proyecto de <a href="https://github.com/mauricloudz">Mauricio Poblete</a></span></p>
+          <h1 id="t-intro" class="h1" tabindex="-1">
+            <span class="hl"><span class="mask"><span class="sube">Mis landings de</span></span></span>
+            <span class="hl"><span class="mask"><span class="sube">estudiante, rehechas</span></span></span>
+            <span class="hl"><span class="mask"><span class="sube">y mejoradas.</span></span></span>
+          </h1>
+          <p class="lead revela">Tomé dos sitios que hice mientras aprendía y los reconstruí con un stack moderno y un flujo de desarrollo asistido por IA. Mismo contenido de base, mucho más sitio. Avanza para comparar.</p>
+        </div>
+        <div class="rise">
+          {proyectos.map((p, i) => (
+            <figure class={`fr fr${i + 1}`}>
+              <figcaption class="cap"><span class="rotulo"><b>0{i + 1}</b> {p.nombre}</span></figcaption>
+              <Marco url={p.ruta} data-ancla-sale="1" data-hacia={p.id} data-sale={i === 0 ? 'izquierda' : 'derecha'}>
+                <div class="comp solo">
+                  <Image src={imagenes[p.id as keyof typeof imagenes].dd} alt="" widths={anchosD} sizes={sizesVentana} width={1440} loading="eager" fetchpriority="low" decoding="async" />
+                </div>
+              </Marco>
+            </figure>
+          ))}
+        </div>
+      </div>
     </section>
 
+    <!-- Cada proyecto es UNA escena con dos pasos: "Lo que no existía" a la izquierda,
+     el marco con el comparador al centro y las métricas a la derecha; luego el marco sube y entran los teléfonos. -->
     {proyectos.map((p, i) => {
       const img = imagenes[p.id as keyof typeof imagenes];
       return (
-        <section class="border-t border-linea py-20" id={p.id}>
-          <div class="mx-auto max-w-6xl px-5">
-            <div class="flex flex-wrap items-end justify-between gap-6">
-              <div>
-                <p data-reveal class="text-sm font-semibold text-marca">0{i + 1} · {p.tipo} · original de {p.anio}</p>
-                <h2 data-reveal style="--d:1" class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">{p.nombre}</h2>
-              </div>
-              <a data-reveal style="--d:2" href={`${base}${p.ruta}`} class="group inline-flex items-center gap-2 rounded-full bg-tinta px-6 py-3 font-semibold text-fondo transition hover:bg-marca">
-                Ver el sitio nuevo <span class="transition group-hover:translate-x-1">→</span>
-              </a>
-            </div>
-
-            <div data-reveal="zoom" class="mt-10 overflow-hidden rounded-3xl border border-linea shadow-[0_40px_80px_-40px_rgba(22,24,29,.35)]">
-              <Comparador antes={img.ad} despues={img.dd} nombre={p.nombre} />
-            </div>
-
-            <div class="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[1.25fr_1fr_.75fr]">
-              <div data-reveal class="rounded-3xl border border-linea bg-superficie p-7">
-                <h3 class="text-lg font-semibold">Métricas en móvil</h3>
-                <table class="mt-4 w-full text-sm">
-                  <thead><tr class="text-left text-suave"><th class="pb-2 font-medium">Lighthouse</th><th class="pb-2 pl-4 text-right font-medium">Antes</th><th class="pb-2 pl-4 text-right font-medium">Después</th></tr></thead>
-                  <tbody class="divide-y divide-linea">
-                    {filas.map(([etiqueta, k]) => (
-                      <tr><td class="py-2.5">{etiqueta}</td><td class="whitespace-nowrap py-2.5 pl-4 text-right tabular-nums text-suave">{p.antes[k]}</td><td class="whitespace-nowrap py-2.5 pl-4 text-right font-semibold tabular-nums text-acento">{p.despues[k]}</td></tr>
-                    ))}
-                    <tr><td class="py-2.5">Carga del contenido principal</td><td class="whitespace-nowrap py-2.5 pl-4 text-right tabular-nums text-suave">{p.antes.lcp}</td><td class="whitespace-nowrap py-2.5 pl-4 text-right font-semibold tabular-nums text-acento">{p.despues.lcp}</td></tr>
-                    <tr><td class="py-2.5">Peso de la página</td><td class="whitespace-nowrap py-2.5 pl-4 text-right tabular-nums text-suave"><span class="whitespace-nowrap">{p.antes.peso.toLocaleString('es-CL')} KB</span></td><td class="whitespace-nowrap py-2.5 pl-4 text-right font-semibold tabular-nums text-acento">{p.despues.peso} KB</td></tr>
-                    <tr><td class="py-2.5">Ancho en un teléfono de 390 px</td><td class="whitespace-nowrap py-2.5 pl-4 text-right tabular-nums text-suave">{p.antes.anchoMovil} px</td><td class="whitespace-nowrap py-2.5 pl-4 text-right font-semibold tabular-nums text-acento">{p.despues.anchoMovil} px</td></tr>
-                  </tbody>
-                </table>
-              </div>
-              <div data-reveal style="--d:1" class="rounded-3xl border border-linea bg-superficie p-7">
-                <h3 class="text-lg font-semibold">Lo que no existía</h3>
-                <ul class="mt-4 space-y-3 text-[15px]">
-                  {p.novedades.map((n) => <li class="flex gap-3"><span class="mt-0.5 text-marca">✦</span>{n}</li>)}
+        <section class="diapo proy" id={p.id} aria-labelledby={`t-${p.id}`} data-paso="0">
+          <div class="plano">
+            <header class="cab">
+              <p class="estado" data-ancla-entra="2" data-desde="inicio" data-sale="arriba" data-entra="arriba"><span class="rotulo">0{i + 1} · {p.tipo} · original de {p.anio}</span></p>
+              <h2 id={`t-${p.id}`} tabindex="-1"><span class="mask"><span class="sube">{p.nombre}</span></span></h2>
+            </header>
+            <div class="zona">
+              <!-- Panel de foco: una tarjeta blanca que envuelve la columna activa y se desplaza a la otra; su borde lleva un haz que gira (solo escritorio) -->
+              <i class="pf" aria-hidden="true"><i class="haz"></i></i>
+              <div class="col col-izq" data-sale="izquierda" data-entra="izquierda">
+                <h3 class="nt-h">Lo que no existía</h3>
+                <ul role="list">
+                  {p.novedades.map((n, j) => <li><div class="rl"><span class="ni" aria-hidden="true">0{j + 1}</span><span class="nt">{n}</span></div></li>)}
                 </ul>
               </div>
-              <div data-reveal style="--d:2" class="grid grid-cols-2 gap-3">
-                <figure><Image src={img.am} alt={`${p.nombre} original en un teléfono`} width={390} class="rounded-2xl border border-linea" loading="lazy" /><figcaption class="mt-2 text-center text-xs text-suave">Antes, en móvil</figcaption></figure>
-                <figure><Image src={img.dm} alt={`${p.nombre} nuevo en un teléfono`} width={390} class="rounded-2xl border border-linea" loading="lazy" /><figcaption class="mt-2 text-center text-xs text-suave">Después, en móvil</figcaption></figure>
+              <div class="centro">
+                <div class="stage">
+                  <p class="mini leyenda"><span class="rotulo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 8l-4 4 4 4M17 8l4 4-4 4M3 12h18" /></svg>Desliza para ver el antes y el después</span></p>
+                  <Marco url={p.ruta} data-ancla-entra="1" data-desde="inicio" data-sale="arriba" data-entra="arriba">
+                    <Comparador antes={img.ad} despues={img.dd} nombre={p.nombre} anio={p.anio} sizes={sizesMarco} />
+                  </Marco>
+                </div>
+                <div class="tels">
+                  <figure class="tel t1" data-sale="abajo" data-entra="abajo"><div class="cuerpo"><div class="bisel"><div class="pantalla"><Image src={img.am} alt={`${p.nombre} original en un teléfono`} widths={anchosM} sizes={sizesMovil} width={460} loading="lazy" decoding="async" /><i class="isla" aria-hidden="true"></i></div></div></div><figcaption class="revela">Antes, en móvil</figcaption></figure>
+                  <figure class="tel t2" data-sale="abajo" data-entra="abajo"><div class="cuerpo"><div class="bisel"><div class="pantalla"><Image src={img.dm} alt={`${p.nombre} nuevo en un teléfono`} widths={anchosM} sizes={sizesMovil} width={460} loading="lazy" decoding="async" /><i class="isla" aria-hidden="true"></i></div></div></div><figcaption class="revela">Después, en móvil</figcaption></figure>
+                </div>
+              </div>
+              <div class="col col-der panel" data-sale="derecha" data-entra="derecha">
+                <Metricas nombre={p.nombre} antes={p.antes} despues={p.despues} />
               </div>
             </div>
+            <div class="accion"><a class="btn" href={`${base}${p.ruta}`}><span class="rotulo">Ver el sitio nuevo<span class="sr-only"> de {p.nombre}</span> <span class="fl" aria-hidden="true">→</span></span></a></div>
           </div>
         </section>
       );
     })}
 
-    <section class="border-t border-linea bg-tinta py-24 text-fondo">
-      <div class="mx-auto max-w-6xl px-5">
-        <h2 data-reveal class="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl">Cómo está hecho</h2>
-        <div class="mt-14 grid grid-cols-1 gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-          {decisiones.map((d, i) => (
-            <div data-reveal style={`--d:${i % 3}`}>
-              <span class="font-mono text-sm text-acento">0{i + 1}</span>
-              <h3 class="mt-2 text-xl font-semibold">{d.t}</h3>
-              <p class="mt-2 leading-relaxed text-fondo/70">{d.d}</p>
-            </div>
-          ))}
+    <!-- 6 · CÓMO ESTÁ HECHO: fondo oscuro; seis decisiones, una por paso. El título no se mueve -->
+    <section class="diapo como" id="como" aria-labelledby="t-como" data-paso="0">
+      <div class="plano">
+        <h2 id="t-como" tabindex="-1"><span class="mask"><span class="sube">Cómo está hecho</span></span></h2>
+        <div class="pistaw" data-sale="izquierda" data-entra="derecha">
+          <ul class="pista-h" role="list">
+            {decisiones.map((d, i) => (
+              <li class:list={['card', 'spot', { actual: i === 0 }]}><span class="cn" aria-hidden="true"><span class="rotulo">0{i + 1}</span></span><div class="ct"><h3><span class="mask"><span class="sube">{d.t}</span></span></h3><p class="revela">{d.d}</p></div></li>
+            ))}
+          </ul>
         </div>
-        <div data-reveal class="mt-16 flex flex-wrap gap-2">
-          {['Astro 7', 'Tailwind CSS 4', 'TypeScript', 'SVG animado', 'View Transitions', 'Scroll-driven animations', 'GitHub Actions', 'GitHub Pages'].map((t) => <span class="rounded-full border border-fondo/20 px-4 py-2 text-sm">{t}</span>)}
-        </div>
+        <ul class="chips" role="list" data-sale="abajo" data-entra="abajo">
+          {tecnologias.map((t, i) => <li class="chip"><span class="rotulo">{t}</span></li>)}
+        </ul>
+        <div class="riel" aria-hidden="true" data-ancla-sale="4" data-hacia="autor" data-sale="derecha" data-entra="izquierda"><i></i></div>
+      </div>
+      <span class="semilla" data-clon="forma" data-modelo=".card.actual" data-ancla-sale="1" data-hacia="autor" aria-hidden="true"></span>
+      <span class="semilla" data-clon="forma" data-modelo=".card.actual" data-ancla-sale="2" data-hacia="autor" aria-hidden="true"></span>
+      <span class="semilla" data-clon="forma" data-modelo=".card.actual" data-ancla-sale="3" data-hacia="autor" aria-hidden="true"></span>
+    </section>
+
+    <!-- 7 · AUTOR: el pie de la página, como escena final -->
+    <section class="diapo autor" id="autor" aria-label="Autor" data-reticula-viva>
+      <div class="retic" aria-hidden="true"><i class="r2"></i></div>
+      <div class="plano">
+        <footer class="pie">
+          <h2 tabindex="-1"><span class="hecho revela">Creado por</span><span class="mask"><span class="sube">Mauricio Poblete</span></span></h2>
+          <i class="filete" aria-hidden="true" data-ancla-entra="4" data-desde="como" data-entra="izquierda"></i>
+          <p class="sub revela">Desarrollo de productos web y automatización con IA</p>
+          <p class="enl">
+            <a href="https://github.com/mauricloudz" data-ancla-entra="1" data-desde="como" data-entra="abajo"><span class="rotulo">GitHub</span></a>
+            <a href="https://www.linkedin.com/in/mauricio-poblete-saez-b089569a" data-ancla-entra="2" data-desde="como" data-entra="abajo"><span class="rotulo">LinkedIn</span></a>
+            <a href="mailto:mpoblete.s3@gmail.com" data-ancla-entra="3" data-desde="como" data-entra="abajo"><span class="rotulo">Correo</span></a>
+          </p>
+        </footer>
       </div>
     </section>
   </main>
-  <footer class="px-5 py-12">
-    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 text-sm text-suave">
-      <p>Hecho por Mauricio Poblete · Desarrollo de productos web y automatización con IA</p>
-      <p class="flex gap-5"><a class="hover:text-tinta" href="https://github.com/mauricloudz">GitHub</a><a class="hover:text-tinta" href="https://www.linkedin.com/in/mauricio-poblete-saez-b089569a">LinkedIn</a><a class="hover:text-tinta" href="mailto:mpoblete.s3@gmail.com">Correo</a></p>
-    </div>
-  </footer>
+
+  <script is:inline>
+    (function () {
+      var h = document.documentElement;
+      if (!h.classList.contains('escenas') || !h.dataset.inicio) return;
+      var sec = null;
+      try {
+        var el = document.getElementById(decodeURIComponent(h.dataset.inicio));
+        sec = el && el.closest('main > section.diapo');
+      } catch (e) { sec = null; }
+      if (!sec) return;
+      document.querySelectorAll('main > section.diapo.activa').forEach(function (s) { s.classList.remove('activa'); });
+      sec.classList.add('activa');
+    })();
+  </script>
+
+  <nav class="puntos-nav" aria-label="Escenas">
+    <ol>
+      {escenas.map(([id, nombre]) => (
+        <li><a href={`#${id}`}><span class="sr-only">{nombre}</span></a></li>
+      ))}
+    </ol>
+  </nav>
+  <p id="aviso" class="sr-only" role="status" aria-live="polite"></p>
 </Base>
+
+<style is:global>
+  /* =====================================================================
+     Caso de estudio · galería
+     Orden: base (documento normal, todo legible, sin nada fijo salvo la barra) → modo escenas (html.escenas).
+     El modo escenas solo se activa con startViewTransition, movimiento permitido y alto >= 560 px (una vez activo, solo se apaga por debajo de 480 px).
+     Curvas permitidas: --friccion (llegadas) y --encastre (salidas y cortes). Sin otras curvas.
+     ===================================================================== */
+  :root {
+    --nav: 72px; --gut: clamp(18px, 5vw, 72px); --noche: #16181d; --noche2: #1f2229; --claro: #f6f5f1; --claro2: #b7bbc7; --marcaclara: #9db4ff;
+    --friccion: cubic-bezier(0.16, 1, 0.3, 1);
+    --encastre: cubic-bezier(0.87, 0, 0.13, 1);
+  }
+  main a:focus-visible, .nav a:focus-visible, .puntos-nav a:focus-visible { outline: 3px solid var(--marca); outline-offset: 3px; }
+  .como a:focus-visible, .autor a:focus-visible { outline-color: var(--marcaclara); }
+  .mini { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--suave); }
+  .diapo { position: relative; scroll-margin-top: var(--nav); }
+  .rotulo { display: inline-block; padding-block: .14em .22em; margin-block: -.14em -.22em; }
+  .mask { display: block; overflow: hidden; padding-block: .14em .22em; padding-inline: .3em; margin-block: -.14em -.22em; margin-inline: -.3em; }
+  .sube, .revela { display: block; }
+  .diapo h1[tabindex="-1"]:focus, .diapo h2[tabindex="-1"]:focus { outline: none; }
+
+  /* ---------- Barra superior ---------- */
+  .nav { position: fixed; z-index: 50; top: 10px; left: clamp(10px, 2.4vw, 32px); right: clamp(10px, 2.4vw, 32px); display: flex; align-items: center; justify-content: space-between; height: 50px; padding: 0 8px 0 20px; border: 1px solid rgb(22 24 29 / .12); border-radius: 999px; background: rgb(246 245 241 / .92); backdrop-filter: blur(12px); }
+  .nav .brand { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; letter-spacing: -.01em; }
+  .nav .brand i { width: 9px; height: 9px; border-radius: 50%; background: var(--marca); }
+  .nav ul { display: flex; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 13px; font-weight: 500; }
+  .nav ul a { display: block; padding: 8px 10px; border-radius: 999px; }
+  .nav ul a:hover { background: rgb(22 24 29 / .06); }
+  .nav .ext { display: none; }
+  .nav .lw { --pill-bg: var(--tinta); --pill-fg: var(--fondo); }
+  @media (min-width: 700px) { .nav ul a { padding: 8px 14px; } .nav .ext { display: inline; } }
+
+  /* ---------- Marco de navegador ---------- */
+  .frame { overflow: clip; border: 1px solid rgb(22 24 29 / .12); border-radius: 14px; background: #fff; box-shadow: 0 50px 90px -40px rgb(22 24 29 / .4), 0 12px 30px -18px rgb(22 24 29 / .27); }
+  .frame .bar { display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-bottom: 1px solid rgb(22 24 29 / .08); background: #efede7; }
+  .frame .bar i { width: 10px; height: 10px; border-radius: 50%; background: rgb(22 24 29 / .18); }
+  .frame .bar span { flex: 0 1 260px; height: 20px; margin-left: 12px; padding: 0 12px; overflow: hidden; border-radius: 10px; background: #fff; color: var(--suave); font-size: 11px; line-height: 20px; white-space: nowrap; }
+  .frame img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; object-position: top; }
+
+  /* ---------- Base · inicio ---------- */
+  .plano { position: relative; padding: 0 var(--gut); }
+  .inicio .plano { padding-top: calc(var(--nav) + 40px); padding-bottom: 72px; }
+  .pill { display: inline-flex; align-items: center; gap: 10px; margin: 0; padding: 7px 16px; border: 1px solid var(--linea); border-radius: 999px; background: #fff; color: var(--suave); font-size: 13px; font-weight: 500; }
+  .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--marca); }
+  .pill a { color: var(--tinta); font-weight: 600; }
+  .pill a:hover { text-decoration: underline; }
+  /* Retícula de fondo de TODA la galería (escenas y respaldo): puntos de 26 px, siempre en el mismo sitio del viewport.
+     Es un pseudoelemento de cada .diapo (no cuenta como fondo de los textos ni pide red, así no toca el LCP ni el contraste medido).
+     En el respaldo con scroll va fija al viewport (background-attachment: fixed); en el modo escenas cada escena ocupa el viewport entero
+     y el patrón arranca en el mismo punto, así las View Transitions no la ven saltar. */
+  :root { --punto: rgb(22 24 29 / .1); }
+  .como, .autor { --punto: rgb(246 245 241 / .1); }
+  .diapo::before { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(circle, var(--punto) 1.1px, transparent 1.8px) 13px 13px / 26px 26px; background-attachment: fixed; }
+  .diapo > .plano { z-index: 1; }
+  html.escenas .diapo::before { position: fixed; background-attachment: scroll; }
+  /* Capa de marca de la portada: solo se ve cerca del puntero */
+  .retic { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .retic i { position: absolute; inset: 0; display: block; background-size: 26px 26px; background-position: 13px 13px; }
+  .retic .r2 { display: none; background-image: radial-gradient(circle, rgb(47 91 234 / .45) 1.4px, transparent 2.1px); }
+  .in-texto { display: flex; flex-direction: column; align-items: flex-start; }
+  .h1 { max-width: 15ch; margin: 28px 0 0; font-size: clamp(36px, min(6vw, 10svh), 96px); font-weight: 700; line-height: .94; letter-spacing: -.05em; }
+  .hl { display: block; }
+  .lead { max-width: 58ch; margin: 28px 0 0; color: var(--suave); font-size: clamp(17px, 1.5vw, 21px); line-height: 1.55; }
+  .rise { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin: 56px 0 0; }
+  .fr { margin: 0; }
+  .cap { margin: 0 0 12px; color: var(--suave); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
+  .cap b { margin-right: 8px; color: var(--marca); font-weight: 600; }
+  @media (max-width: 900px) { .rise { grid-template-columns: 1fr; } }
+
+  /* ---------- Base · escena de proyecto (documento normal: todo el contenido, una cosa bajo otra) ---------- */
+  .proy { border-top: 1px solid var(--linea); }
+  .proy .plano { display: flex; flex-direction: column; max-width: 1240px; margin: 0 auto; padding: calc(var(--nav) + 32px) var(--gut) 64px; }
+  .cab h2 { margin: 12px 0 0; font-size: clamp(32px, 4vw, 52px); font-weight: 700; line-height: 1; letter-spacing: -.045em; }
+  .estado { display: inline-flex; margin: 0; padding: 6px 14px; border: 1px solid var(--linea); border-radius: 999px; background: #fff; color: var(--suave); font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+  .zona { display: flex; flex-direction: column; gap: 44px; margin-top: 32px; }
+  .centro { display: contents; }
+  .stage { order: 0; width: 100%; max-width: 1100px; margin: 0 auto; }
+  .col-izq { order: 1; }
+  .tels { order: 2; }
+  .col-der { order: 3; max-width: 680px; }
+  .comp { display: grid; grid-template-columns: 1fr 1fr; background: #fff; }
+  .comp.solo { display: block; }
+  .pf { display: none; }
+  /* Leyenda sobre el marco, fuera de la captura: el rótulo se abre y se cierra por máscara con la escena */
+  .leyenda { display: flex; align-items: center; justify-content: center; height: 18px; margin: 0 0 10px; line-height: 1.4; letter-spacing: .14em; }
+  .leyenda .rotulo { display: inline-flex; align-items: center; gap: 8px; }
+  .leyenda svg { flex: none; color: var(--marca); }
+
+  /* Tabla de métricas: la tabla real (Métrica | Antes | Después) siempre está; en el modo escenas solo se ve una columna de valores
+     (odómetro) y el rótulo de la cabecera rueda de «Antes» a «Después» */
+  .met { width: 100%; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
+  .met caption { padding-bottom: 12px; text-align: left; caption-side: top; }
+  .met thead th { padding: 0 0 8px 16px; color: var(--suave); font-size: 11px; font-weight: 600; letter-spacing: .14em; text-align: right; text-transform: uppercase; }
+  .met thead th:first-child { padding-left: 0; text-align: left; }
+  .fila > th, .fila > td { border-top: 1px solid var(--linea); padding-top: clamp(4px, 1.2svh, 13px); padding-bottom: clamp(4px, 1.2svh, 13px); vertical-align: middle; }
+  .fila .et { padding-right: 12px; color: var(--suave); font-size: 11px; font-weight: 600; letter-spacing: .14em; line-height: 1.4; text-align: left; text-transform: uppercase; }
+  .col-ant { padding-left: 16px; color: var(--suave); font-size: 14px; text-align: right; white-space: nowrap; }
+  .h-rot { display: none; }
+  .viejo { text-decoration: line-through; text-decoration-thickness: 1px; }
+  .col-des { min-width: 8.5rem; padding-left: 16px; text-align: right; white-space: nowrap; }
+  .vd { position: relative; display: inline-block; color: var(--acento); font-weight: 600; letter-spacing: -.03em; }
+  .grande .vd { font-size: clamp(30px, min(4vw, 5svh), 60px); line-height: 1; letter-spacing: -.05em; }
+  .det .vd { font-size: clamp(18px, min(1.9vw, 2.8svh), 26px); }
+  .barra { display: block; height: 3px; margin-top: clamp(3px, .8svh, 10px); overflow: clip; background: rgb(22 24 29 / .08); }
+  .barra i { display: block; height: 100%; background: var(--acento); transform-origin: 0 50%; transform: scaleX(var(--r)); }
+  /* Odómetro: una columna por cifra, recortada por su celda (1em de alto); solo se ve en el modo escenas */
+  .cnt { display: none; }
+  .cnt .rod { display: inline-flex; height: 1em; overflow: hidden; vertical-align: top; }
+  .cnt .rc { display: block; transform: translateY(calc(var(--p) * -1em)); }
+  .cnt .rc span { display: block; height: 1em; min-width: .3em; line-height: 1; text-align: center; }
+  .cnt .sep, .cnt .suf { display: block; height: 1em; line-height: 1; }
+  .cnt .suf { margin-left: .28em; }
+  .cnt .mil .rc span { min-width: .2em; }
+  @media (max-width: 520px) { .col-des { min-width: 5.5rem; } .col-ant { padding-left: 10px; font-size: 13px; } .fila .et { font-size: 10px; letter-spacing: .08em; } }
+
+  /* ---------- Base · lo que no existía (columna izquierda), botón y teléfonos ---------- */
+  .col-izq .nt-h { margin: 0; font-size: clamp(30px, 4vw, 52px); font-weight: 700; line-height: 1; letter-spacing: -.05em; }
+  /* Las siete filas miden lo mismo (la más alta manda), aunque alguna pase a dos líneas en una pantalla estrecha */
+  .col-izq ul { display: grid; grid-auto-rows: 1fr; margin: 24px 0 0; padding: 0; list-style: none; }
+  .col-izq li { display: flex; align-items: center; padding: 15px 0; border-top: 1px solid var(--linea); font-size: clamp(16px, 1.35vw, 19px); line-height: 1.4; letter-spacing: -.01em; }
+  .col-izq li:last-child { border-bottom: 1px solid var(--linea); }
+  .col-izq .rl { display: flex; gap: 16px; width: 100%; }
+  .col-izq .ni { flex: none; width: 22px; color: var(--marca); font-size: 12px; font-weight: 600; line-height: 1.9; font-variant-numeric: tabular-nums; }
+  /* Botón: marca sólida, texto blanco (contraste 5,5:1), 48 px o más de alto. La sombra va en el contenedor: el clip-path del botón no la corta */
+  .accion { align-self: flex-start; margin-top: 40px; filter: drop-shadow(0 10px 12px rgb(47 91 234 / .3)); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 30px; border-radius: 999px; background: var(--marca); color: #fff; font-size: 16px; font-weight: 600; letter-spacing: -.01em; transition: background-color .25s var(--friccion); }
+  .btn .fl { display: inline-block; margin-left: .15em; transition: transform .25s var(--friccion); }
+  .btn:hover { background: var(--marca-fuerte); }
+  .btn:hover .fl { transform: translateX(5px); }
+  .tels { display: flex; align-items: flex-start; justify-content: center; gap: clamp(18px, 3vw, 44px); }
+  .tel { width: clamp(130px, 16vw, 230px); margin: 0; }
+  .tel.t2 { margin-top: clamp(28px, 6vw, 80px); }
+  /* Teléfono tipo iPhone 17 Pro Max, todo en CSS. Medidas en cqw (ancho del teléfono = 100): marco de aluminio 1,7,
+     bisel negro 2,2 y pantalla de 92,2 con proporción 440:956 y esquinas de 12,5 % de su ancho. Alto total = 2,081 × ancho. */
+  .tel, .tel-giro { container-type: inline-size; position: relative; --alu: linear-gradient(135deg, #8fa3c7 0%, #3d5280 13%, #1f2e4f 36%, #2a3c63 62%, #4a5f8c 86%, #a3b5d6 100%); --bt: linear-gradient(90deg, #5d6f94, #1a2644); }
+  .cuerpo { position: relative; padding: 1.7cqw; border-radius: 15.4cqw; background: var(--alu); box-shadow: inset 0 0 0 .22cqw rgb(200 214 240 / .5), inset 0 0 .8cqw .2cqw rgb(255 255 255 / .14), 0 12cqw 18cqw -12cqw rgb(22 24 29 / .55); }
+  .bisel { padding: 2.2cqw; border-radius: 13.7cqw; background: #000; box-shadow: 0 0 0 .18cqw rgb(0 0 0 / .55); }
+  .pantalla { position: relative; overflow: hidden; aspect-ratio: 440 / 956; border-radius: 11.5cqw; background: #0b0b0d; }
+  .pantalla > img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .pantalla::after { content: ""; position: absolute; inset: 0; background: linear-gradient(155deg, rgb(255 255 255 / .1), transparent 34%); pointer-events: none; }
+  .isla { position: absolute; z-index: 1; top: 2.4cqw; left: 50%; width: 28%; height: 3.6%; translate: -50% 0; border-radius: 999px; background: #000; }
+  /* Botones laterales: acción y volumen a la izquierda; encendido y control de cámara a la derecha */
+  .tel::before, .tel::after, .tel-giro::before, .tel-giro::after { content: ""; position: absolute; top: 0; width: 1cqw; height: 100%; pointer-events: none; }
+  .tel::before, .tel-giro::before { left: -.75cqw; border-radius: .6cqw 0 0 .6cqw; background: var(--bt) 0 19cqw / 100% 5.5cqw no-repeat, var(--bt) 0 30cqw / 100% 10cqw no-repeat, var(--bt) 0 43cqw / 100% 10cqw no-repeat; }
+  .tel::after, .tel-giro::after { right: -.75cqw; transform: scaleX(-1); background: var(--bt) 0 40cqw / 100% 16cqw no-repeat, var(--bt) 0 100cqw / 100% 11cqw no-repeat; }
+  .tel.vuela .cuerpo, .tel.vuela::before, .tel.vuela::after { visibility: hidden; }
+  /* Copia real (DOM) del teléfono "Después" que gira a horizontal antes del cambio de escena */
+  .tel-giro { position: fixed; margin: 0; transform-origin: 50% 50%; }
+  /* Vista previa dentro de la pantalla del teléfono que gira: un clon de la escena vecina, en una caja del tamaño del viewport,
+     contra-rotada +90° (el teléfono queda a -90°) y escalada para cubrir la pantalla; el controlador pone su tamaño y escala */
+  /* En pantallas estrechas el teléfono no gira: la vista previa va derecha (sin la contra-rotación) */
+  .tel-giro.vertical .vista-previa { rotate: none; }
+  .tel-giro .vp { position: absolute; inset: 0; pointer-events: none; clip-path: inset(100% 0 0 0); }
+  .tel-giro .vista-previa { position: absolute; left: 50%; top: 50%; translate: -50% -50%; rotate: 90deg; transform-origin: 50% 50%; overflow: hidden; pointer-events: none; }
+  html.escenas .vista-previa > .diapo { display: block; position: absolute; inset: 0; }
+  /* Al entrar en la pantalla (giro hacia la escena vecina) la isla y el brillo se retiran: la captura nueva no los lleva */
+  .tel-giro .isla { transition: scale .3s var(--encastre); }
+  .tel-giro .pantalla::after { transition: opacity .3s var(--encastre); }
+  .tel-giro.cierra .isla { scale: 0; }
+  .tel-giro.cierra .pantalla::after { opacity: 0; }
+  .tel figcaption { margin-top: 14px; color: var(--suave); font-size: 11px; letter-spacing: .12em; text-align: center; text-transform: uppercase; }
+  /* ---------- Base · cómo está hecho y autor (fondo oscuro) ---------- */
+  .como, .autor { background: var(--noche); color: var(--claro); }
+  .como .plano { padding-top: calc(var(--nav) + 32px); padding-bottom: 56px; }
+  .como h2 { margin: 0; font-size: clamp(44px, 8vw, 128px); font-weight: 700; line-height: .92; letter-spacing: -.06em; }
+  .pista-h { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin: 48px 0 0; padding: 0; list-style: none; }
+  .card { padding: 28px; border: 1px solid rgb(255 255 255 / .12); border-radius: 20px; background: var(--noche2); }
+  .cn { display: block; color: var(--marcaclara); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .card h3 { margin: 44px 0 0; font-size: 24px; font-weight: 600; line-height: 1.1; letter-spacing: -.035em; }
+  .card p { margin: 14px 0 0; color: var(--claro2); font-size: 15.5px; line-height: 1.55; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 40px 0 0; padding: 0; list-style: none; }
+  .chip { padding: 8px 16px; border: 1px solid rgb(255 255 255 / .28); border-radius: 999px; font-size: 14px; }
+  .riel { display: none; }
+  @media (max-width: 900px) { .pista-h { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .pista-h { grid-template-columns: 1fr; } }
+  .autor { border-top: 1px solid rgb(255 255 255 / .08); }
+  .autor .plano { display: flex; flex-direction: column; justify-content: center; min-height: 85svh; padding-top: 10svh; padding-bottom: 40px; }
+  .pie h2 { margin: 0; font-size: clamp(48px, min(10.4vw, 22svh), 176px); font-weight: 700; line-height: .92; letter-spacing: -.065em; }
+  .pie .hecho { margin-bottom: .4em; color: var(--claro2); font-size: .3em; font-weight: 500; letter-spacing: -.03em; }
+  .filete { display: block; width: 100%; height: 2px; margin-top: clamp(16px, 4svh, 36px); background: var(--marcaclara); }
+  .pie .sub { margin: 28px 0 0; color: var(--claro2); font-size: 17px; }
+  .pie .enl { display: flex; flex-wrap: wrap; gap: 12px; margin: 32px 0 0; font-size: clamp(18px, 2vw, 26px); font-weight: 600; letter-spacing: -.03em; }
+  .pie .enl a { display: inline-block; padding: 12px 26px; border: 1px solid rgb(255 255 255 / .3); border-radius: 999px; transition: border-color .25s var(--friccion), color .25s var(--friccion); }
+  .pie .enl a:hover { border-color: var(--marcaclara); color: var(--marcaclara); }
+
+  /* ---------- Semillas y navegador de puntos: solo existen en modo escenas ---------- */
+  .semilla, .puntos-nav { display: none; }
+
+  /* =====================================================================
+     MODO ESCENAS · html.escenas
+     Una escena a la vez, a pantalla completa. Tres fases por cambio:
+     1 despedida (los textos suben y se cierran) → 2 transformación (anclas) → 3 llegada (los textos suben).
+     ===================================================================== */
+
+  html.escenas, html.escenas body { overflow: hidden; height: 100%; }
+  html.escenas .nav { view-transition-name: cabecera; }
+  html.escenas, html.escenas body { overscroll-behavior: none; }
+  html.escenas .diapo { position: fixed; inset: 0; overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: thin; padding: var(--nav) 0 0; box-sizing: border-box; margin: 0; display: none; background: var(--fondo); }
+  html.escenas .diapo.activa { display: block; }
+  html.escenas .como, html.escenas .autor { background: var(--noche); color: var(--claro); }
+  html.escenas .diapo > .plano { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: safe center; gap: clamp(.6rem, 2svh, 1.6rem); max-width: none; margin: 0; padding: clamp(8px, 2svh, 24px) calc(var(--gut) + 36px) clamp(14px, 3svh, 36px) var(--gut); }
+  html.escenas .puntos-nav { display: block; position: fixed; z-index: 40; top: 50%; right: calc(clamp(10px, 1.6vw, 22px) + var(--sb, 0px)); translate: 0 -50%; view-transition-name: puntos; background: var(--fondo); border: 1px solid var(--linea); border-radius: 999px; padding: 10px 6px; box-shadow: 0 6px 20px rgb(0 0 0 / .18); }
+  html.escenas .puntos-nav ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  html.escenas .puntos-nav a { position: relative; display: block; width: 24px; height: 24px; border-radius: 50%; }
+  html.escenas .puntos-nav a::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; border: 1.5px solid var(--tinta); transition: background-color .4s var(--friccion), transform .4s var(--friccion); }
+  html.escenas .puntos-nav a:hover::before { transform: scale(1.2); }
+  html.escenas .puntos-nav a[aria-current="true"]::before { background: var(--tinta); transform: scale(1.25); }
+
+  /* ---- Fase 1 · despedida: textos hacia arriba, bloques cerrados, rótulos borrados (240 ms, 12 ms entre textos) ---- */
+  html.escenas .diapo.saliendo .sube { transform: translateY(-170%); transition: transform calc(240ms - min(var(--k, 0), 8) * 12ms) var(--encastre) calc(min(var(--k, 0), 8) * 12ms); }
+  html.escenas .diapo.saliendo .revela { clip-path: inset(0 0 100% 0); transition: clip-path .24s var(--encastre); }
+  html.escenas .diapo.saliendo .rotulo { clip-path: inset(0 100% 0 0); transition: clip-path .24s var(--encastre); }
+  html.escenas .rotulo { clip-path: inset(0 0 0 0); }
+
+  /* ---- Fase 2 · transformación: la escena que llega queda en "llegando" (solo formas, sin texto en la captura) ---- */
+  html.escenas .diapo.llegando .sube { transform: translateY(170%); }
+  html.escenas .diapo.llegando .revela { clip-path: inset(100% 0 0 0); }
+  html.escenas .diapo.llegando .rotulo { clip-path: inset(0 100% 0 0); }
+
+  /* ---- Fase 3 · llegada: los textos suben desde sus máscaras; los rótulos se abren ---- */
+  html.escenas .diapo.entrando .sube { animation: sube .9s var(--friccion) both; animation-delay: calc(var(--k, 0) * 30ms); }
+  html.escenas .diapo.entrando .revela { animation: revela .9s var(--friccion) both; animation-delay: calc(var(--k, 0) * 30ms); }
+  html.escenas .diapo.entrando .rotulo { animation: rotulo-abre .6s var(--friccion) both; }
+  html.escenas[data-dir="atras"] .diapo.entrando .rotulo { animation-name: rotulo-abre-der; }
+  @keyframes sube { from { transform: translateY(170%); } }
+  @keyframes revela { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0 0 0 0); } }
+  @keyframes rotulo-abre { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+  @keyframes rotulo-abre-der { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
+
+  /* ---- Apertura de la portada (solo carga directa en #inicio): sin retraso en el titular ---- */
+  @keyframes abre-sube { from { transform: translateY(170%); } }
+  @keyframes abre-ventana { from { translate: 0 110svh; rotate: calc(var(--rot) * 3); } }
+  @keyframes abre-cabecera { from { transform: translateY(-110%); } }
+  @keyframes abre-puntos { from { transform: translateX(160%); } }
+  html.escenas.abriendo .inicio .h1 .mask > .sube { animation: abre-sube .62s var(--friccion) both; }
+  html.escenas.abriendo .inicio .h1 .hl:nth-child(2) .mask > .sube { animation-delay: 40ms; }
+  html.escenas.abriendo .inicio .h1 .hl:nth-child(3) .mask > .sube { animation-delay: 80ms; }
+  html.escenas.abriendo .inicio .pill .rotulo { animation: rotulo-abre .6s var(--friccion) .2s both; }
+  html.escenas.abriendo .inicio .lead { animation: revela .6s var(--friccion) .25s both; }
+  html.escenas.abriendo .inicio .fr { animation: abre-ventana 1.1s var(--friccion) .25s both; }
+  html.escenas.abriendo .inicio .fr2 { animation-delay: .33s; }
+  html.escenas.abriendo .inicio .cap .rotulo { animation: rotulo-abre .6s var(--friccion) .9s both; }
+  html.escenas.abriendo .nav { animation: abre-cabecera .8s var(--friccion) both; }
+  html.escenas.abriendo .puntos-nav { animation: abre-puntos .8s var(--friccion) .15s both; }
+
+  /* ---- Anclas: raíz y parejas ---- */
+  html.escenas::view-transition-group(root), html.escenas::view-transition-image-pair(root) { animation: none; inset: 0; width: 100%; height: 100%; }
+  html.escenas::view-transition-old(root) { animation: none; opacity: 1; transform: none; inset: 0; width: 100%; height: 100%; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(root) { animation: funde-raiz .45s var(--encastre) both; inset: 0; width: 100%; height: 100%; mix-blend-mode: normal; }
+  /* Sin figuras: el fondo del destino se funde bajo las anclas (ambas capturas ya no tienen texto) */
+  @keyframes funde-raiz { from { opacity: 0; } }
+  /* Cuatro parejas, con 45 ms de desfase entre ellas */
+  html.escenas { --escalon: 45ms; }
+  html.escenas::view-transition-group(ancla-1) { animation-duration: .8s; animation-timing-function: var(--friccion); animation-delay: 0ms; z-index: 5; }
+  html.escenas::view-transition-group(ancla-2) { animation-duration: .8s; animation-timing-function: var(--friccion); animation-delay: var(--escalon); z-index: 5; }
+  html.escenas::view-transition-group(ancla-3) { animation-duration: .8s; animation-timing-function: var(--friccion); animation-delay: calc(2 * var(--escalon)); z-index: 5; }
+  html.escenas::view-transition-group(ancla-4) { animation-duration: .8s; animation-timing-function: var(--friccion); animation-delay: calc(3 * var(--escalon)); z-index: 5; }
+  html.escenas::view-transition-image-pair(ancla-1) { isolation: isolate; overflow: hidden; animation: radio-1 .8s var(--friccion) both; }
+  html.escenas::view-transition-image-pair(ancla-2) { isolation: isolate; overflow: hidden; animation: radio-2 .8s var(--friccion) both; }
+  html.escenas::view-transition-image-pair(ancla-3) { isolation: isolate; overflow: hidden; animation: radio-3 .8s var(--friccion) both; }
+  html.escenas::view-transition-image-pair(ancla-4) { isolation: isolate; overflow: hidden; animation: radio-4 .8s var(--friccion) both; }
+  @keyframes radio-1 { from { border-radius: var(--ar-sale-1, 0px); } to { border-radius: var(--ar-entra-1, 0px); } }
+  @keyframes radio-2 { from { border-radius: var(--ar-sale-2, 0px); } to { border-radius: var(--ar-entra-2, 0px); } }
+  @keyframes radio-3 { from { border-radius: var(--ar-sale-3, 0px); } to { border-radius: var(--ar-entra-3, 0px); } }
+  @keyframes radio-4 { from { border-radius: var(--ar-sale-4, 0px); } to { border-radius: var(--ar-entra-4, 0px); } }
+  html.escenas::view-transition-old(ancla-1), html.escenas::view-transition-new(ancla-1),
+  html.escenas::view-transition-old(ancla-2), html.escenas::view-transition-new(ancla-2),
+  html.escenas::view-transition-old(ancla-3), html.escenas::view-transition-new(ancla-3),
+  html.escenas::view-transition-old(ancla-4), html.escenas::view-transition-new(ancla-4) { animation: none; height: 100%; width: 100%; object-fit: cover; mix-blend-mode: normal; }
+  html.escenas::view-transition-old(ancla-1), html.escenas::view-transition-old(ancla-2),
+  html.escenas::view-transition-old(ancla-3), html.escenas::view-transition-old(ancla-4) { opacity: 0; }
+  html.escenas::view-transition-new(ancla-1), html.escenas::view-transition-new(ancla-2),
+  html.escenas::view-transition-new(ancla-3), html.escenas::view-transition-new(ancla-4) { opacity: 1; }
+
+  /* ---- Movimiento direccional (data-sale / data-entra): el elemento sale o entra de la pantalla trasladándose, 45 ms entre elementos.
+     El controlador pone a cada uno un nombre mov-N (único entre origen y destino) y las variables --mov-x-N, --mov-y-N (distancia hasta
+     salir de la pantalla) y --mov-d-N (desfase). ---- */
+  @keyframes mov-sale { to { transform: translate(var(--mx), var(--my)); } }
+  @keyframes mov-entra { from { transform: translate(var(--mx), var(--my)); } }
+  html.escenas::view-transition-group(mov-1) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-1) { --mx: var(--mov-x-1, 0px); --my: var(--mov-y-1, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-1, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-1) { --mx: var(--mov-x-1, 0px); --my: var(--mov-y-1, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-1, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-group(mov-2) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-2) { --mx: var(--mov-x-2, 0px); --my: var(--mov-y-2, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-2, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-2) { --mx: var(--mov-x-2, 0px); --my: var(--mov-y-2, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-2, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-group(mov-3) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-3) { --mx: var(--mov-x-3, 0px); --my: var(--mov-y-3, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-3, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-3) { --mx: var(--mov-x-3, 0px); --my: var(--mov-y-3, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-3, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-group(mov-4) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-4) { --mx: var(--mov-x-4, 0px); --my: var(--mov-y-4, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-4, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-4) { --mx: var(--mov-x-4, 0px); --my: var(--mov-y-4, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-4, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-group(mov-5) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-5) { --mx: var(--mov-x-5, 0px); --my: var(--mov-y-5, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-5, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-5) { --mx: var(--mov-x-5, 0px); --my: var(--mov-y-5, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-5, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-group(mov-6) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-6) { --mx: var(--mov-x-6, 0px); --my: var(--mov-y-6, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-6, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-6) { --mx: var(--mov-x-6, 0px); --my: var(--mov-y-6, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-6, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-group(mov-7) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-7) { --mx: var(--mov-x-7, 0px); --my: var(--mov-y-7, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-7, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-7) { --mx: var(--mov-x-7, 0px); --my: var(--mov-y-7, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-7, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-group(mov-8) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-8) { --mx: var(--mov-x-8, 0px); --my: var(--mov-y-8, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-8, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-8) { --mx: var(--mov-x-8, 0px); --my: var(--mov-y-8, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-8, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-group(mov-9) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-9) { --mx: var(--mov-x-9, 0px); --my: var(--mov-y-9, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-9, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-9) { --mx: var(--mov-x-9, 0px); --my: var(--mov-y-9, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-9, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-group(mov-10) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-10) { --mx: var(--mov-x-10, 0px); --my: var(--mov-y-10, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-10, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-10) { --mx: var(--mov-x-10, 0px); --my: var(--mov-y-10, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-10, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-group(mov-11) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-11) { --mx: var(--mov-x-11, 0px); --my: var(--mov-y-11, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-11, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-11) { --mx: var(--mov-x-11, 0px); --my: var(--mov-y-11, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-11, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-group(mov-12) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-12) { --mx: var(--mov-x-12, 0px); --my: var(--mov-y-12, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-12, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-12) { --mx: var(--mov-x-12, 0px); --my: var(--mov-y-12, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-12, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-group(mov-13) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-13) { --mx: var(--mov-x-13, 0px); --my: var(--mov-y-13, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-13, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-13) { --mx: var(--mov-x-13, 0px); --my: var(--mov-y-13, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-13, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-group(mov-14) { animation: none; z-index: 4; }
+  html.escenas::view-transition-old(mov-14) { --mx: var(--mov-x-14, 0px); --my: var(--mov-y-14, 0px); animation: mov-sale .8s var(--friccion) var(--mov-d-14, 0ms) both; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(mov-14) { --mx: var(--mov-x-14, 0px); --my: var(--mov-y-14, 0px); animation: mov-entra .8s var(--friccion) var(--mov-d-14, 0ms) both; mix-blend-mode: normal; }
+
+  /* División y fusión (marco ↔ teléfonos, teléfonos ↔ tarjeta, tarjeta ↔ píldoras): las copias conservan su forma
+     mientras viajan y se funden con el destino hacia el final (60 % → 40 % de la curva). */
+  @keyframes fundido-sale { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes fundido-entra { 0%, 40% { opacity: 0; } 100% { opacity: 1; } }
+  html.escenas[data-division]::view-transition-old(ancla-1) { opacity: 1; animation: fundido-sale .8s var(--friccion) 0ms both; }
+  html.escenas[data-division]::view-transition-old(ancla-2) { opacity: 1; animation: fundido-sale .8s var(--friccion) var(--escalon) both; }
+  html.escenas[data-division]::view-transition-old(ancla-3) { opacity: 1; animation: fundido-sale .8s var(--friccion) calc(2 * var(--escalon)) both; }
+  html.escenas[data-division]::view-transition-old(ancla-4) { opacity: 1; animation: fundido-sale .8s var(--friccion) calc(3 * var(--escalon)) both; }
+  html.escenas[data-division]::view-transition-new(ancla-1) { opacity: 1; animation: fundido-entra .8s var(--friccion) 0ms both; }
+  html.escenas[data-division]::view-transition-new(ancla-2) { opacity: 1; animation: fundido-entra .8s var(--friccion) var(--escalon) both; }
+  html.escenas[data-division]::view-transition-new(ancla-3) { opacity: 1; animation: fundido-entra .8s var(--friccion) calc(2 * var(--escalon)) both; }
+  html.escenas[data-division]::view-transition-new(ancla-4) { opacity: 1; animation: fundido-entra .8s var(--friccion) calc(3 * var(--escalon)) both; }
+  html.escenas::view-transition-group(cabecera), html.escenas::view-transition-group(puntos) { animation: none; z-index: 10; }
+  html.escenas::view-transition-old(cabecera), html.escenas::view-transition-new(cabecera),
+  html.escenas::view-transition-old(puntos), html.escenas::view-transition-new(puntos) { animation: none; }
+  /* La captura nueva de la cabecera es en vivo (la píldora se desliza en ella); la vieja se oculta para que no se transparente su píldora */
+  html.escenas::view-transition-old(cabecera) { opacity: 0; }
+
+  /* ---- Giro del teléfono: la escena que llega aparece dentro de la pantalla horizontal y la cámara entra ----
+     El controlador mide la pantalla del teléfono ya girado y pasa: --vt-s (escala por ancho), --vt-tx/ty (traslación),
+     --vt-ix/iy (recorte local) y --vt-r (radio local), más la inversa --vt-k, --vt-ux/uy y el color de fondo del destino.
+     Las dos capturas de la raíz se mueven con la misma transformación: la nueva nunca se amplía (siempre nítida). */
+  html.escenas[data-giro]::view-transition-group(root) { background: var(--vt-fondo, transparent); }
+  html.escenas[data-giro]::view-transition-old(root), html.escenas[data-giro]::view-transition-new(root) { transform-origin: 0 0; }
+  html.escenas[data-giro="adelante"]::view-transition-new(root) { animation: giro-entra .7s var(--friccion) both; }
+  html.escenas[data-giro="adelante"]::view-transition-old(root) { animation: giro-aleja .7s var(--friccion) both, giro-apaga .25s var(--encastre) both; }
+  /* Reversa: la captura nueva (teléfono horizontal centrado, con la vista previa en su pantalla) está desde el 0 %; la vieja,
+     encima, se encoge dentro de esa pantalla y se apaga al final, cuando ya coincide con la vista previa */
+  html.escenas[data-giro="atras"]::view-transition-old(root) { z-index: 1; animation: giro-encoge .7s var(--friccion) both, giro-apaga .21s var(--encastre) .49s both; }
+  html.escenas[data-giro="atras"]::view-transition-new(root) { animation: none; opacity: 1; }
+  @keyframes giro-entra { from { transform: translate(var(--vt-tx), var(--vt-ty)) scale(var(--vt-s)); clip-path: inset(var(--vt-iy) var(--vt-ix) round var(--vt-r)); } to { transform: none; clip-path: inset(0px round 0px); } }
+  @keyframes giro-aleja { to { transform: translate(var(--vt-ux), var(--vt-uy)) scale(var(--vt-k)); } }
+  @keyframes giro-apaga { to { opacity: 0; } }
+  @keyframes giro-encoge { from { transform: none; clip-path: inset(0px round 0px); } to { transform: translate(var(--vt-tx), var(--vt-ty)) scale(var(--vt-s)); clip-path: inset(var(--vt-iy) var(--vt-ix) round var(--vt-r)); } }
+
+  /* Semillas: copias del marco (o formas de tarjeta) que se ponen sobre el modelo solo mientras viajan */
+  html.escenas .semilla.viva { display: block; position: fixed; z-index: 3; margin: 0; overflow: clip; box-sizing: border-box; pointer-events: none; }
+  html.escenas .semilla .copia { position: absolute; left: 0; top: 0; transform-origin: 0 0; margin: 0; }
+
+  /* ---- Escena 1 · Inicio ---- */
+  /* Fondo interactivo: retícula de puntos (r1) y una copia en la marca (r2) que solo se ve cerca del puntero. --mx, --my, --act y --px, --py
+     los pone reticula.ts (puntero fino, movimiento permitido); sin ellos queda la retícula estática. */
+  html.escenas .retic .r2 { display: block; opacity: var(--act, 0); -webkit-mask-image: radial-gradient(circle 220px at var(--mx, -400px) var(--my, -400px), #000, transparent); mask-image: radial-gradient(circle 220px at var(--mx, -400px) var(--my, -400px), #000, transparent); }
+  /* Autor: la misma capa, en el azul claro de la marca sobre el fondo oscuro. Sin paralaje (no hay ventanas) */
+  html.escenas .autor .retic .r2 { background-image: radial-gradient(circle, rgb(157 180 255 / .9) 1.5px, transparent 2.2px); }
+  html.escenas .inicio .fr1 { translate: calc(var(--px, 0) * 6px) calc(var(--py, 0) * 6px); }
+  html.escenas .inicio .fr2 { translate: calc(var(--px, 0) * -12px) calc(var(--py, 0) * -12px); }
+  html.escenas .inicio.mueve .fr { will-change: translate; }
+  html.escenas .inicio { background: var(--fondo); }
+  html.escenas .inicio .h1 { max-width: none; margin: clamp(12px, 3svh, 26px) 0 0; font-size: clamp(32px, min(3.9vw, 8.2svh), 80px); }
+  html.escenas .inicio .hl { white-space: nowrap; }
+  html.escenas .inicio .lead { margin: clamp(12px, 3svh, 26px) 0 0; max-width: 46ch; font-size: clamp(14px, min(1.3vw, 2.5svh), 19px); }
+  html.escenas .inicio .rise { display: block; position: relative; margin: 0; container-type: size; }
+  html.escenas .inicio .fr { position: absolute; width: min(68cqw, calc(((100cqh - 52px) / 1.5 - 34px) / .625)); rotate: var(--rot); }
+  html.escenas .inicio .fr1 { --rot: -4deg; left: 0; top: 26px; }
+  html.escenas .inicio .fr2 { --rot: 3.5deg; right: 0; bottom: 26px; z-index: 1; }
+  html.escenas .inicio .cap { position: absolute; left: 0; top: -26px; margin: 0; white-space: nowrap; }
+  html.escenas .inicio .fr2 .cap { top: auto; bottom: -26px; }
+  @media (min-width: 901px) {
+    html.escenas .inicio .plano { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-content: center; align-items: center; column-gap: clamp(24px, 4vw, 64px); }
+    html.escenas .inicio .rise { justify-self: center; width: min(100%, 640px, calc((100svh - 190px) / .8)); aspect-ratio: 1 / .8; }
+  }
+  @media (max-width: 900px) {
+    html.escenas .inicio .plano { justify-content: flex-start; gap: clamp(8px, 1.8svh, 16px); padding-right: var(--gut); padding-bottom: 76px; }
+    html.escenas .inicio .hl { white-space: normal; }
+    html.escenas .inicio .h1 { font-size: clamp(26px, min(8.4vw, 5.4svh), 46px); margin-top: clamp(8px, 1.8svh, 16px); }
+    html.escenas .inicio .lead { margin-top: clamp(8px, 1.8svh, 16px); font-size: clamp(13px, 3.6vw, 16px); max-width: none; }
+    html.escenas .inicio .rise { flex: 1 1 0; min-height: 0; width: 100%; }
+  }
+
+  /* ---- Escenas 2 y 3 · Proyecto: una escena con dos pasos ----
+     Escritorio, tres columnas: lo que no existía (izquierda), marco con comparador (centro), métricas (derecha).
+       paso 0: énfasis a la izquierda · paso 1: el marco sube y entran los teléfonos, el énfasis pasa a la derecha.
+     Móvil: paso 0 comparador con la lista debajo · paso 1 teléfonos y métricas (con «Antes» y «Después»).
+     El controlador fija en la escena data-marco, data-lista, data-tels, data-tabla (1 = a la vista) y data-enf (izq | der). */
+  html.escenas .proy { border-top: 0; overflow: clip; }
+  html.escenas .proy .plano { max-width: none; margin: 0; justify-content: flex-start; gap: clamp(4px, 1.1svh, 10px); padding-top: clamp(6px, 1.6svh, 18px); padding-bottom: clamp(10px, 2.2svh, 24px); }
+  html.escenas .proy .cab { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(3px, .8svh, 6px); }
+  html.escenas .proy .cab h2 { margin: 0; font-size: clamp(24px, min(2.8vw, 4.6svh), 38px); }
+  html.escenas .proy .estado { padding: 4px 13px; font-size: 11px; }
+  html.escenas .proy .zona { position: relative; flex: 1 1 0; min-height: 0; margin: 0; display: block; }
+  html.escenas .proy .accion { flex: none; align-self: center; margin: 0; }
+  html.escenas .proy .btn { min-height: clamp(48px, 6.2svh, 56px); }
+  /* Posiciones de cada pieza según el paso. Todas viajan (transform): ninguna se apaga por opacidad */
+  html.escenas .proy .stage, html.escenas .proy .tel { transition: transform .7s var(--friccion); }
+  /* Los teléfonos son decorativos y su contenedor cubre el centro: no debe tapar el comparador (aunque estén fuera de pantalla) */
+  html.escenas .proy .tels { pointer-events: none; }
+  html.escenas .proy .stage { z-index: 2; }
+  html.escenas .proy .col { transition: transform .7s var(--friccion), color .7s var(--friccion); }
+  html.escenas .proy .tel.t2 { transition-delay: 60ms; }
+  html.escenas .proy[data-marco="0"] .stage { transform: translateY(-100svh); }
+  html.escenas .proy[data-tels="0"] .tel { transform: translateY(100svh); }
+  html.escenas .proy[data-lista="0"] .col-izq { transform: translateX(-100vw); }
+  html.escenas .proy[data-tabla="0"] .col-der { transform: translateX(100vw); }
+  /* Énfasis por color (nunca por opacidad): la izquierda en tinta con los números en la marca y, cuando el énfasis pasa a la derecha, en gris.
+     data-enf manda sobre las columnas y el panel; data-vista (antes | despues) sobre los valores de la tabla */
+  html.escenas .proy .col-izq { color: var(--tinta); }
+  html.escenas .proy .col-izq .ni { color: var(--marca); transition: color .7s var(--friccion); }
+  html.escenas .proy[data-enf="der"] .col-izq, html.escenas .proy[data-enf="der"] .col-izq .ni { color: var(--suave); }
+  html.escenas .proy .met caption { color: var(--suave); }
+  /* Tabla de métricas. Escritorio (más abajo): una sola columna de valores; la columna «Antes» queda solo para el lector de pantalla y su
+     rótulo de cabecera lo reemplaza el odómetro «Antes» → «Después». Móvil: dos columnas, «Antes» fija y en gris, y «Después» con el odómetro. */
+  /* Valores y barras: parten del número original (gris, barra «antes») y ruedan/crecen hasta el del sitio nuevo (verde, barra «después»).
+     Son transiciones: la reversa es la misma curva al revés */
+  html.escenas .proy .vd { color: var(--suave); transition: color .7s var(--friccion); }
+  html.escenas .proy[data-vista="despues"] .vd { color: var(--acento); }
+  html.escenas .proy .vd.rola .stat { position: absolute; width: 1px; height: 1px; overflow: clip; clip-path: inset(50%); white-space: nowrap; }
+  html.escenas .proy .vd.rola { line-height: 1; }
+  html.escenas .proy .vd.rola .cnt { display: inline-flex; vertical-align: top; }
+  html.escenas .proy .cnt .rc { transform: translateY(0); transition: transform 1.2s var(--friccion) calc(.15s + var(--k) * 55ms); }
+  html.escenas .proy[data-vista="despues"] .cnt .rc { transform: translateY(calc(var(--p) * -1em)); }
+  html.escenas .proy .barra i { background: var(--suave); transform: scaleX(var(--r0)); transition: transform 1.2s var(--friccion) calc(.15s + var(--k) * 55ms), background-color .7s var(--friccion); }
+  html.escenas .proy[data-vista="despues"] .barra i { background: var(--acento); transform: scaleX(var(--r)); }
+  html.escenas .proy .fila > th, html.escenas .proy .fila > td { padding-top: clamp(3px, .8svh, 11px); padding-bottom: clamp(3px, .8svh, 11px); }
+  /* Panel de foco (escritorio): UNA tarjeta blanca detrás de las columnas. Con el énfasis a la izquierda envuelve la lista; al pasar a la
+     derecha se desplaza y se redimensiona hasta envolver la tabla (translate + width + height, 700 ms --friccion: así la sombra y el radio
+     de 20 px no se deforman, que sí pasaría con un scale). El controlador mide ambas columnas y deja --izq-* y --der-* en la zona. */
+  html.escenas .proy .pf { --pf-cerrado: inset(0 100% 0 0 round 20px); --pf-abierto: inset(-80px round 20px); }
+  /* Haz de borde (como Border Beam): anillo de 1,5 px hecho con máscara y un trazo corto de la marca que gira. --angulo está registrada
+     con @property para poder animarla. */
+  @property --angulo { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+  @keyframes haz-giro { to { --angulo: 360deg; } }
+  @keyframes pf-abre { from { clip-path: var(--pf-cerrado); } to { clip-path: var(--pf-abierto); } }
+  @keyframes pf-entra-der { from { translate: calc(var(--der-x, 0px) + 100vw) var(--der-y, 0px); } }
+  /* Botón «Ver el sitio nuevo»: no se mueve entre pasos; entra subiendo por máscara con la escena y sale cerrándose con ella */
+  html.escenas .proy.saliendo .btn, html.escenas .proy.llegando .btn { clip-path: inset(100% 0 0 0 round 999px); }
+  html.escenas .proy.saliendo .btn { transition: clip-path .24s var(--encastre); }
+  html.escenas .proy.entrando .btn { animation: btn-sube .7s var(--friccion) .15s both; }
+  @keyframes btn-sube { from { clip-path: inset(100% 0 0 0 round 999px); } to { clip-path: inset(0 0 0 0 round 999px); } }
+  /* Giro del teléfono (escena .giro): antes de girar las dos columnas salen por sus lados, el teléfono «Antes» baja y la píldora se cierra;
+     al volver, tras el giro, todo regresa con la misma coreografía al revés */
+  html.escenas .proy.saliendo .col, html.escenas .proy.saliendo .tel, html.escenas .proy.saliendo .stage { transition: transform .24s var(--encastre), color .24s var(--encastre); }
+  html.escenas .proy.giro.saliendo .col-izq, html.escenas .proy.giro.llegando .col-izq { transform: translateX(-100vw); }
+  html.escenas .proy.giro.saliendo .col-der, html.escenas .proy.giro.llegando .col-der { transform: translateX(100vw); }
+  html.escenas .proy.giro.saliendo .t1, html.escenas .proy.giro.llegando .t1 { transform: translateY(105svh); }
+  html.escenas .proy.giro.saliendo .estado, html.escenas .proy.giro.llegando .estado { clip-path: inset(0 50% 0 50% round 999px); }
+  html.escenas .proy.giro.saliendo .estado { transition: clip-path .24s var(--encastre); }
+  html.escenas .proy.giro.entrando .col-izq { animation: col-entra-izq .9s var(--friccion) both; }
+  html.escenas .proy.giro.entrando .col-der { animation: col-entra-der .9s var(--friccion) 45ms both; }
+  html.escenas .proy.giro.entrando .t1 { animation: tel-sube .9s var(--friccion) 90ms both; }
+  html.escenas .proy.giro.entrando .estado { animation: pildora-abre .7s var(--friccion) .1s both; }
+  @keyframes col-entra-izq { from { transform: translateX(-100vw); } }
+  @keyframes col-entra-der { from { transform: translateX(100vw); } }
+  @keyframes tel-sube { from { transform: translateY(105svh); } }
+  @keyframes pildora-abre { from { clip-path: inset(0 50% 0 50% round 999px); } to { clip-path: inset(0 0 0 0 round 999px); } }
+
+  @media (min-width: 1024px) {
+    html.escenas .proy .plano { padding-left: clamp(24px, 3.4vw, 56px); padding-right: 76px; }
+    html.escenas .proy .zona { --g: clamp(20px, 2.6vw, 44px); container-type: inline-size; display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 2.1fr) minmax(0, 1.2fr); grid-template-rows: minmax(0, 1fr); column-gap: var(--g); align-items: center; }
+    html.escenas .proy .col-izq { grid-column: 1; grid-row: 1; }
+    html.escenas .proy .col-der { grid-column: 3; grid-row: 1; max-width: none; }
+    html.escenas .proy .centro { display: block; grid-column: 2; grid-row: 1; align-self: stretch; position: relative; container-type: size; }
+    /* --W: ancho del marco = el mayor que cabe en la columna central (34 px de barra + captura 16:10) */
+    html.escenas .proy .stage { --W: min(100cqw, calc((100cqh - 62px) * 1.6)); position: absolute; left: 50%; top: 50%; width: var(--W); max-width: none; margin: 0; translate: -50% -50%; }
+    html.escenas .proy .tels { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: clamp(12px, 3cqw, 30px); --tw: min(42cqw, calc((100cqh - 50px) / 2.26)); }
+    html.escenas .proy .tel { width: var(--tw); }
+    html.escenas .proy .tel.t2 { margin-top: calc(var(--tw) * .14); }
+    html.escenas .proy .tel figcaption { margin-top: clamp(5px, 1.2svh, 12px); }
+    /* Las columnas y el centro quedan por encima del panel */
+    html.escenas .proy .col, html.escenas .proy .centro { position: relative; z-index: 1; }
+    html.escenas .proy .pf { display: block; position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; border-radius: 20px; background: #fff;
+      box-shadow: 0 18px 40px -18px rgb(20 20 40 / .18), 0 2px 8px -3px rgb(20 20 40 / .08);
+      width: var(--izq-w, 0px); height: var(--izq-h, 0px); translate: var(--izq-x, 0px) var(--izq-y, 0px); clip-path: var(--pf-abierto);
+      transition: translate .7s var(--friccion), width .7s var(--friccion), height .7s var(--friccion); }
+    html.escenas .proy[data-enf="der"] .pf { width: var(--der-w, 0px); height: var(--der-h, 0px); translate: var(--der-x, 0px) var(--der-y, 0px); }
+    html.escenas .proy .haz { position: absolute; inset: 0; box-sizing: border-box; padding: 1.5px; border-radius: inherit; pointer-events: none;
+      background:
+        conic-gradient(from var(--angulo), transparent 0deg 296deg, rgb(47 91 234 / .3) 326deg, var(--marca) 356deg, transparent 360deg),
+        linear-gradient(rgb(47 91 234 / .14), rgb(47 91 234 / .14));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude;
+      /* La rotación infinita es el ÚNICO uso permitido de linear: no es una transición entre estados sino un bucle sin principio ni fin. */
+      animation: haz-giro 3.6s linear infinite; animation-play-state: paused; }
+    html.escenas .proy.activa .haz { animation-play-state: running; }
+    /* Con la escena: sale cerrándose hacia el lado de su columna (240 ms) y entra abriéndose desde él, después de que llegue la columna */
+    html.escenas .proy.saliendo .pf, html.escenas .proy.llegando .pf { clip-path: var(--pf-cerrado); }
+    html.escenas .proy.saliendo .pf { transition: clip-path .24s var(--encastre), translate .7s var(--friccion), width .7s var(--friccion), height .7s var(--friccion); }
+    html.escenas .proy.entrando .pf { animation: pf-abre .8s var(--friccion) .2s both; }
+    /* Giro del teléfono: el panel va con su columna (la tabla): sale hacia la derecha con ella y vuelve con ella, mismas curvas y tiempos */
+    html.escenas .proy.giro[data-enf="der"].saliendo .pf, html.escenas .proy.giro[data-enf="der"].llegando .pf { clip-path: var(--pf-abierto); translate: calc(var(--der-x, 0px) + 100vw) var(--der-y, 0px); }
+    html.escenas .proy.giro[data-enf="der"].saliendo .pf { transition: translate .24s var(--encastre), width .7s var(--friccion), height .7s var(--friccion); }
+    html.escenas .proy.giro[data-enf="der"].entrando .pf { animation: pf-entra-der .9s var(--friccion) 45ms both; }
+    html.escenas .proy .nt-h { font-size: clamp(19px, min(1.8vw, 3.4svh), 30px); }
+    html.escenas .proy .col-izq ul { margin-top: clamp(6px, 1.4svh, 14px); }
+    html.escenas .proy .col-izq li { padding: clamp(3px, .75svh, 9px) 0; font-size: clamp(11.5px, min(.95vw, 1.85svh), 15.5px); line-height: 1.32; }
+    html.escenas .proy .col-izq .rl { gap: 10px; }
+    html.escenas .proy .col-izq .ni { width: 20px; font-size: 11px; line-height: 1.55; }
+    html.escenas .proy .grande .vd { font-size: clamp(22px, min(2.5vw, 4.4svh), 42px); }
+    html.escenas .proy .det .vd { font-size: clamp(14px, min(1.3vw, 2.4svh), 20px); }
+    html.escenas .proy .fila .et { font-size: 10px; letter-spacing: .1em; }
+    html.escenas .proy .col-ant { font-size: clamp(11px, 1vw, 14px); }
+    html.escenas .proy .met thead th { font-size: 10px; }
+    /* Una sola columna de valores: «Antes» solo para el lector de pantalla (como un .sr-only); su rótulo y el de «Después» los
+       reemplaza el rodillo «Antes» → «Después», que gira igual que los dígitos (600 ms, --friccion) */
+    html.escenas .proy .met .h-ant, html.escenas .proy .met .col-ant, html.escenas .proy .met .h-txt { position: absolute; width: 1px; height: 1px; padding: 0; border: 0; overflow: clip; clip-path: inset(50%); white-space: nowrap; }
+    html.escenas .proy .met .h-des { --hh: 1.75em; }
+    html.escenas .proy .met .h-rot { display: inline-block; height: var(--hh); overflow: hidden; vertical-align: top; }
+    html.escenas .proy .met .h-tira { display: block; transform: translateY(0); transition: transform .6s var(--friccion); }
+    html.escenas .proy .met .h-tira span { display: block; height: var(--hh); line-height: var(--hh); }
+    html.escenas .proy .met .h-tira span:last-child { color: var(--acento); }
+    html.escenas .proy[data-vista="despues"] .met .h-tira { transform: translateY(calc(var(--hh) * -1)); }
+  }
+  @media (min-width: 1024px) and (max-width: 1200px) {
+    html.escenas .proy .zona { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1.3fr); }
+  }
+  @media (prefers-reduced-motion: reduce) { html.escenas .proy .haz { animation: none; } }
+  @media (max-width: 1023.98px) {
+    html.escenas .proy .plano { padding-left: var(--gut); padding-right: var(--gut); padding-bottom: 54px; }
+    html.escenas .proy .cab h2 { font-size: clamp(22px, 3.6svh, 30px); }
+    html.escenas .proy .estado { padding: 4px 11px; font-size: 10px; letter-spacing: .06em; white-space: nowrap; }
+    /* Paso 0 = comparador arriba y la lista debajo. La lista mide siempre lo mismo (siete filas fijas, en función del alto de pantalla) y el
+       comparador toma lo que sobra: --disp es ese alto (100cqh = alto de la zona), 58 px es la leyenda más la barra del marco. */
+    html.escenas .proy .zona { --fila: clamp(20px, 3.3svh, 29px); --cabl: clamp(15px, 2.4svh, 20px); --lista: calc(var(--cabl) + 5px + 7 * var(--fila) + 1px); --disp: calc(100cqh - var(--lista) - 8px);
+      container-type: size; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; }
+    html.escenas .proy .stage { position: absolute; left: 0; right: 0; top: 0; height: var(--disp); width: auto; max-width: none; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    html.escenas .proy .stage .frame { width: min(100%, calc((var(--disp) - 58px) * 1.6)); }
+    html.escenas .proy .leyenda { width: 100%; height: 14px; margin: 0 0 6px; }
+    html.escenas .proy .col-izq { position: absolute; left: 0; right: 0; bottom: 0; height: var(--lista); }
+    /* Teléfonos arriba (ocupan lo que deja la tabla) y tabla abajo, a su altura natural */
+    html.escenas .proy .tels { position: relative; inset: auto; flex: 1 1 0; min-height: 0; container-type: size; display: flex; align-items: center; justify-content: center; gap: clamp(34px, 6cqw, 40px); --tw: min(38cqw, calc((100cqh - 24px) / 2.26)); }
+    html.escenas .proy .tel { width: var(--tw); }
+    html.escenas .proy .tel.t2 { margin-top: calc(var(--tw) * .12); }
+    html.escenas .proy .tel figcaption { margin: 4px -18% 0; font-size: 8.5px; letter-spacing: .03em; white-space: nowrap; }
+    html.escenas .proy .col-der { position: relative; flex: none; max-width: none; }
+    html.escenas .proy .nt-h { height: var(--cabl); font-size: var(--cabl); line-height: 1; }
+    html.escenas .proy .col-izq ul { grid-auto-rows: var(--fila); margin-top: 5px; }
+    html.escenas .proy .col-izq li { padding: 0; font-size: clamp(11.5px, min(1.95svh, 3.7vw), 15px); line-height: 1.2; }
+    html.escenas .proy .col-izq .rl { gap: 10px; align-items: center; }
+    html.escenas .proy .col-izq .ni { width: 20px; font-size: 11px; line-height: 1; }
+    html.escenas .proy .met caption { padding-bottom: 3px; font-size: 10px; letter-spacing: .14em; }
+    html.escenas .proy .met thead th { padding-bottom: 2px; font-size: 9px; letter-spacing: .1em; }
+    html.escenas .proy .grande .vd, html.escenas .proy .grande .viejo { font-size: clamp(17px, 2.7svh, 25px); }
+    html.escenas .proy .det .vd, html.escenas .proy .det .viejo { font-size: clamp(12px, 1.8svh, 16px); }
+    /* «Antes»: valores originales, fijos y en gris (sin tachar), al lado de los de «Después». Misma caja que el valor verde (una línea de
+       1em, arriba) y, bajo ella, el hueco de su barra, para que las cifras de las dos columnas queden a la misma altura */
+    html.escenas .proy .fila > .col-ant { padding: 1px 0 calc(2px + clamp(3px, .6svh, 6px) + 1px) 8px; font-size: 16px; }
+    html.escenas .proy .viejo { display: inline-block; vertical-align: top; line-height: 1; font-weight: 600; letter-spacing: -.03em; text-decoration: none; }
+    html.escenas .proy .vd { vertical-align: top; }
+    html.escenas .proy .met thead th.h-ant { padding-left: 8px; }
+    html.escenas .proy .fila > th, html.escenas .proy .fila > td { padding-top: 1px; padding-bottom: 1px; line-height: 1.1; }
+    html.escenas .proy .barra { height: 2px; margin-top: clamp(3px, .6svh, 6px); }
+    html.escenas .proy .fila .et { font-size: 8.5px; letter-spacing: .05em; line-height: 1.25; }
+    html.escenas .proy .col-des { min-width: 5.5rem; padding-left: 8px; }
+  }
+
+  /* ---- Escena 6 · Cómo está hecho: seis tarjetas, una por paso ---- */
+  html.escenas .como { --cw: min(640px, 58vw); --gap: clamp(14px, 2vw, 28px); }
+  html.escenas .como .plano { justify-content: space-between; gap: clamp(6px, 1.6svh, 16px); }
+  html.escenas .como h2 { font-size: clamp(30px, min(4vw, 6.6svh), 58px); }
+  html.escenas .como .pistaw { flex: 1 1 0; min-height: 0; display: flex; align-items: center; margin-inline: calc(var(--gut) * -1) calc((var(--gut) + 36px) * -1); overflow: clip; }
+  html.escenas .como .pista-h { display: flex; align-items: stretch; gap: var(--gap); width: 100%; margin: 0; padding: 0 0 0 calc((100% - var(--cw)) / 2); transform: translateX(calc(var(--paso, 0) * (var(--cw) + var(--gap)) * -1)); transition: transform .8s var(--friccion); }
+  html.escenas .como .card { flex: none; display: flex; flex-direction: column; justify-content: space-between; gap: clamp(10px, 3svh, 28px); width: var(--cw); box-sizing: border-box; min-height: min(44svh, 340px); padding: clamp(16px, 3svh, 30px) clamp(18px, 2.4vw, 32px); scale: .94; transition: scale .8s var(--friccion), border-color .8s var(--friccion); }
+  html.escenas .como .card.actual { scale: 1; border-color: var(--marcaclara); }
+  html.escenas .como .cn { font-size: clamp(32px, min(4.4vw, 8svh), 60px); font-weight: 500; line-height: 1; letter-spacing: -.05em; }
+  html.escenas .como .card .ct { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
+  html.escenas .como .card h3 { margin: 0; font-size: clamp(19px, min(2.2vw, 3.8svh), 30px); }
+  html.escenas .como .card p { margin: clamp(6px, 1.4svh, 14px) 0 0; font-size: clamp(13px, min(1.2vw, 2.3svh), 17px); }
+  html.escenas .como .chips { margin: 0; gap: 6px 8px; }
+  html.escenas .como .chip { padding: clamp(4px, .9svh, 8px) clamp(10px, 1.2vw, 16px); font-size: clamp(12px, 1.9svh, 14px); }
+  html.escenas .como .riel { display: block; height: 2px; background: rgb(255 255 255 / .15); }
+  html.escenas .como .riel i { display: block; height: 100%; background: var(--marcaclara); transform-origin: 0 50%; transform: scaleX(calc((var(--paso, 0) + 1) / 6)); transition: transform .8s var(--friccion); }
+  @media (max-width: 900px) {
+    html.escenas .como { --cw: 82vw; --gap: 12px; }
+    html.escenas .como .plano { padding-right: var(--gut); padding-bottom: 76px; }
+    html.escenas .como .pistaw { margin-right: calc(var(--gut) * -1); }
+    html.escenas .como .card { min-height: 0; padding: clamp(12px, 2.2svh, 24px) 18px; }
+    html.escenas .como .cn { font-size: clamp(24px, 4.2svh, 40px); }
+    html.escenas .como .card h3 { font-size: clamp(17px, 2.9svh, 22px); }
+    html.escenas .como .card p { font-size: clamp(11.5px, 1.95svh, 15px); line-height: 1.45; }
+  }
+
+  /* ---- Escena 7 · Autor ---- */
+  html.escenas .autor .plano { min-height: 0; padding-top: clamp(8px, 2svh, 24px); }
+  html.escenas .autor .pie { width: 100%; }
+  html.escenas .autor .pie h2 { font-size: clamp(44px, min(10.4vw, 22svh), 176px); }
+  html.escenas .autor .pie .sub { margin-top: clamp(14px, 3svh, 28px); font-size: clamp(15px, 2.4svh, 17px); }
+  html.escenas .autor .pie .enl { margin-top: clamp(16px, 3.6svh, 32px); }
+  @media (max-width: 900px) {
+    html.escenas .autor .plano { padding-right: var(--gut); padding-bottom: 76px; }
+    html.escenas .autor .pie h2 { font-size: clamp(40px, min(15vw, 11svh), 84px); }
+    html.escenas .autor .pie .enl a { padding: 10px 20px; }
+  }
+
+  /* Teléfono: los puntos van abajo, al centro */
+  @media (max-width: 900px) {
+    html.escenas .puntos-nav { top: auto; bottom: 10px; left: 50%; right: auto; translate: -50% 0; padding: 4px 8px; }
+    html.escenas .puntos-nav ol { display: flex; gap: 0; }
+    html.escenas .diapo > .plano { padding-right: var(--gut); }
+  }
+
+  /* ---- Pasos sin animar (salto al entrar a la escena) ---- */
+  html.escenas .quieta, html.escenas .quieta * { transition: none !important; }
+
+  /* ---- Movimiento reducido: sin modo escenas; aquí solo se quita lo que moleste ---- */
+  @media (prefers-reduced-motion: reduce) {
+    .btn, .btn .fl, .pie .enl a { transition: none; }
+  }
+</style>
+
+<script>
+  // Modo escenas: una escena a pantalla completa, cambiada con View Transitions en tres fases
+  // (despedida, transformación con anclas y llegada). Sin dependencias. Si el navegador no cumple los requisitos,
+  // la página se queda como documento normal con scroll.
+
+  import { crearPildora, type Pildora } from '../scripts/pildora';
+  import { iniciarFoco } from '../scripts/foco';
+  import { iniciarReticulas } from '../scripts/reticula';
+
+  type VT = { finished: Promise<unknown> };
+  type DocVT = Document & { startViewTransition?: (cb: () => void) => VT };
+  type Tipo = 'entra' | 'sale';
+  // Copia real del teléfono "Después" que gira (caja) y el original, que queda oculto mientras vuela
+  // "img" es la captura vertical del teléfono; "vp" envuelve la vista previa (clon de la escena vecina) y "previa" es su caja
+  // "vertical": en pantallas estrechas (< 1024 px) el teléfono no gira: va al centro derecho y la vista previa se ve derecha
+  type Telefono = { caja: HTMLElement; original: HTMLElement; lista: Promise<void>; img: HTMLImageElement; vp: HTMLElement; previa: HTMLElement; vertical: boolean };
+
+  // Distancia en píxeles para contar un gesto como paso de escena
+  const UMBRAL = 50;
+  // Tras la transformación, los eventos de rueda se ignoran 150 ms, para no contar la inercia del trackpad
+  const ESPERA_RUEDA = 150;
+  // Duración de la despedida (fase 1) antes de empezar la transformación
+  const DESPEDIDA = 240;
+  // Tiempo tras la transformación hasta liberar la entrada de nuevo
+  const LIBERA = 150;
+  // Número de pares de anclas (ancla-1 … ancla-4)
+  const PARES = 4;
+  // Giro del teléfono "Después" (DOM real) antes de la View Transition que lo acerca
+  const GIRO = 520;
+  // Sin giro (pantallas estrechas) el teléfono solo viaja al centro: tramo más corto
+  const GIRO_VERTICAL = 420;
+  // Proporción alto/ancho del teléfono: pantalla 440:956 más marco (1,7) y bisel (2,2) a cada lado, sobre 100 de ancho
+  const ASPECTO_TEL = (2 * (1.7 + 2.2) + (100 - 2 * (1.7 + 2.2)) * 956 / 440) / 100;
+  const POSE_HORIZONTAL = 'translate(0px, 0px) rotate(-90deg) scale(1)';
+  const POSE_VERTICAL = 'translate(0px, 0px) rotate(0deg) scale(1)';
+  // Altura mínima del modo escenas: se activa por encima de ALTO_ACTIVA y solo se apaga por debajo de ALTO_APAGA (histéresis: en iOS la
+  // altura cambia al plegar las barras). Un cambio de menos de ALTO_BARRAS px de alto con el mismo ancho se ignora.
+  const ALTO_ACTIVA = 560;
+  const ALTO_APAGA = 480;
+  const ALTO_BARRAS = 120;
+
+  let cancelar: AbortController | null = null;
+  const esperar = (ms: number) => new Promise<void>((resolver) => setTimeout(resolver, ms));
+  const movil = () => matchMedia('(max-width: 900px)').matches;
+  // Los proyectos pasan de tres columnas a pasos sueltos por debajo de 1024 px
+  const estrecho = () => matchMedia('(max-width: 1023.98px)').matches;
+
+  function iniciarGaleria() {
+    // El controlador es de esta página: Peludo y Meet también tienen "main > section.diapo" y su propio controlador
+    if (!document.documentElement.classList.contains('tema-galeria')) return;
+    const main = document.getElementById('contenido');
+    const escenas = [...document.querySelectorAll<HTMLElement>('main > section.diapo')];
+    if (!main || escenas.length === 0) return;
+
+    cancelar?.abort();
+    cancelar = new AbortController();
+    const señal = { signal: cancelar.signal };
+    const html = document.documentElement;
+    const doc = document as DocVT;
+    const nav = document.querySelector<HTMLElement>('.puntos-nav');
+    const aviso = document.getElementById('aviso');
+
+    let modo = false;
+    let ocupado = false;
+    let acumulado = 0;
+    let ultimaRueda = 0;
+    let finVT = 0;
+    let temporizadorEntrada = 0;
+    let temporizadorBarrido = 0;
+    let temporizadorVista = 0;
+    let tacto: { x: number; y: number } | null = null;
+    let multitoque = false;
+    let rafagaConScroll = false;
+    // Estado del scroll interno de la escena al empezar el gesto táctil (el scroll nativo ya habrá llegado al tope en touchend)
+    let scrollIni: { top: number; scroll: boolean; arriba: boolean; abajo: boolean } | null = null;
+    let bloqueoPaso = false;
+    let precargadas = false;
+    // Termina de golpe el giro en curso si el usuario avanza durante él; no encola nada
+    let acelerar: (() => void) | null = null;
+    let inicioCambio = 0;
+    let acumuladoGiro = 0;
+
+    const indiceDe = (id: string): number => {
+      const el = id ? document.getElementById(id.replace(/-nuevo$/, '')) : null;
+      const sec = el?.closest('main > section.diapo') ?? null;
+      return sec ? escenas.indexOf(sec as HTMLElement) : -1;
+    };
+    let indice = Math.max(0, indiceDe(decodeURIComponent(location.hash.slice(1))));
+
+    const cercano = (t: EventTarget | null, sel: string) => (t instanceof Element ? t.closest(sel) : null);
+
+    // ---------- Pasos internos ----------
+    // Proyecto: 2 pasos, en escritorio y en pantallas estrechas (comparador y lo que no existía; teléfonos y métricas).
+    // «Cómo está hecho»: una tarjeta por paso.
+    const subpasosDe = (sec: HTMLElement): number => {
+      if (sec.classList.contains('proy')) return 2;
+      if (sec.classList.contains('como')) return sec.querySelectorAll('.card').length;
+      return 1;
+    };
+    const pasoDe = (sec: HTMLElement) => Number(sec.dataset.paso ?? 0);
+
+    // El comparador es manual. Solo la escena lo mueve al llegar (barre del «antes», 100 %, al 50 %) y al irse (al revés).
+    // ms = 0: salto sin animar. La transición de --pos vive en la clase «barre» del comparador.
+    const barrer = (sec: HTMLElement, valor: number, ms: number) => {
+      const c = sec.querySelector<HTMLElement>('[data-comparador]');
+      const r = c?.querySelector<HTMLInputElement>('input');
+      if (!c || !r || Number(r.value) === valor) return;
+      clearTimeout(temporizadorBarrido);
+      c.style.setProperty('--dur-barre', `${ms}ms`);
+      c.classList.toggle('barre', ms > 0);
+      r.value = String(valor);
+      r.dispatchEvent(new Event('input'));
+      if (ms > 0) temporizadorBarrido = window.setTimeout(() => c.classList.remove('barre'), ms + 100);
+    };
+
+    const anunciar = (sec: HTMLElement, k: number) => {
+      if (!aviso) return;
+      const titulo = sec.querySelector('h2')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+      let texto = '';
+      if (sec.classList.contains('proy')) {
+        const nombres = ['comparador y lo que no existía', 'teléfonos y métricas'];
+        texto = `${titulo}: ${nombres[k]}`;
+      } else if (sec.classList.contains('como')) texto = `Decisión ${k + 1} de ${subpasosDe(sec)}`;
+      aviso.textContent = texto;
+    };
+
+    // Qué piezas de un proyecto están a la vista en cada paso (el CSS las coloca con estos atributos).
+    // data-enf (izq | der): la columna con el énfasis y el panel. data-vista (antes | despues): qué número muestra la tabla de métricas.
+    // En escritorio la vista sigue al énfasis. En pantallas estrechas la tabla aparece con el odómetro en «antes» (la columna «Antes» ya se ve
+    // fija a su lado) y ~250 ms después de llegar rueda a «después»; al salir de ese paso vuelve a «antes» de inmediato.
+    //   'animar' = cambio de paso con la rueda · 'llegar' = la escena llega a ese paso (el controlador espera a la llegada) · 'asentar' = sin animar
+    const VISTA_RETARDO = 250;
+    const poner = (sec: HTMLElement, k: number, modo: 'animar' | 'llegar' | 'asentar' = 'asentar') => {
+      const e = estrecho();
+      const v = (x: boolean) => (x ? '1' : '0');
+      const der = k === 1;
+      sec.dataset.marco = v(k === 0);
+      sec.dataset.lista = v(e ? k === 0 : true);
+      sec.dataset.tels = v(k === 1);
+      sec.dataset.tabla = v(e ? k === 1 : true);
+      sec.dataset.enf = der ? 'der' : 'izq';
+      clearTimeout(temporizadorVista);
+      if (!der || !e || modo === 'asentar') sec.dataset.vista = der ? 'despues' : 'antes';
+      else {
+        sec.dataset.vista = 'antes';
+        if (modo === 'animar') {
+          temporizadorVista = window.setTimeout(() => { if (pasoDe(sec) === k) sec.dataset.vista = 'despues'; }, VISTA_RETARDO);
+        }
+      }
+    };
+
+    // Panel de foco (solo escritorio): mide las dos columnas de la zona y deja su caja (x, y, ancho, alto, con 22 px de aire) en variables
+    // --izq-* y --der-*; el CSS mueve el panel de una a otra. Hay que medir con la escena a la vista (con display: none no hay caja).
+    const AIRE_PANEL = 22;
+    const medirPanel = (sec: HTMLElement | null | undefined) => {
+      const z = sec?.querySelector<HTMLElement>('.zona');
+      if (!z || !z.querySelector('.pf') || estrecho() || z.offsetWidth === 0) return;
+      for (const [lado, sel] of [['izq', '.col-izq'], ['der', '.col-der']] as const) {
+        const c = z.querySelector<HTMLElement>(sel);
+        if (!c) continue;
+        const y0 = Math.max(c.offsetTop - AIRE_PANEL, 0);
+        const y1 = Math.min(c.offsetTop + c.offsetHeight + AIRE_PANEL, z.offsetHeight);
+        z.style.setProperty(`--${lado}-x`, `${c.offsetLeft - AIRE_PANEL}px`);
+        z.style.setProperty(`--${lado}-y`, `${y0}px`);
+        z.style.setProperty(`--${lado}-w`, `${c.offsetWidth + 2 * AIRE_PANEL}px`);
+        z.style.setProperty(`--${lado}-h`, `${y1 - y0}px`);
+      }
+    };
+
+    // Fija el paso. Sin animar (al entrar a la escena) el cambio es instantáneo. `llega`: la escena llega a ese paso con un cambio de escena.
+    const fijarPaso = (sec: HTMLElement, n: number, animar: boolean, llega = false) => {
+      const total = subpasosDe(sec);
+      const k = Math.min(Math.max(n, 0), Math.max(total - 1, 0));
+      if (!animar) sec.classList.add('quieta');
+      sec.dataset.paso = String(k);
+      sec.style.setProperty('--paso', String(k));
+      if (sec.classList.contains('proy')) poner(sec, k, animar ? 'animar' : llega ? 'llegar' : 'asentar');
+      if (sec.classList.contains('como')) sec.querySelectorAll('.card').forEach((c, i) => c.classList.toggle('actual', i === k));
+      if (animar) anunciar(sec, k);
+      if (!animar) {
+        void sec.offsetWidth;
+        sec.classList.remove('quieta');
+      }
+    };
+
+    // ---------- Anclas ----------
+    // Una ancla puede declarar con qué escena se empareja: data-hacia (como "sale") o data-desde (como "entra").
+    // Valen en ambos sentidos: la "otra" escena es el destino al avanzar y el origen al retroceder.
+    const aplica = (el: HTMLElement, tipo: Tipo, otra: HTMLElement) => {
+      const con = tipo === 'entra' ? el.dataset.desde : el.dataset.hacia;
+      return !con || con.split(' ').includes(otra.id);
+    };
+    const candidatos = (sec: HTMLElement, tipo: Tipo, n: number, otra: HTMLElement) =>
+      [...sec.querySelectorAll<HTMLElement>(`[data-ancla-${tipo}="${n}"]`)].filter((el) => aplica(el, tipo, otra));
+    // Ancla N de una escena: el primer elemento visible que cumpla la condición
+    const anclaDe = (sec: HTMLElement, tipo: Tipo, n: number, otra: HTMLElement): HTMLElement | null => {
+      for (const el of candidatos(sec, tipo, n, otra)) {
+        const r = el.getBoundingClientRect();
+        const visible = r.width > 0 && r.height > 0 && r.right > 0 && r.left < innerWidth && r.bottom > 0 && r.top < innerHeight;
+        if (!visible || getComputedStyle(el).visibility === 'hidden') continue;
+        return el;
+      }
+      return null;
+    };
+
+    // ---------- Movimiento direccional ----------
+    // data-sale="derecha|izquierda|arriba|abajo": hacia dónde sale el elemento al dejar la escena hacia una posterior; data-entra: desde dónde
+    // entra al llegar desde una anterior. Al ir hacia atrás se invierten (sale por donde entró y entra por donde salió). Cada uno recibe un
+    // nombre mov-N (único entre origen y destino), una distancia hasta salir de la pantalla y un desfase de 45 ms. Las anclas tienen prioridad.
+    type Dir = 'derecha' | 'izquierda' | 'arriba' | 'abajo';
+    const MOV_MAX = 14;
+    const ESCALON_MOV = 45;
+    let movCuenta = 0;
+    const movDe = (sec: HTMLElement, saliendo: boolean, adelante: boolean): HTMLElement[] => {
+      const attr = saliendo === adelante ? 'sale' : 'entra';
+      return [...sec.querySelectorAll<HTMLElement>(`[data-${attr}]`)].filter((el) => {
+        if (el.style.viewTransitionName || el.closest('.semilla, .vista-previa')) return false;
+        const r = el.getBoundingClientRect();
+        const visible = r.width > 0 && r.height > 0 && r.right > 0 && r.left < html.clientWidth && r.bottom > 0 && r.top < html.clientHeight;
+        return visible && getComputedStyle(el).visibility !== 'hidden';
+      });
+    };
+    const nombrarMov = (el: HTMLElement, i: number, saliendo: boolean, adelante: boolean) => {
+      if (movCuenta >= MOV_MAX) return false;
+      const dir = el.dataset[saliendo === adelante ? 'sale' : 'entra'] as Dir;
+      const r = el.getBoundingClientRect();
+      const m = 28;
+      const x = dir === 'derecha' ? html.clientWidth - r.left + m : dir === 'izquierda' ? -(r.right + m) : 0;
+      const y = dir === 'abajo' ? html.clientHeight - r.top + m : dir === 'arriba' ? -(r.bottom + m) : 0;
+      const n = ++movCuenta;
+      el.style.viewTransitionName = `mov-${n}`;
+      html.style.setProperty(`--mov-x-${n}`, `${x}px`);
+      html.style.setProperty(`--mov-y-${n}`, `${y}px`);
+      html.style.setProperty(`--mov-d-${n}`, `${i * ESCALON_MOV}ms`);
+      return true;
+    };
+    const limpiarMov = () => {
+      for (let n = 1; n <= MOV_MAX; n++) for (const v of ['x', 'y', 'd']) html.style.removeProperty(`--mov-${v}-${n}`);
+      movCuenta = 0;
+    };
+
+    // Radio de esquina de un ancla: en píxeles; las formas redondeadas (50 %, pastillas) usan un radio grande
+    const radioDe = (el: HTMLElement | null) => {
+      if (!el) return '0px';
+      const v = getComputedStyle(el).borderTopLeftRadius;
+      if (/^\d+(\.\d+)?px$/.test(v)) return v;
+      return v.includes('%') && v !== '0%' ? '999px' : '0px';
+    };
+
+    // ---------- Semillas ----------
+    // Para dividir un ancla en varias (o fundir varias en una) se apilan copias del modelo: el modelo real se oculta
+    // justo antes de capturar y las copias toman los nombres de transición. Las copias del marco llevan imágenes
+    // (se decodifican antes de la despedida); las de tarjeta son solo la forma.
+    let sembradas: { semilla: HTMLElement; modelo: HTMLElement }[] = [];
+    const semillasDe = (sec: HTMLElement, tipo: Tipo, otra: HTMLElement, pares?: number[]) =>
+      [...sec.querySelectorAll<HTMLElement>(`.semilla[data-ancla-${tipo}]`)].filter(
+        (s) => aplica(s, tipo, otra) && (!pares || pares.includes(Number(s.dataset[tipo === 'entra' ? 'anclaEntra' : 'anclaSale']))),
+      );
+    const prepararSemilla = (s: HTMLElement): Promise<void> => {
+      const modelo = s.closest('section')?.querySelector<HTMLElement>(s.dataset.modelo ?? '');
+      if (!modelo || s.dataset.listo) return Promise.resolve();
+      s.dataset.listo = '1';
+      if (s.dataset.clon !== 'marco') return Promise.resolve();
+      const copia = modelo.cloneNode(true) as HTMLElement;
+      copia.classList.add('copia');
+      // La copia no es ancla ni comparador: fuera atributos de pareja y el input (no debe recibir foco)
+      for (const el of [copia, ...copia.querySelectorAll<HTMLElement>('*')]) {
+        for (const a of ['data-ancla-entra', 'data-ancla-sale', 'data-desde', 'data-hacia', 'data-comparador']) el.removeAttribute(a);
+      }
+      copia.querySelectorAll('input').forEach((i) => i.remove());
+      const imgs = [...copia.querySelectorAll('img')];
+      imgs.forEach((i) => { i.loading = 'eager'; i.setAttribute('fetchpriority', 'low'); });
+      s.replaceChildren(copia);
+      return Promise.all(imgs.map((i) => i.decode().catch(() => undefined))).then(() => undefined);
+    };
+    const sembrar = (sec: HTMLElement, tipo: Tipo, otra: HTMLElement, pares: number[]) => {
+      for (const s of semillasDe(sec, tipo, otra, pares)) {
+        const modelo = sec.querySelector<HTMLElement>(s.dataset.modelo ?? '');
+        if (!modelo) continue;
+        const r = modelo.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        const cs = getComputedStyle(modelo);
+        const k = modelo.offsetWidth ? r.width / modelo.offsetWidth : 1;
+        Object.assign(s.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px` });
+        s.style.borderRadius = `${(parseFloat(cs.borderTopLeftRadius) || 0) * k}px`;
+        const copia = s.querySelector<HTMLElement>('.copia');
+        if (copia) {
+          Object.assign(copia.style, { width: `${modelo.offsetWidth}px`, height: `${modelo.offsetHeight}px`, transform: `scale(${k})` });
+        } else {
+          s.style.background = cs.backgroundColor;
+          s.style.border = `${cs.borderTopWidth} solid ${cs.borderTopColor}`;
+        }
+        s.classList.add('viva');
+        modelo.style.visibility = 'hidden';
+        sembradas.push({ semilla: s, modelo });
+      }
+    };
+    const recoger = () => {
+      for (const { semilla, modelo } of sembradas) {
+        semilla.classList.remove('viva');
+        modelo.style.visibility = '';
+      }
+      sembradas = [];
+    };
+
+    // ---------- Imágenes ----------
+    // En modo escenas las escenas ocultas (display: none) no cargan sus imágenes perezosas: al primer gesto se
+    // pasan a "eager" las de las escenas vecinas, y se repite al entrar a cada escena.
+    const precargar = (sec: HTMLElement | undefined) =>
+      sec?.querySelectorAll<HTMLImageElement>('img[loading="lazy"]').forEach((i) => { i.loading = 'eager'; });
+    const precargarVecinas = () => { precargar(escenas[indice]); precargar(escenas[indice - 1]); precargar(escenas[indice + 1]); };
+    // Antes de pintar la escena que llega, sus imágenes deben estar decodificadas (con tope de 700 ms)
+    const imagenesListas = (sec: HTMLElement) => {
+      precargar(sec);
+      // También las ya cargadas: la nueva captura de la raíz se ve en vivo y una imagen sin decodificar sale en blanco
+      const imgs = [...sec.querySelectorAll<HTMLImageElement>('img')];
+      if (imgs.length === 0) return Promise.resolve();
+      return Promise.race([Promise.all(imgs.map((i) => i.decode().catch(() => undefined))), esperar(700)]);
+    };
+
+    // Píldora de la cabecera: se desliza al enlace de la escena activa. Las dos escenas de un proyecto comparten enlace
+    const lwCab = document.querySelector<HTMLElement>('.nav .lw');
+    const pildora: Pildora | null = lwCab ? crearPildora(lwCab, (id) => id.replace(/-nuevo$/, '')) : null;
+    señal.signal.addEventListener('abort', () => pildora?.destruir());
+    // Foco que sigue al puntero en las tarjetas de «Cómo está hecho» (también las vecinas, según su distancia)
+    const escenaComo = document.getElementById('como');
+    if (escenaComo) iniciarFoco(escenaComo, [...escenaComo.querySelectorAll<HTMLElement>('.card.spot')], señal.signal);
+
+    // Fondo de la portada: retícula que sigue al puntero y paralaje de las ventanas (solo con ratón y movimiento permitido)
+    // Se enlaza a cada escena con data-reticula-viva (portada y autor); cada una apaga el suyo al dejar de estar activa
+    const apagarReticula = iniciarReticulas(escenas, (sec) => modo && escenas[indice] === sec && !ocupado, señal.signal);
+
+    // Si la escena activa tiene barra de desplazamiento clásica, los puntos se corren a su izquierda (--sb = ancho de la barra)
+    const medirBarra = () => {
+      const s = escenas[indice];
+      html.style.setProperty('--sb', `${modo && s ? s.offsetWidth - s.clientWidth : 0}px`);
+    };
+    const actualizarPuntos = (animarPildora = false) => {
+      medirBarra();
+      nav?.querySelectorAll('a').forEach((a, i) => {
+        if (i === indice) a.setAttribute('aria-current', 'true');
+        else a.removeAttribute('aria-current');
+      });
+      pildora?.marcar(escenas[indice].id, animarPildora);
+    };
+
+    // Desplazamiento interno: si la escena puede desplazarse en esa dirección, la rueda no cambia de escena
+    const scrollInterno = (sec: HTMLElement, dy: number) => {
+      const oy = getComputedStyle(sec).overflowY;
+      if ((oy !== 'auto' && oy !== 'scroll') || sec.scrollHeight <= sec.clientHeight + 1) return false;
+      return dy > 0 ? sec.scrollTop + sec.clientHeight < sec.scrollHeight - 1 : sec.scrollTop > 0;
+    };
+
+    // Marca la escena que se activa para que sus textos suban (fase 3)
+    const animarEntrada = (sec: HTMLElement) => {
+      sec.classList.add('entrando');
+      clearTimeout(temporizadorEntrada);
+      temporizadorEntrada = window.setTimeout(() => sec.classList.remove('entrando', 'giro'), 2000);
+    };
+
+    // ---------- Giro del teléfono ----------
+    // Cambios entre un proyecto y la escena que sigue (peludo ⇄ meet, meet ⇄ como): el teléfono "Después" (una copia real
+    // en el DOM) viaja al centro y gira a horizontal; la escena vecina se muestra dentro de su pantalla, ya completa, y la cámara
+    // entra. Las dos capturas de la raíz llevan la misma transformación (ver el CSS). Al avanzar, el teléfono debe verse (último paso
+    // del proyecto); al volver se llega a ese último paso (con un enlace se llega al primero: cambio normal, sin giro).
+    const giroDe = (origen: number, destino: number, enlace: boolean) => {
+      if (Math.abs(origen - destino) !== 1) return null;
+      const adelante = destino > origen;
+      const proy = escenas[Math.min(origen, destino)];
+      if (!proy.classList.contains('proy')) return null;
+      if (adelante ? pasoDe(proy) !== subpasosDe(proy) - 1 : enlace) return null;
+      return { proy, adelante };
+    };
+    const friccion = () => getComputedStyle(html).getPropertyValue('--friccion').trim();
+    const centro = () => ({ x: html.clientWidth / 2, y: html.clientHeight / 2 });
+    // "largo" es el ancho en pantalla del teléfono ya horizontal (o su alto, si no gira); "ancho", el del teléfono vertical
+    const medidasGiro = (vertical: boolean) => {
+      if (vertical) {
+        const ancho = Math.min(html.clientWidth * 0.78, (html.clientHeight * 0.8) / ASPECTO_TEL);
+        return { largo: ancho * ASPECTO_TEL, ancho };
+      }
+      const largo = Math.min(html.clientWidth * (movil() ? 0.92 : 0.7), html.clientHeight * 0.9 * 2.17);
+      return { largo, ancho: largo / ASPECTO_TEL };
+    };
+    const poseFinal = (t: Telefono) => (t.vertical ? POSE_VERTICAL : POSE_HORIZONTAL);
+    // Clon inerte de una escena para la vista previa: sin ids, sin parejas de ancla ni movimientos, sin nombres de transición ni controles,
+    // con las imágenes pedidas (eager) y COMPLETA (sin llegando ni saliendo): la cámara entra en una pantalla ya cargada
+    const clonarEscena = (sec: HTMLElement) => {
+      const clon = sec.cloneNode(true) as HTMLElement;
+      clon.classList.remove('activa', 'entrando', 'giro', 'llegando', 'saliendo', 'quieta');
+      clon.inert = true;
+      clon.setAttribute('aria-hidden', 'true');
+      clon.querySelectorAll('input, textarea, select, .tel-giro').forEach((n) => n.remove());
+      for (const el of [clon, ...clon.querySelectorAll<HTMLElement>('*')]) {
+        el.removeAttribute('id');
+        el.removeAttribute('aria-labelledby');
+        el.removeAttribute('tabindex');
+        for (const a of ['data-ancla-entra', 'data-ancla-sale', 'data-desde', 'data-hacia', 'data-sale', 'data-entra', 'data-comparador', 'data-listo']) el.removeAttribute(a);
+        el.style.viewTransitionName = '';
+      }
+      const imgs = [...clon.querySelectorAll<HTMLImageElement>('img')];
+      imgs.forEach((i) => { i.loading = 'eager'; i.removeAttribute('fetchpriority'); });
+      return { clon, imgs };
+    };
+    const crearTelefono = (proy: HTMLElement, vecina: HTMLElement): Telefono | null => {
+      const original = proy.querySelector<HTMLElement>('.tel.t2');
+      const copia = original?.querySelector<HTMLElement>('.cuerpo')?.cloneNode(true) as HTMLElement | undefined;
+      const img = copia?.querySelector('img');
+      if (!original || !copia || !img) return null;
+      for (const el of [copia, ...copia.querySelectorAll<HTMLElement>('*')]) {
+        for (const a of ['data-ancla-entra', 'data-ancla-sale', 'data-desde', 'data-hacia', 'data-sale', 'data-entra']) el.removeAttribute(a);
+      }
+      // Con "sizes" al tamaño que tendrá la pantalla en el giro, el navegador elige la variante nítida
+      img.loading = 'eager';
+      img.alt = '';
+      img.removeAttribute('fetchpriority');
+      const vertical = estrecho();
+      img.sizes = `${Math.ceil(medidasGiro(vertical).ancho * 0.922)}px`;
+      const caja = document.createElement('div');
+      caja.className = vertical ? 'tel-giro vertical' : 'tel-giro';
+      caja.setAttribute('aria-hidden', 'true');
+      caja.style.visibility = 'hidden';
+      caja.append(copia);
+      // Vista previa dentro de la pantalla: el clon de la escena vecina, contra-rotado (ver el CSS de .vista-previa)
+      const { clon, imgs } = clonarEscena(vecina);
+      const previa = document.createElement('div');
+      previa.className = 'vista-previa';
+      previa.append(clon);
+      const vp = document.createElement('div');
+      vp.className = 'vp';
+      if (vertical) vp.style.background = getComputedStyle(vecina).backgroundColor;
+      vp.append(previa);
+      copia.querySelector('.pantalla')!.append(vp);
+      main.append(caja); // fuera de la escena del proyecto: sus reglas de .plano, .tel… no deben alcanzar al clon
+      const lista = new Promise<void>((r) => requestAnimationFrame(() => r()))
+        .then(() => Promise.all([img, ...imgs].map((i) => i.decode().catch(() => undefined))))
+        .then(() => undefined, () => undefined);
+      return { caja, original, lista, img, vp, previa, vertical };
+    };
+    // La caja nace con el tamaño final y centrada: solo se reduce al principio, así su trama nunca se amplía
+    const colocarCaja = (t: Telefono) => {
+      const { largo, ancho } = medidasGiro(t.vertical);
+      const c = centro();
+      Object.assign(t.caja.style, { left: `${c.x - ancho / 2}px`, top: `${c.y - largo / 2}px`, width: `${ancho}px` });
+      // La vista previa es una caja del tamaño del viewport escalada para cubrir la pantalla ya horizontal (la misma escala
+      // "cover" que usa fijarZoom para la captura nueva): así ambas coinciden en posición y tamaño
+      const p = t.caja.querySelector<HTMLElement>('.pantalla')!;
+      // (sin giro, la pantalla ya es vertical como el viewport: cada lado se compara con el suyo y la escena cabe ENTERA, con bandas del
+      // color de su fondo si las proporciones difieren; con giro la escena cubre la pantalla)
+      const e = t.vertical
+        ? Math.min(p.offsetWidth / html.clientWidth, p.offsetHeight / html.clientHeight)
+        : Math.max(p.offsetHeight / html.clientWidth, p.offsetWidth / html.clientHeight);
+      Object.assign(t.previa.style, { width: `${html.clientWidth}px`, height: `${html.clientHeight}px`, scale: String(e) });
+      // El clon de la escena vecina lleva su panel de foco: se mide ya con el tamaño final (offset* no depende de la escala)
+      medirPanel(t.previa.querySelector<HTMLElement>('.diapo'));
+    };
+    // Qué muestra la pantalla: la captura vertical o la vista previa (se cambian con clip-path, ver "girar")
+    const contenido = (t: Telefono, ver: 'captura' | 'vista') => {
+      t.img.style.clipPath = ver === 'captura' ? 'inset(0 0 0 0)' : 'inset(0 0 100% 0)';
+      t.vp.style.clipPath = ver === 'captura' ? 'inset(100% 0 0 0)' : 'inset(0 0 0 0)';
+    };
+    // Instante (0-1 del tiempo) en que la curva --friccion alcanza el avance p del giro
+    const tiempoDe = (p: number) => {
+      const m = friccion().match(/-?\d*\.?\d+/g)?.map(Number);
+      if (!m || m.length < 4) return p;
+      const b = (a: number, c: number, u: number) => 3 * a * u * (1 - u) ** 2 + 3 * c * u * u * (1 - u) + u ** 3;
+      let lo = 0;
+      let hi = 1;
+      for (let i = 0; i < 24; i++) {
+        const u = (lo + hi) / 2;
+        if (b(m[1], m[3], u) < p) lo = u; else hi = u;
+      }
+      return b(m[0], m[2], (lo + hi) / 2);
+    };
+    // Pose de la caja encima del teléfono vertical original
+    const poseVertical = (t: Telefono) => {
+      const r = t.original.querySelector<HTMLElement>('.cuerpo')!.getBoundingClientRect();
+      const c = centro();
+      return `translate(${r.left + r.width / 2 - c.x}px, ${r.top + r.height / 2 - c.y}px) rotate(0deg) scale(${r.width / medidasGiro(t.vertical).ancho})`;
+    };
+    // Gira la caja (o, sin giro, solo la lleva al centro). Entre el 35 % y el 65 % del trayecto el contenido de la pantalla cambia con
+    // clip-path: al ir al centro la captura del proyecto se cierra y se descubre la vista previa; al volver, al revés.
+    const girar = (t: Telefono, desde: string, hasta: string, a: 'vista' | 'captura'): Promise<void> => {
+      t.caja.style.willChange = 'transform';
+      contenido(t, a === 'vista' ? 'captura' : 'vista');
+      const dur = t.vertical ? GIRO_VERTICAL : GIRO;
+      const t0 = tiempoDe(0.35);
+      const t1 = tiempoDe(0.65);
+      const tiempo = { delay: t0 * dur, duration: (t1 - t0) * dur, easing: getComputedStyle(html).getPropertyValue('--encastre').trim(), fill: 'both' as const };
+      const cierra = [{ clipPath: 'inset(0 0 0 0)' }, { clipPath: 'inset(0 0 100% 0)' }];
+      const abre = [{ clipPath: 'inset(100% 0 0 0)' }, { clipPath: 'inset(0 0 0 0)' }];
+      const sentido = (k: Keyframe[]) => (a === 'vista' ? k : [...k].reverse());
+      const anims = [
+        t.caja.animate([{ transform: desde }, { transform: hasta }], { duration: dur, easing: friccion(), fill: 'both' }),
+        t.img.animate(sentido(cierra), tiempo),
+        t.vp.animate(sentido(abre), tiempo),
+      ];
+      acelerar = () => anims.forEach((x) => x.finish());
+      if (a === 'vista') window.setTimeout(() => t.caja.classList.add('cierra'), t1 * dur);
+      return Promise.race([Promise.all(anims.map((x) => x.finished)), esperar(dur + 500)]).then(() => undefined, () => undefined).then(() => {
+        t.caja.style.transform = hasta;
+        contenido(t, a);
+        if (a === 'vista') t.caja.classList.add('cierra');
+        anims.forEach((x) => x.cancel());
+        t.caja.style.willChange = '';
+        acelerar = null;
+      });
+    };
+    // Escala por ancho del viewport hacia la pantalla del teléfono (ya girado) y datos para las dos capturas de la raíz.
+    // La nueva parte de (tx, ty, s) recortada a la pantalla; la vieja crece con la inversa (k, ux, uy).
+    // Con giro la escena cubre la pantalla (recorte positivo). Sin giro cabe entera (contain): el recorte es negativo (la captura no pinta
+    // fuera de sí misma) y la esquina redondeada de la pantalla solo cuenta lo que la banda no se la come.
+    const fijarZoom = (pantalla: HTMLElement, destino: HTMLElement, vertical = false): boolean => {
+      const r = pantalla.getBoundingClientRect();
+      const vw = html.clientWidth;
+      const vh = html.clientHeight;
+      if (!(r.width > 0 && r.height > 0)) return false;
+      const e = vertical ? Math.min(r.width / vw, r.height / vh) : Math.max(r.width / vw, r.height / vh);
+      const ix = (vw - r.width / e) / 2;
+      const iy = (vh - r.height / e) / 2;
+      const tx = r.left - e * ix;
+      const ty = r.top - e * iy;
+      let radio = parseFloat(getComputedStyle(pantalla).borderTopLeftRadius) || 0;
+      if (vertical) radio = Math.max(0, radio - Math.max(-ix * e, -iy * e));
+      const v = (n: string, x: string | number) => html.style.setProperty(`--vt-${n}`, String(x));
+      v('s', e); v('k', 1 / e);
+      v('tx', `${tx}px`); v('ty', `${ty}px`);
+      v('ux', `${-tx / e}px`); v('uy', `${-ty / e}px`);
+      v('ix', `${ix}px`); v('iy', `${iy}px`); v('r', `${radio / e}px`);
+      v('fondo', getComputedStyle(destino).backgroundColor);
+      return true;
+    };
+    const limpiarZoom = () => {
+      for (const n of ['s', 'k', 'tx', 'ty', 'ux', 'uy', 'ix', 'iy', 'r', 'fondo']) html.style.removeProperty(`--vt-${n}`);
+      delete html.dataset.giro;
+    };
+    // Si el usuario avanza durante el giro, este termina de golpe (no se encola otro cambio)
+    const pedirFin = () => {
+      if (acelerar && performance.now() - inicioCambio > 300) acelerar();
+    };
+
+    // Cambia a la escena destino en tres fases. Las anclas viajan por parejas declaradas (data-hacia / data-desde); los elementos
+    // sin pareja salen y entran trasladándose (data-sale / data-entra) y los textos y bloques se cierran y se abren por máscara.
+    const ir = async (destino: number, desde?: HTMLElement | null, enlace = false) => {
+      if (!modo || ocupado || destino === indice || destino < 0 || destino >= escenas.length) return;
+      ocupado = true;
+      inicioCambio = performance.now();
+      acumuladoGiro = 0;
+      clearTimeout(temporizadorEntrada);
+      escenas.forEach((s) => s.classList.remove('entrando', 'giro'));
+      const origen = indice;
+      const origenSec = escenas[origen];
+      const sec = escenas[destino];
+      const adelante = destino > origen;
+      const tipoSale: Tipo = adelante ? 'sale' : 'entra';
+      const tipoEntra: Tipo = adelante ? 'entra' : 'sale';
+
+      // Giro del teléfono (cambio adyacente entre un proyecto y la escena que sigue). Se prepara la copia con su imagen decodificada.
+      // Si el teléfono no se ve, el cambio es el normal, sin giro.
+      const g0 = giroDe(origen, destino, enlace);
+
+      // Paso de destino: el primero (hacia delante o por enlace) o el último (al retroceder con rueda o teclas)
+      fijarPaso(sec, adelante || enlace ? 0 : subpasosDe(sec) - 1, false, true);
+
+      let tel: Telefono | null = null;
+      if (g0) {
+        // La escena vecina va completa en la vista previa (sin llegando ni saliendo): la cámara entra en una pantalla ya cargada
+        tel = crearTelefono(g0.proy, adelante ? sec : origenSec);
+        const c = tel?.original.querySelector<HTMLElement>('.cuerpo');
+        if (tel && g0.adelante && (!c || c.offsetWidth === 0 || getComputedStyle(c).visibility === 'hidden')) {
+          tel.caja.remove();
+          tel = null;
+        }
+        if (tel) g0.proy.classList.add('giro');
+      }
+      const g = tel ? g0 : null;
+      // Reversa del giro: la escena que se deja (meet, como) sigue completa mientras la cámara sale de ella
+      const reversaGiro = !!g && !g.adelante;
+
+      // Pares presentes en ambos lados (no en el giro: allí el teléfono es el ancla)
+      let pares: number[] = [];
+      if (!g) {
+        for (let n = 1; n <= PARES; n++) {
+          if (candidatos(sec, tipoEntra, n, origenSec).length && candidatos(origenSec, tipoSale, n, sec).length) pares.push(n);
+        }
+      }
+      const division = pares.length > 0 && (semillasDe(origenSec, tipoSale, sec, pares).length > 0 || semillasDe(sec, tipoEntra, origenSec, pares).length > 0);
+
+      // El comparador llega mostrando el «antes» y barre al 50 % al terminar; al irse barre al «antes» (la reversa)
+      if (!g && sec.classList.contains('proy')) barrer(sec, 100, 0);
+      if (!g && origenSec.classList.contains('proy')) barrer(origenSec, 100, pasoDe(origenSec) === 0 ? DESPEDIDA - 20 : 0);
+      const retirarTelefono = () => {
+        tel?.caja.remove();
+        tel?.original.classList.remove('vuela');
+        tel = null;
+      };
+
+      // Fase 1 · despedida: la escena de origen sale; sus anclas quedan como formas. Mientras, se preparan imágenes y copias
+      origenSec.classList.remove('entrando');
+      html.dataset.fase = 'salida';
+      if (!reversaGiro) origenSec.classList.add('saliendo');
+      await Promise.all([
+        esperar(reversaGiro ? 0 : DESPEDIDA),
+        imagenesListas(sec),
+        // Tope de 1 s: una decodificación que no termina no debe dejar el cambio colgado
+        tel ? Promise.race([tel.lista, esperar(1000)]) : undefined,
+        ...semillasDe(origenSec, tipoSale, sec, pares).map((x) => Promise.race([prepararSemilla(x), esperar(1000)])),
+        ...semillasDe(sec, tipoEntra, origenSec, pares).map((x) => Promise.race([prepararSemilla(x), esperar(1000)])),
+      ]);
+
+      // Giro (solo al avanzar): el teléfono "Después" viaja al centro y gira a horizontal antes de la transición
+      if (tel && g!.adelante) {
+        colocarCaja(tel);
+        const desdePose = poseVertical(tel);
+        tel.original.classList.add('vuela');
+        tel.caja.style.visibility = 'visible';
+        await girar(tel, desdePose, poseFinal(tel), 'vista');
+        if (fijarZoom(tel.caja.querySelector<HTMLElement>('.pantalla')!, sec, tel.vertical)) html.dataset.giro = 'adelante';
+        else retirarTelefono();
+      } else if (tel) {
+        html.dataset.giro = 'atras';
+      }
+
+      // El origen se mide ya sin movimiento de textos; las copias del origen toman el sitio del modelo
+      sembrar(origenSec, tipoSale, sec, pares);
+      const origenEls: (HTMLElement | null)[] = [];
+      pares = pares.filter((n) => {
+        const el = anclaDe(origenSec, tipoSale, n, sec);
+        origenEls[n] = el;
+        return !!el;
+      });
+      html.dataset.dir = adelante ? 'adelante' : 'atras';
+      if (division) html.dataset.division = '1';
+      for (const n of pares) {
+        const el = origenEls[n]!;
+        el.style.viewTransitionName = `ancla-${n}`;
+        html.style.setProperty(`--ar-sale-${n}`, radioDe(el));
+      }
+      // Salidas direccionales del origen (las anclas ya tienen nombre y quedan fuera)
+      limpiarMov();
+      const movEls: HTMLElement[] = [];
+      if (!g) movDe(origenSec, true, adelante).forEach((el, i) => { if (nombrarMov(el, i, true, adelante)) movEls.push(el); });
+
+      // Fase 2 · transformación: la escena de destino llega en "llegando" (textos recogidos). En el giro de la cámara hacia delante llega
+      // completa, igual que su vista previa dentro del teléfono
+      const destinoEls: (HTMLElement | null)[] = [];
+      const actualizar = () => {
+        for (const n of pares) origenEls[n]!.style.viewTransitionName = '';
+        for (const el of movEls) el.style.viewTransitionName = '';
+        recoger();
+        origenSec.classList.remove('activa', 'saliendo', 'giro');
+        // Sin transiciones al mostrarse: los valores de la tabla y el panel llegan ya en su estado final (no ruedan a medio llegar)
+        sec.classList.add('quieta', 'activa');
+        medirPanel(sec);
+        // Sin giro (pantallas estrechas) las columnas y teléfonos de "llegando" quedan aparcados ya en la captura nueva: sin transición
+        // no se ven deslizarse fuera mientras la escena que se deja se encoge dentro de la pantalla del teléfono
+        const aparcada = !(g && g.adelante);
+        if (aparcada && tel?.vertical) sec.classList.add('llegando');
+        void sec.offsetWidth;
+        sec.classList.remove('quieta');
+        if (aparcada && !tel?.vertical) sec.classList.add('llegando');
+        apagarReticula(origenSec);
+        html.dataset.fase = 'morph';
+        indice = destino;
+        if (tel) {
+          if (g!.adelante) {
+            // La escena nueva ya no lleva el teléfono: el original vuelve a su sitio (oculta tras la escena inactiva)
+            tel.caja.remove();
+            tel.original.classList.remove('vuela');
+          } else {
+            // Al volver, el teléfono "Después" ya está horizontal y centrado cuando se captura la escena nueva
+            colocarCaja(tel);
+            Object.assign(tel.caja.style, { transform: poseFinal(tel), visibility: 'visible' });
+            contenido(tel, 'vista');
+            tel.original.classList.add('vuela');
+            if (!fijarZoom(tel.caja.querySelector<HTMLElement>('.pantalla')!, sec, tel.vertical)) delete html.dataset.giro;
+          }
+        }
+        sembrar(sec, tipoEntra, origenSec, pares);
+        for (const n of pares) {
+          const el = anclaDe(sec, tipoEntra, n, origenSec);
+          if (!el) continue;
+          el.style.viewTransitionName = `ancla-${n}`;
+          destinoEls[n] = el;
+          html.style.setProperty(`--ar-entra-${n}`, radioDe(el));
+        }
+        // Entradas direccionales del destino
+        if (!g) movDe(sec, false, adelante).forEach((el, i) => { if (nombrarMov(el, i, false, adelante)) movEls.push(el); });
+        actualizarPuntos(true);
+        history.replaceState(history.state, '', `#${sec.id}`);
+      };
+
+      // Fase 3 · llegada: los textos de la escena nueva suben (y el comparador barre); luego se libera la entrada
+      const llegada = () => {
+        for (const el of [...origenEls, ...destinoEls, ...movEls]) if (el) el.style.viewTransitionName = '';
+        limpiarMov();
+        recoger();
+        limpiarZoom();
+        html.dataset.fase = 'llegada';
+        delete html.dataset.division;
+        sec.classList.remove('llegando');
+        if (!(g && g.adelante)) animarEntrada(sec);
+        if (!g && sec.classList.contains('proy')) barrer(sec, 50, 900);
+        // En pantallas estrechas, si la escena llegó al paso de las métricas, la tabla (que entró mostrando «antes») rueda a «después»
+        if (sec.classList.contains('proy') && estrecho() && pasoDe(sec) === 1) {
+          clearTimeout(temporizadorVista);
+          temporizadorVista = window.setTimeout(() => { if (escenas[indice] === sec && pasoDe(sec) === 1) sec.dataset.vista = 'despues'; }, VISTA_RETARDO);
+        }
+        anunciar(sec, pasoDe(sec));
+        finVT = performance.now();
+        setTimeout(() => {
+          ocupado = false;
+          acumulado = 0;
+          delete html.dataset.fase;
+        }, LIBERA);
+        sec.querySelector<HTMLElement>('h1[tabindex="-1"], h2[tabindex="-1"]')?.focus({ preventScroll: true });
+        if (precargadas) precargarVecinas();
+      };
+
+      // Al volver, cuando termina la transición el teléfono gira de nuevo a vertical y se posa en su sitio
+      const cierre = async () => {
+        if (tel && !g!.adelante) {
+          if (tel.caja.isConnected) await girar(tel, poseFinal(tel), poseVertical(tel), 'captura');
+          retirarTelefono();
+        }
+        llegada();
+      };
+
+      if (!doc.startViewTransition) {
+        actualizar();
+        void cierre();
+        return;
+      }
+      let t: VT;
+      try {
+        t = doc.startViewTransition(actualizar);
+      } catch {
+        actualizar();
+        void cierre();
+        return;
+      }
+      t.finished.then(cierre, cierre);
+    };
+
+    // Un paso hacia delante o atrás: primero los pasos internos de la escena actual, luego la escena vecina
+    const avanzar = (dir: 1 | -1) => {
+      if (!modo || bloqueoPaso) return;
+      if (ocupado) {
+        pedirFin();
+        return;
+      }
+      const sec = escenas[indice];
+      const siguiente = pasoDe(sec) + dir;
+      if (siguiente >= 0 && siguiente < subpasosDe(sec)) {
+        fijarPaso(sec, siguiente, true);
+        bloqueoPaso = true;
+        setTimeout(() => { bloqueoPaso = false; }, 450);
+        return;
+      }
+      void ir(indice + dir);
+    };
+
+    // ¿Puede moverse la rueda en esa dirección? (paso interno o escena vecina)
+    const puedeAvanzar = (dir: 1 | -1) => {
+      const sec = escenas[indice];
+      const sig = pasoDe(sec) + dir;
+      return (sig >= 0 && sig < subpasosDe(sec)) || (indice + dir >= 0 && indice + dir < escenas.length);
+    };
+
+    // Rueda: acumula el desplazamiento; ignora la inercia tras una transición
+    addEventListener('wheel', (e) => {
+      if (!modo || e.ctrlKey || e.metaKey) return;
+      // Firefox (y algunos ratones) dan deltaY en líneas o páginas: se pasa a píxeles
+      const px = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaMode === 2 ? e.deltaY * innerHeight : e.deltaY;
+      const ahora = performance.now();
+      if (ocupado || ahora - finVT < ESPERA_RUEDA) {
+        if (ocupado && acelerar && ahora - inicioCambio > 400) {
+          acumuladoGiro += Math.abs(px);
+          if (acumuladoGiro > UMBRAL * 3) acelerar();
+        }
+        acumulado = 0;
+        ultimaRueda = ahora;
+        return;
+      }
+      // Una ráfaga nueva (más de 200 ms de silencio) vuelve a poder cambiar de escena; si en la ráfaga actual hubo scroll interno, el
+      // tramo que sigue (cuando ya llegó al tope) no cambia de escena
+      if (ahora - ultimaRueda > 200) { acumulado = 0; rafagaConScroll = false; }
+      if (scrollInterno(escenas[indice], px)) {
+        acumulado = 0;
+        rafagaConScroll = true;
+        ultimaRueda = ahora;
+        return;
+      }
+      if (rafagaConScroll) {
+        acumulado = 0;
+        ultimaRueda = ahora;
+        return;
+      }
+      if (ahora - ultimaRueda > 200) acumulado = 0;
+      if (acumulado !== 0 && Math.sign(acumulado) !== Math.sign(px)) acumulado = 0;
+      ultimaRueda = ahora;
+      acumulado += px;
+      if (Math.abs(acumulado) < UMBRAL) return;
+      const dir = acumulado > 0 ? 1 : -1;
+      acumulado = 0;
+      if (!puedeAvanzar(dir)) return;
+      avanzar(dir);
+    }, { passive: true, ...señal });
+
+    // Teclado: flechas, AvPág, espacio, inicio y fin. Con el foco en el comparador (input) las flechas son suyas
+    addEventListener('keydown', (e) => {
+      if (!modo || e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target as HTMLElement;
+      if (cercano(t, 'input, textarea, select, [contenteditable]')) return;
+      const enBoton = !!cercano(t, 'button, a, summary');
+      const sec = escenas[indice];
+      let dir: 1 | -1;
+      switch (e.key) {
+        case 'ArrowDown':
+        case 'PageDown':
+          dir = 1; break;
+        case 'ArrowUp':
+        case 'PageUp':
+          dir = -1; break;
+        case ' ':
+          if (enBoton) return;
+          dir = e.shiftKey ? -1 : 1; break;
+        case 'Home':
+          e.preventDefault(); void ir(0, null, true); return;
+        case 'End':
+          e.preventDefault(); void ir(escenas.length - 1, null, true); return;
+        default:
+          return;
+      }
+      if (scrollInterno(sec, dir)) return;
+      e.preventDefault();
+      avanzar(dir);
+    }, señal);
+
+    // Táctil: deslizar en vertical, con poco movimiento horizontal. El arrastre horizontal sobre el comparador
+    // lo resuelve el propio comparador; un deslizamiento vertical sobre él sí cambia de paso.
+    // Un gesto con dos dedos (pellizco) o con la página ampliada no cambia de escena: si en algún momento hubo multitoque, se descarta.
+    const ampliada = () => !!window.visualViewport && window.visualViewport.scale > 1.01;
+    addEventListener('touchstart', (e) => {
+      if (e.touches.length > 1) { multitoque = true; tacto = null; return; }
+      multitoque = false;
+      tacto = null;
+      if (!modo || ampliada() || cercano(e.target, 'textarea, select')) return;
+      const t = e.touches[0];
+      tacto = { x: t.clientX, y: t.clientY };
+      const sc = escenas[indice];
+      const oy = getComputedStyle(sc).overflowY;
+      const scroll = (oy === 'auto' || oy === 'scroll') && sc.scrollHeight > sc.clientHeight + 1;
+      scrollIni = { top: sc.scrollTop, scroll, arriba: sc.scrollTop <= 0, abajo: sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1 };
+    }, { passive: true, ...señal });
+    addEventListener('touchmove', (e) => {
+      if (e.touches.length > 1) { multitoque = true; tacto = null; }
+    }, { passive: true, ...señal });
+    addEventListener('touchcancel', () => { tacto = null; multitoque = false; }, { passive: true, ...señal });
+    addEventListener('touchend', (e) => {
+      const inicio = tacto;
+      tacto = null;
+      if (e.touches.length > 0) { multitoque = true; return; }
+      const hubo = multitoque;
+      multitoque = false;
+      if (!modo || !inicio || hubo || ampliada()) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - inicio.x;
+      const dy = inicio.y - t.clientY;
+      if (Math.abs(dy) < UMBRAL || Math.abs(dx) > Math.abs(dy) * 0.5) return;
+      // Con scroll interno solo cambia de escena si al empezar ya estaba en el tope de ese lado y el gesto no lo desplazó
+      const sc = escenas[indice];
+      if (scrollIni?.scroll && (!(dy > 0 ? scrollIni.abajo : scrollIni.arriba) || sc.scrollTop !== scrollIni.top)) return;
+      if (scrollInterno(sc, dy)) return;
+      avanzar(dy > 0 ? 1 : -1);
+    }, { passive: true, ...señal });
+
+    // Enlaces internos (con "#" o con la ruta de esta página). Se atienden en fase de captura, antes que el
+    // router de Astro, que si no los resuelve él mismo.
+    addEventListener('click', (e) => {
+      if (!modo || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      const a = cercano(e.target, 'a[href]') as HTMLAnchorElement | null;
+      if (!a) return;
+      const u = new URL(a.href, location.href);
+      if (u.origin !== location.origin || u.pathname !== location.pathname || !u.hash) return;
+      const destino = indiceDe(decodeURIComponent(u.hash.slice(1)));
+      if (destino < 0) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      void ir(destino, a, true);
+    }, { capture: true, ...señal });
+
+    // Atrás/adelante del navegador o un hash que no pasó por ir(): activa la escena sin transición
+    addEventListener('hashchange', () => {
+      if (!modo || ocupado) return;
+      const destino = indiceDe(decodeURIComponent(location.hash.slice(1)));
+      if (destino < 0 || destino === indice) return;
+      escenas[indice].classList.remove('activa');
+      apagarReticula(escenas[indice]);
+      indice = destino;
+      escenas[destino].classList.add('activa');
+      fijarPaso(escenas[destino], 0, false);
+      medirPanel(escenas[destino]);
+      actualizarPuntos();
+    }, señal);
+
+    // Primer gesto del usuario: se cargan las imágenes de las escenas vecinas (hasta entonces no pesan en la carga)
+    for (const tipo of ['wheel', 'keydown', 'touchstart', 'pointerdown', 'pointermove'] as const) {
+      addEventListener(tipo, () => {
+        if (precargadas) return;
+        precargadas = true;
+        precargarVecinas();
+      }, { passive: true, once: true, ...señal });
+    }
+
+    // Activación del modo escenas: requisitos de navegador, movimiento y altura
+    const soportado = () => !!doc.startViewTransition && matchMedia('(prefers-reduced-motion: no-preference)').matches;
+    // Decisión inicial: la misma del script del <head> (alto >= 560)
+    const modoPosible = () => soportado() && innerHeight >= ALTO_ACTIVA;
+
+    // Asigna --k en orden del DOM dentro de cada escena (cascada de 30 ms)
+    escenas.forEach((sec) =>
+      sec.querySelectorAll<HTMLElement>('.sube, .revela').forEach((el, k) => el.style.setProperty('--k', String(k))),
+    );
+
+    // Quien llega directo a otra escena (por #hash) ya vino con intención de recorrer: se cargan las vecinas de una vez
+    if (indice > 0 && modoPosible()) { precargadas = true; precargarVecinas(); }
+
+    const activar = (on: boolean) => {
+      modo = on;
+      html.classList.toggle('escenas', on);
+      if (on) {
+        escenas.forEach((sec, i) => sec.classList.toggle('activa', i === indice));
+        escenas.forEach((sec) => fijarPaso(sec, pasoDe(sec), false));
+        medirPanel(escenas[indice]);
+        actualizarPuntos();
+      } else {
+        escenas.forEach((sec) => { sec.classList.remove('activa'); apagarReticula(sec); });
+      }
+    };
+    let eraEstrecho = estrecho();
+    let anchoEval = innerWidth;
+    let altoEval = innerHeight;
+    const evaluar = () => {
+      // Histéresis: activo, solo se apaga por debajo de ALTO_APAGA; apagado, solo se activa por encima de ALTO_ACTIVA
+      const quiere = soportado() && innerHeight >= (modo ? ALTO_APAGA : ALTO_ACTIVA);
+      anchoEval = innerWidth;
+      altoEval = innerHeight;
+      if (quiere !== modo) activar(quiere);
+      else if (modo) {
+        // Al cambiar entre móvil y escritorio cambia la disposición de los pasos: se recoloca cada escena en el primero
+        const cambio = estrecho() !== eraEstrecho;
+        escenas.forEach((sec) => {
+          if (cambio || pasoDe(sec) >= subpasosDe(sec)) fijarPaso(sec, cambio && sec.classList.contains('proy') ? 0 : pasoDe(sec), false);
+        });
+      }
+      if (modo) { medirPanel(escenas[indice]); medirBarra(); }
+      eraEstrecho = estrecho();
+    };
+    evaluar();
+    addEventListener('resize', () => {
+      // Las barras del navegador (iOS, Android) cambian solo el alto, en menos de ALTO_BARRAS px: no cuenta como cambio de tamaño
+      if (innerWidth === anchoEval && Math.abs(innerHeight - altoEval) < ALTO_BARRAS) {
+        if (modo) medirPanel(escenas[indice]);
+        return;
+      }
+      evaluar();
+    }, señal);
+    // Las fuentes cambian el alto de las columnas: se vuelve a medir el panel cuando están listas
+    void document.fonts?.ready.then(() => { if (modo) medirPanel(escenas[indice]); });
+  }
+
+  // Al salir de la página se limpian listeners y el modo escenas
+  const ventana = window as Window & { __galeriaEnlazada?: boolean };
+  if (!ventana.__galeriaEnlazada) {
+    ventana.__galeriaEnlazada = true;
+    document.addEventListener('astro:before-swap', () => {
+      cancelar?.abort();
+      cancelar = null;
+      const html = document.documentElement;
+      if (!html.classList.contains('tema-galeria')) return;
+      html.classList.remove('escenas', 'abriendo');
+      html.removeAttribute('data-dir');
+      html.removeAttribute('data-fase');
+      html.removeAttribute('data-division');
+      html.removeAttribute('data-giro');
+      html.removeAttribute('data-inicio');
+    });
+    // Llegada por navegación de cliente: el <html> llega sin la clase; se vuelve a poner con la escena del hash
+    // (o la portada) antes del primer pintado.
+    document.addEventListener('astro:after-swap', () => {
+      const html = document.documentElement;
+      if (!html.classList.contains('tema-galeria')) return;
+      const mazo = !!document.querySelector('main > section.diapo') && !!(document as DocVT).startViewTransition &&
+        matchMedia('(prefers-reduced-motion: no-preference)').matches && innerHeight >= 560;
+      html.classList.toggle('escenas', mazo);
+      if (!mazo) return;
+      const secciones = [...document.querySelectorAll<HTMLElement>('main > section.diapo')];
+      let destino: HTMLElement | null = secciones[0] ?? null;
+      try {
+        const el = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+        destino = (el?.closest('main > section.diapo') as HTMLElement | null) ?? destino;
+      } catch { /* hash mal codificado: se queda la portada */ }
+      secciones.forEach((s) => s.classList.toggle('activa', s === destino));
+    });
+  }
+  document.addEventListener('astro:page-load', iniciarGaleria);
+</script>

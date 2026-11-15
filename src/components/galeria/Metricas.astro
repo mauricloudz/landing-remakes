@@ -1,0 +1,124 @@
+---
+// Tabla de métricas de un proyecto. Los valores salen de src/data/galeria.ts; el texto real siempre está en la tabla
+// La tabla real (Métrica | Antes | Después) siempre está: es el respaldo sin escenas y lo que leen los lectores de pantalla.
+// En el modo escenas se ve una sola columna de valores: un odómetro aria-hidden pasa del número original al del sitio nuevo
+// y el rótulo de la cabecera rueda de «Antes» a «Después» (el CSS oculta la columna «Antes», sin quitarla del árbol de accesibilidad).
+import type { Metricas } from '../../data/galeria';
+interface Props { nombre: string; antes: Metricas; despues: Metricas }
+const { nombre, antes, despues } = Astro.props;
+
+const miles = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const decimas = (s: string) => Math.round(parseFloat(s.replace(',', '.')) * 10);
+const razon = (n: number) => n.toFixed(3);
+
+// Odómetro: una columna por cifra con los valores que toma esa cifra al contar de `a` a `b` (sin repetir seguidos).
+// Todas las columnas recorren su tira en el mismo tiempo. Los ceros a la izquierda quedan en blanco salvo `minimo`.
+const rodillos = (a: number, b: number, minimo: number) => {
+  // Como mucho ~24 valores intermedios: una tira de cientos de cifras acumula error de redondeo
+  // y la cifra final quedaba descolocada (p. ej. 1.025 → 163 KB recorría 862 valores).
+  const PASOS = 24;
+  const valores: number[] = [];
+  if (Math.abs(b - a) <= PASOS) {
+    const paso = a <= b ? 1 : -1;
+    for (let v = a; v !== b + paso; v += paso) valores.push(v);
+  } else {
+    for (let i = 0; i <= PASOS; i++) {
+      const v = Math.round(a + ((b - a) * i) / PASOS);
+      if (valores[valores.length - 1] !== v) valores.push(v);
+    }
+  }
+  const n = Math.max(String(a).length, String(b).length, minimo);
+  return Array.from({ length: n }, (_, c) => {
+    const tira: string[] = [];
+    for (const v of valores) {
+      const cifras = Math.max(String(v).length, minimo);
+      const t = c < n - cifras ? '' : String(v).padStart(n, '0')[c];
+      if (tira[tira.length - 1] !== t) tira.push(t);
+    }
+    return tira;
+  });
+};
+
+const puntajes = [
+  ['Rendimiento', 'rendimiento'], ['Accesibilidad', 'accesibilidad'], ['Buenas prácticas', 'practicas'], ['SEO', 'seo'],
+] as const;
+
+// Cada fila dibuja su odómetro con piezas: columnas que ruedan (arreglo de cifras) o separadores fijos (cadena).
+type Pieza = string[] | string;
+type Fila = { grande: boolean; et: string; ant: string; des: string; estilo: string; piezas: Pieza[]; sufijo?: string };
+
+// Columnas de un valor de `a` a `b`. `coma` es el decimal fijo antes de la última cifra; `miles` pone un punto de miles que se
+// enciende y se apaga con la cifra de los miles (la misma tira): en 163 queda en blanco, igual que su cifra.
+const piezas = (a: number, b: number, minimo: number, opc: { coma?: boolean; miles?: boolean } = {}): Pieza[] => {
+  const cols = rodillos(a, b, minimo);
+  const salida: Pieza[] = [];
+  cols.forEach((tira, i) => {
+    const desdeFin = cols.length - 1 - i;
+    if (opc.coma && desdeFin === 0) salida.push(',');
+    if (opc.miles && desdeFin === 2 && i > 0) {
+      const mil = cols[i - 1];
+      salida.push(mil.map((x) => (x === '' ? '' : '.')));
+    }
+    salida.push(tira);
+  });
+  return salida;
+};
+
+const filas: Fila[] = [
+  ...puntajes.map(([et, k], i): Fila => ({
+    grande: true, et, ant: String(antes[k]), des: String(despues[k]), piezas: piezas(antes[k], despues[k], 1),
+    estilo: `--k:${i};--r0:${razon(antes[k] / 100)};--r:${razon(despues[k] / 100)}`,
+  })),
+];
+
+const la = decimas(antes.lcp), lb = decimas(despues.lcp);
+filas.push({
+  grande: false, et: 'Carga del contenido principal', ant: antes.lcp, des: despues.lcp,
+  piezas: piezas(la, lb, 2, { coma: true }), sufijo: 's',
+  estilo: `--k:4;--r0:1;--r:${razon(lb / la)}`,
+});
+filas.push({
+  grande: false, et: 'Peso de la página', ant: `${miles(antes.peso)} KB`, des: `${miles(despues.peso)} KB`,
+  piezas: piezas(antes.peso, despues.peso, 1, { miles: true }), sufijo: 'KB',
+  estilo: `--k:5;--r0:1;--r:${razon(despues.peso / antes.peso)}`,
+});
+filas.push({
+  grande: false, et: 'Ancho en un teléfono de 390 px', ant: `${antes.anchoMovil} px`, des: `${despues.anchoMovil} px`,
+  piezas: piezas(antes.anchoMovil, despues.anchoMovil, 1), sufijo: 'px',
+  estilo: `--k:6;--r0:1;--r:${razon(despues.anchoMovil / antes.anchoMovil)}`,
+});
+---
+<table class="met">
+  <caption class="mini">Lighthouse en móvil<span class="sr-only"> de {nombre}</span></caption>
+  <thead>
+    <tr>
+      <th scope="col">Métrica</th>
+      <th scope="col" class="h-ant">Antes</th>
+      <th scope="col" class="h-des">
+        <span class="h-txt">Después</span>
+        <span class="h-rot" aria-hidden="true"><span class="h-tira"><span>Antes</span><span>Después</span></span></span>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    {filas.map((f) => (
+      <tr class:list={['fila', f.grande ? 'grande' : 'det']} style={f.estilo}>
+        <th scope="row" class="et">{f.et}</th>
+        <td class="col-ant"><span class="viejo">{f.ant}</span></td>
+        <td class="col-des">
+          <span class="vd rola">
+            <span class="stat">{f.des}</span>
+            <span class="cnt" aria-hidden="true">
+              {f.piezas.map((p) =>
+                typeof p === 'string'
+                  ? <span class="sep">{p}</span>
+                  : <span class:list={['rod', { mil: p[0] === '.' }]}><span class="rc" style={`--p:${p.length - 1}`}>{p.map((x) => <span>{x}</span>)}</span></span>)}
+              {f.sufijo && <span class="suf">{f.sufijo}</span>}
+            </span>
+          </span>
+          <span class="barra" aria-hidden="true"><i></i></span>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>

@@ -1,0 +1,10 @@
+---
+// Marco de navegador: barra con tres puntos y la dirección del sitio. Los estilos viven en la página.
+// Acepta atributos data-* (por ejemplo las anclas de las transiciones entre escenas).
+interface Props { url: string; class?: string; [atributo: `data-${string}`]: string | number | undefined }
+const { url, class: clase = '', ...resto } = Astro.props;
+---
+<div class:list={['frame', clase]} {...resto}>
+  <div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>{url}</span></div>
+  <slot />
+</div>

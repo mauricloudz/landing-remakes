@@ -1,41 +1,101 @@
 ---
-// Comparador antes/después: se arrastra la barra o se usan las flechas del teclado.
+// Comparador antes/después: se arrastra o se usan las flechas del teclado (Inicio y Fin van a los extremos).
+// Es un <input type="range"> nativo, invisible, sobre las dos capturas: rol "slider", teclado y táctil sin código extra.
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
-interface Props { antes: ImageMetadata; despues: ImageMetadata; nombre: string; ancho?: number; class?: string }
-const { antes, despues, nombre, ancho = 1440, class: clase = '' } = Astro.props;
+interface Props { antes: ImageMetadata; despues: ImageMetadata; nombre: string; anio: number; class?: string; sizes?: string }
+const { antes, despues, nombre, anio, class: clase = '', sizes = '(min-width: 901px) min(88vw, 1180px), 94vw' } = Astro.props;
+const anchos = [640, 960, 1440];
 ---
-<div class:list={['comparador relative select-none overflow-hidden', clase]} style="--pos:50%">
-  <Image src={antes} alt={`${nombre}, versión original`} width={ancho} class="block h-auto w-full" loading="lazy" />
-  <div class="despues absolute inset-0">
-    <Image src={despues} alt={`${nombre}, versión nueva`} width={ancho} class="block h-auto w-full" loading="lazy" />
+<div class:list={['cmpbox', clase]} style="--pos:50%" data-comparador>
+  <div class="capa"><Image src={antes} alt={`${nombre}, versión original de ${anio}, en escritorio`} widths={anchos} sizes={sizes} width={1440} loading="lazy" decoding="async" /></div>
+  <div class="capa cmp-des"><Image src={despues} alt={`${nombre}, versión nueva, en escritorio`} widths={anchos} sizes={sizes} width={1440} loading="lazy" decoding="async" /></div>
+  <div class="div" aria-hidden="true">
+    <span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5" /></svg></span>
   </div>
-  <span class="etiqueta left-3">Antes</span><span class="etiqueta right-3">Después</span>
-  <div class="barra pointer-events-none absolute inset-y-0" aria-hidden="true"><span class="tirador">⟷</span></div>
-  <input type="range" min="0" max="100" value="50" aria-label={`Comparar antes y después de ${nombre}`} class="absolute inset-0 size-full cursor-ew-resize opacity-0" />
+  <input type="range" min="0" max="100" step="1" value="50" aria-label={`Comparar antes y después de ${nombre}`} aria-valuetext="Antes 50 %, después 50 %" />
 </div>
 <style>
-  .despues { clip-path: inset(0 0 0 var(--pos)); }
-  .barra { left: var(--pos); width: 3px; translate: -50% 0; background: #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / .15), 0 0 24px rgb(0 0 0 / .35); }
-  .tirador { position: absolute; top: 50%; left: 50%; translate: -50% -50%; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; background: #fff; color: #16181d; font-weight: 700; box-shadow: 0 6px 20px rgb(0 0 0 / .3); transition: scale .2s; }
-  .comparador:hover .tirador, .comparador:has(input:focus-visible) .tirador { scale: 1.12; }
-  .comparador:has(input:focus-visible) { outline: 3px solid var(--marca); outline-offset: 4px; }
-  .etiqueta { position: absolute; top: .75rem; z-index: 2; border-radius: 999px; background: rgb(22 24 29 / .78); color: #fff; padding: .3rem .8rem; font-size: .75rem; font-weight: 600; backdrop-filter: blur(6px); pointer-events: none; }
+  .cmpbox { position: relative; overflow: clip; aspect-ratio: 1440 / 900; background: #fff; user-select: none; -webkit-user-select: none; }
+  .capa { position: absolute; inset: 0; }
+  .cmpbox :global(img) { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .cmp-des { clip-path: inset(0 0 0 var(--pos)); }
+  .div { position: absolute; top: 0; bottom: 0; left: var(--pos); z-index: 2; width: 3px; translate: -50% 0; background: #fff; box-shadow: 0 0 0 1px rgb(22 24 29 / .18), 0 0 24px rgb(22 24 29 / .35); pointer-events: none; }
+  .div span { position: absolute; top: 50%; left: 50%; translate: -50% -50%; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: #fff; color: #16181d; box-shadow: 0 8px 24px rgb(22 24 29 / .35); transition: scale .25s var(--friccion); }
+  /* Barrido automático (lo pone la escena al cambiar de paso): --pos está registrada en global.css, así que se anima */
+  .cmpbox.barre { transition: --pos var(--dur-barre, .9s) var(--encastre); }
+  .cmpbox:hover .div span, .cmpbox:has(input:focus-visible) .div span { scale: 1.1; }
+  .cmpbox:has(input:focus-visible) { outline: 3px solid #2f5bea; outline-offset: -3px; }
+  .cmpbox:has(input:focus-visible) .div { box-shadow: 0 0 0 2px #2f5bea, 0 0 24px rgb(22 24 29 / .35); }
+  .cmpbox { cursor: ew-resize; touch-action: pan-y; }
+  input { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; pointer-events: none; touch-action: pan-y; appearance: none; -webkit-appearance: none; background: transparent; }
+  /* Sin ancho propio, la posición del dedo coincide con la de la barra */
+  input::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 0; height: 100%; }
+  input::-moz-range-thumb { width: 0; height: 100%; border: 0; }
 </style>
 <script>
+  // Cada comparador se enlaza una sola vez, aunque la página se vuelva a mostrar con las transiciones.
   function iniciarComparadores() {
-    document.querySelectorAll<HTMLElement>('.comparador').forEach((c) => {
+    document.querySelectorAll<HTMLElement>('[data-comparador]').forEach((c) => {
+      if (c.dataset.listo) return;
+      c.dataset.listo = '1';
       const r = c.querySelector('input')!;
-      const pintar = () => c.style.setProperty('--pos', `${r.value}%`);
-      r.addEventListener('input', pintar); pintar();
-      // Pequeña animación inicial que invita a deslizar
-      if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !c.dataset.listo) {
-        c.dataset.listo = '1';
-        new IntersectionObserver((e, o) => {
-          if (!e[0].isIntersecting) return; o.disconnect();
-          c.animate([{ '--pos': '50%' }, { '--pos': '28%' }, { '--pos': '68%' }, { '--pos': '50%' }] as Keyframe[], { duration: 1800, easing: 'ease-in-out' });
-        }, { threshold: 0.5 }).observe(c);
-      }
+      const pintar = () => {
+        c.style.setProperty('--pos', `${r.value}%`);
+        r.setAttribute('aria-valuetext', `Antes ${r.value} %, después ${100 - Number(r.value)} %`);
+      };
+      // Si el usuario toma el control durante el barrido automático, este se cancela: la posición pasa a ser suya
+      // (quitar la clase no basta: Chrome deja correr la transición de --pos hacia su destino, así que se cancela a mano)
+      const cancelarBarrido = () => {
+        c.classList.remove('barre');
+        c.getAnimations().forEach((an) => an.cancel());
+      };
+      r.addEventListener('input', (e) => { if (e.isTrusted) cancelarBarrido(); pintar(); });
+      // iOS Safari no salta al tocar la pista ni arrastra con un tirador de 0 px: la posición sale del puntero
+      const desdePuntero = (e: PointerEvent) => {
+        const caja = c.getBoundingClientRect();
+        const v = Math.round(((e.clientX - caja.left) / caja.width) * 100);
+        r.value = String(Math.max(0, Math.min(100, v)));
+        pintar();
+      };
+      // Los gestos los atiende la caja entera y el <input> no recibe puntero (así el navegador no mueve el valor por su cuenta con un toque
+      // que luego es un deslizamiento vertical); sigue siendo el control con foco, el rol «slider» y el teclado.
+      // Con el dedo la posición no salta al tocar: se espera a que el gesto sea horizontal (un deslizamiento vertical es de la escena,
+      // que cambia de paso) o a que sea un toque sin movimiento
+      let arrastrando = false;
+      let origen: { x: number; y: number } | null = null;
+      const tomar = (e: PointerEvent) => { cancelarBarrido(); arrastrando = true; origen = null; desdePuntero(e); };
+      c.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        c.setPointerCapture(e.pointerId);
+        if (e.pointerType === 'touch') { origen = { x: e.clientX, y: e.clientY }; return; }
+        tomar(e);
+      });
+      c.addEventListener('pointermove', (e) => {
+        if (arrastrando) desdePuntero(e);
+        else if (origen && Math.abs(e.clientX - origen.x) > 6 && Math.abs(e.clientX - origen.x) > Math.abs(e.clientY - origen.y)) tomar(e);
+      });
+      c.addEventListener('pointerup', (e) => {
+        if (origen && Math.abs(e.clientX - origen.x) <= 6 && Math.abs(e.clientY - origen.y) <= 6) tomar(e); // toque
+        arrastrando = false; origen = null;
+      });
+      c.addEventListener('dragstart', (e) => e.preventDefault()); // las capturas son <img>: no se arrastran como archivo
+      const soltar = () => { arrastrando = false; origen = null; };
+      c.addEventListener('pointercancel', soltar);
+      c.addEventListener('lostpointercapture', soltar);
+      // Pasos más grandes con las flechas; Inicio y Fin ya los resuelve el navegador
+      r.addEventListener('keydown', (e) => {
+        const paso = e.shiftKey ? 10 : 5;
+        let v = Number(r.value);
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') v -= paso;
+        else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') v += paso;
+        else return;
+        e.preventDefault();
+        cancelarBarrido();
+        r.value = String(Math.max(0, Math.min(100, v)));
+        pintar();
+      });
+      pintar();
     });
   }
   document.addEventListener('astro:page-load', iniciarComparadores);
