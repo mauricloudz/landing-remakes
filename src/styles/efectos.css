@@ -1,0 +1,25 @@
+/* Efectos compartidos por las tres webs: píldora deslizante de la cabecera y foco de tarjeta.
+   Solo las dos curvas del proyecto (--friccion y --encastre); cada página define sus colores. */
+
+/* ---------- Píldora deslizante (src/scripts/pildora.ts) ----------
+   La lista de enlaces va dentro de .lw; la copia clara del texto vive dentro de .pil-cab y la recorta el clip-path.
+   Solo existe en el modo escenas: sin él (respaldo) la cabecera queda como siempre. */
+.lw { position: relative; }
+.pil-cab { display: none; position: absolute; inset: 0; background: var(--pill-bg); color: var(--pill-fg); clip-path: inset(0 50% 0 50% round 999px); pointer-events: none; }
+html.escenas .pil-cab { display: block; }
+.pil-cab ul { position: absolute; inset: 0; margin: 0; padding: 0; }
+/* !important: las hojas de cada página (con alcance propio) pintan el color de los enlaces del original; la copia hereda el de la píldora */
+.pil-cab ul, .pil-cab ul a { color: inherit !important; }
+.pil-cab ul a { background: none; }
+.pil-cab.en-marcha { will-change: clip-path; }
+
+/* ---------- Foco de tarjeta (src/scripts/foco.ts) ----------
+   Foco y borde dependen de --mx, --my (px dentro de la tarjeta) y --act (0 a 1). Variante clara con .spot-claro. */
+.spot { position: relative; isolation: isolate; --mx: 0; --my: 0; --act: 0; --foco: rgb(157 180 255 / .12); --borde: rgb(157 180 255 / .95); }
+.spot.spot-claro { --foco: rgb(194 65 47 / .10); --borde: rgb(194 65 47 / .75); }
+.spot::before, .spot::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; opacity: var(--act); }
+.spot::before { z-index: 0; background: radial-gradient(260px circle at calc(var(--mx) * 1px) calc(var(--my) * 1px), var(--foco), transparent 70%); }
+.spot::after { z-index: 2; padding: 1px; background: radial-gradient(170px circle at calc(var(--mx) * 1px) calc(var(--my) * 1px), var(--borde), transparent 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude; }
+.spot > * { position: relative; z-index: 1; }
+.spot.activo::before, .spot.activo::after { will-change: opacity; }

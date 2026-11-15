@@ -8,5 +8,11 @@ export default defineConfig({
   base: '/landing-remakes',
   trailingSlash: 'always',
   integrations: [sitemap()],
-  vite: { plugins: [tailwindcss()] },
+  vite: {
+    plugins: [tailwindcss()],
+    build: {
+      // Mantiene el prefijo -webkit-backdrop-filter (Safari 16-17) en el CSS final.
+      cssTarget: ['chrome111', 'safari16.4', 'firefox114', 'ios16.4'],
+    },
+  },
 });

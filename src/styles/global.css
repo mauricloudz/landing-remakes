@@ -63,10 +63,10 @@
 /* Barra de progreso de lectura: animación ligada al scroll, sin JavaScript */
 .progreso { position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 60; background: var(--marca); transform-origin: 0 50%; transform: scaleX(0); pointer-events: none; }
 @supports (animation-timeline: scroll()) {
-  .progreso { animation: progreso linear both; animation-timeline: scroll(root); }
+  .progreso { animation-name: progreso; animation-timing-function: linear; animation-fill-mode: both; animation-timeline: scroll(root); }
   @keyframes progreso { to { transform: scaleX(1); } }
   /* Parallax suave para elementos decorativos */
-  .parallax { animation: parallax linear both; animation-timeline: view(); animation-range: entry 0% exit 100%; }
+  .parallax { animation-name: parallax; animation-timing-function: linear; animation-fill-mode: both; animation-timeline: view(); animation-range: entry 0% exit 100%; }
   @keyframes parallax { from { transform: translateY(var(--p-desde, 40px)); } to { transform: translateY(var(--p-hasta, -40px)); } }
 }
 
@@ -74,10 +74,9 @@
 .palabras > span { display: inline-block; opacity: 0; transform: translateY(.45em) rotate(2deg); transition: opacity .7s var(--ease-salida), transform .8s var(--ease-salida); transition-delay: calc(var(--i) * 55ms); }
 .visible .palabras > span, .palabras.visible > span { opacity: 1; transform: none; }
 
-/* Marquesina infinita */
-.marquesina { display: flex; width: max-content; animation: marquesina var(--vel, 35s) linear infinite; }
-.marquesina:hover { animation-play-state: paused; }
-@keyframes marquesina { to { transform: translateX(-50%); } }
+/* Portadas de Meet & Coffee: la transición entre tarjeta y detalle recorta en vez de estirar */
+::view-transition-old(.portada), ::view-transition-new(.portada) { height: 100%; object-fit: cover; }
+::view-transition-group(.portada) { overflow: clip; border-radius: 20px; }
 
 /* Acordeón de preguntas con altura animada */
 details.pregunta::details-content { block-size: 0; overflow: clip; transition: block-size .45s var(--ease-salida), content-visibility .45s allow-discrete; }
@@ -90,7 +89,6 @@ details.pregunta[open] .icono { transform: rotate(45deg); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
   [data-reveal], .palabras > span { opacity: 1 !important; transform: none !important; }
-  .marquesina { animation: none !important; }
 }
 
 /* Permite animar la posición del comparador */
