@@ -15,8 +15,11 @@ interface Props { evento: Evento; siguiente: Evento }
 const { evento: e, siguiente } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const iniciales = sacarIniciales(e.orador.nombre);
+const descripcionBase = `${e.bajada} Resumen del evento de Meet & Coffee con ${e.orador.nombre}.`;
+// Se añade la firma solo si la descripción total no pasa de 160 caracteres
+const descripcion = `${descripcionBase} Remake de Mauricio Poblete.`.length <= 160 ? `${descripcionBase} Remake de Mauricio Poblete.` : descripcionBase;
 ---
-<Base titulo={`${e.titulo} · Meet & Coffee`} descripcion={`${e.bajada} Resumen del evento de Meet & Coffee con ${e.orador.nombre}.`} tema="meet">
+<Base titulo={`${e.titulo} · Meet & Coffee`} descripcion={descripcion} tema="meet">
   <Cabecera />
   <main id="contenido" class="ev">
     <a href={`${base}meet-and-coffee/#eventos`} class="volver">← Todos los eventos</a>

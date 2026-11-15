@@ -29,12 +29,6 @@ const manifiestoA = 'Los rescatamos de la calle, los sanamos y les buscamos la f
 const manifiestoB = 'acompañamos adopciones responsables,';
 const manifiestoC = 'antes, durante y después.';
 
-const jsonLd = {
-  '@context': 'https://schema.org', '@type': 'NGO', name: 'Ayuda a un Peludo',
-  description: 'ONG de rescate y adopción responsable de perros y gatos.',
-  url: new URL(`${base}ayuda-a-un-peludo/`, Astro.site).toString(),
-};
-
 const ayudas = [
   { titulo: 'Adopta', texto: 'Dale un hogar definitivo a uno de nuestros peludos. Te acompañamos antes, durante y después.', icono: 'M12 21s-7-4.4-9.3-9A5.4 5.4 0 0 1 12 6a5.4 5.4 0 0 1 9.3 6c-2.3 4.6-9.3 9-9.3 9z' },
   { titulo: 'Sé hogar temporal', texto: 'Recibe a un peludo unas semanas mientras encuentra familia. Nosotros cubrimos alimento y veterinario.', icono: 'M3 11 12 3l9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z' },
@@ -65,7 +59,7 @@ const secciones = [
 const filtros = [['todos', `Todos (${peludos.length})`], ['perro', `Perros (${perros})`], ['gato', `Gatos (${gatos})`]];
 const iniciales = (nombre: string) => nombre.split(' ').map((w) => w[0]).slice(0, 2).join('');
 ---
-<Base titulo="Ayuda a un Peludo · Adopta un perro o un gato" descripcion="ONG de rescate de perros y gatos. Conoce a los peludos que buscan familia, descubre cuál calza contigo y aprende cómo ayudar." tema="peludo" jsonLd={jsonLd}>
+<Base titulo="Ayuda a un Peludo · Remake UX/UI de una landing de adopción" descripcion="Remake de una landing de adopción de perros y gatos con escenas, test y formulario. Diseño UX/UI y desarrollo web de Mauricio Poblete." tema="peludo">
   <Fragment slot="head">
     <link rel="preload" as="font" type="font/woff2" href={frauncesNormal} crossorigin />
     <link rel="preload" as="font" type="font/woff2" href={frauncesItalic} crossorigin />

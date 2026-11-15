@@ -9,13 +9,55 @@ interface Props {
   titulo: string;
   descripcion: string;
   tema: 'galeria' | 'peludo' | 'meet';
+  tipo?: 'WebPage' | 'CollectionPage';
   imagen?: string;
-  jsonLd?: Record<string, unknown>;
+  imagenAlt?: string;
 }
-const { titulo, descripcion, tema, imagen, jsonLd } = Astro.props;
+const { titulo, descripcion, tema, tipo = 'WebPage', imagen, imagenAlt } = Astro.props;
+const base = import.meta.env.BASE_URL;
 const canonica = new URL(Astro.url.pathname, Astro.site);
-const og = imagen ? new URL(imagen, Astro.site) : undefined;
+const raiz = new URL(base, Astro.site).toString();
 const colores = { galeria: '#f6f5f1', peludo: '#fbf6ee', meet: '#14100d' };
+
+// Imagen social 1200x630 por tema (URL absoluta) y su texto alternativo
+const altPorTema = {
+  galeria: 'Portada de Landing remakes, el portafolio de Mauricio Poblete con dos landings rehechas',
+  peludo: 'Portada del remake de Ayuda a un Peludo, una landing de adopción de perros y gatos',
+  meet: 'Portada del remake de Meet & Coffee, un sitio de charlas de tecnología',
+};
+const og = new URL(imagen ?? `${base}og/${tema}.jpg`, Astro.site).toString();
+const ogAlt = imagenAlt ?? altPorTema[tema];
+
+// Datos estructurados: un solo grafo con sitio, autor y la página actual
+const idSitio = `${raiz}#sitio`;
+const idAutor = `${raiz}#autor`;
+const nodoPagina: Record<string, unknown> = {
+  '@type': tipo,
+  '@id': `${canonica}#pagina`,
+  url: canonica.toString(),
+  name: titulo,
+  description: descripcion,
+  inLanguage: 'es',
+  isPartOf: { '@id': idSitio },
+  author: { '@id': idAutor },
+  primaryImageOfPage: { '@type': 'ImageObject', url: og, width: 1200, height: 630 },
+};
+if (tipo === 'CollectionPage') {
+  nodoPagina.hasPart = [`${raiz}ayuda-a-un-peludo/`, `${raiz}meet-and-coffee/`];
+}
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'WebSite', '@id': idSitio, name: 'Landing remakes', url: raiz, inLanguage: 'es', author: { '@id': idAutor } },
+    {
+      '@type': 'Person', '@id': idAutor, name: 'Mauricio Poblete',
+      description: 'Desarrollo web, diseño UX/UI y AI engineering', url: raiz,
+      sameAs: ['https://github.com/mauricloudz', 'https://www.linkedin.com/in/mauricio-poblete-saez-b089569a'],
+      knowsAbout: ['Desarrollo web', 'Diseño UX/UI', 'AI engineering', 'Astro', 'TypeScript', 'Accesibilidad web', 'Rendimiento web'],
+    },
+    nodoPagina,
+  ],
+};
 ---
 <!doctype html>
 <html lang="es" class={`tema-${tema}`}>
@@ -24,22 +66,31 @@ const colores = { galeria: '#f6f5f1', peludo: '#fbf6ee', meet: '#14100d' };
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{titulo}</title>
     <meta name="description" content={descripcion} />
+    <meta name="author" content="Mauricio Poblete" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="google-site-verification" content="O9PlwmJ9pgZNIllKD-ym55wCaM0a46U9PKcJSDdiar0" />
     <link rel="canonical" href={canonica} />
     <meta name="theme-color" content={colores[tema]} />
     <meta name="color-scheme" content={tema === 'meet' ? 'dark' : 'light'} />
     <link rel="preload" href={interLatina} as="font" type="font/woff2" crossorigin />
-    <link rel="icon" href={`${import.meta.env.BASE_URL}favicon-${tema}.svg`} type="image/svg+xml" />
-    <link rel="icon" href={`${import.meta.env.BASE_URL}favicon-${tema}-32.png`} type="image/png" sizes="32x32" />
-    <link rel="apple-touch-icon" href={`${import.meta.env.BASE_URL}apple-touch-icon-${tema}.png`} sizes="180x180" />
-    <link rel="sitemap" href={`${import.meta.env.BASE_URL}sitemap-index.xml`} />
+    <link rel="icon" href={`${base}favicon-${tema}.svg`} type="image/svg+xml" />
+    <link rel="icon" href={`${base}favicon-${tema}-32.png`} type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href={`${base}apple-touch-icon-${tema}.png`} sizes="180x180" />
+    <link rel="sitemap" href={`${base}sitemap-index.xml`} />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Landing remakes" />
     <meta property="og:locale" content="es_CL" />
     <meta property="og:title" content={titulo} />
     <meta property="og:description" content={descripcion} />
     <meta property="og:url" content={canonica} />
-    {og && <meta property="og:image" content={og} />}
-    <meta name="twitter:card" content={og ? 'summary_large_image' : 'summary'} />
-    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+    <meta property="og:image" content={og} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:alt" content={ogAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image:alt" content={ogAlt} />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     <ClientRouter />
     <slot name="head" />
   </head>

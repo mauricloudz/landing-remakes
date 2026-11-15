@@ -25,14 +25,8 @@ const escenas = [
 ];
 const iniciales = sacarIniciales(proxima.orador.nombre);
 const dosDigitos = (n: number) => String(n).padStart(2, '0');
-const jsonLd = {
-  '@context': 'https://schema.org', '@type': 'Organization', name: 'Meet & Coffee',
-  description: 'Comunidad de charlas y encuentros sobre tecnología en Santiago.',
-  url: new URL(`${base}meet-and-coffee/`, Astro.site).toString(),
-  address: { '@type': 'PostalAddress', streetAddress: 'Calle Baker 133', addressLocality: 'Providencia', addressRegion: 'Santiago', addressCountry: 'CL' },
-};
 ---
-<Base titulo="Meet & Coffee · Charlas de tecnología con café" descripcion="Charlas, eventos y simposios sobre tecnología, martes y viernes de 19:00 a 22:00 en Providencia, Santiago. Gratis y para todos los niveles." tema="meet" jsonLd={jsonLd}>
+<Base titulo="Meet & Coffee · Remake UX/UI de un sitio de charlas tech" descripcion="Remake de un sitio de charlas de tecnología con cuenta regresiva, agenda y mapa en escenas. Diseño UX/UI y desarrollo web de Mauricio Poblete." tema="meet">
   <Fragment slot="head">
     <!-- Decide el modo mazo antes del primer pintado (mismas condiciones que el script del módulo).
          Sin hash y con movimiento permitido, la portada se abre con su entrada (clase abriendo, 1,5 s). -->
