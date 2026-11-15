@@ -1,16 +1,33 @@
 ---
 import '@fontsource-variable/fraunces';
+import '@fontsource-variable/fraunces/wght-italic.css';
+import frauncesNormal from '@fontsource-variable/fraunces/files/fraunces-latin-wght-normal.woff2?url';
+import frauncesItalic from '@fontsource-variable/fraunces/files/fraunces-latin-wght-italic.woff2?url';
 import Base from '../../layouts/Base.astro';
 import Retrato from '../../components/peludo/Retrato.astro';
 import Logo from '../../components/peludo/Logo.astro';
 import Huella from '../../components/Huella.astro';
-import Palabras from '../../components/Palabras.astro';
 import { peludos, equipo } from '../../data/peludos';
 
 const base = import.meta.env.BASE_URL;
 const perros = peludos.filter((p) => p.especie === 'perro').length;
 const gatos = peludos.length - perros;
 const fondos = ['var(--menta)', 'var(--rosa)', '#f3e6c4', '#dfe7f5', '#f6d6cf', '#cfe9e3'];
+
+// "Hoy hay seis esperando…": el número sale de los datos
+const numeros = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'];
+const cuantos = numeros[peludos.length] ?? String(peludos.length);
+const enAdopcion = peludos.length;
+
+// Titular de la portada. El * marca el énfasis.
+const titular = [['Cada', 'peludo'], ['merece', 'un', '*hogar'], ['donde', 'lo', '*esperen.']].map((l) =>
+  l.map((w) => ({ t: w.replace('*', ''), e: w.startsWith('*') })),
+);
+
+// Manifiesto en tres líneas: la del medio es la banda que viaja (no puede ir dentro de una máscara que se mueve)
+const manifiestoA = 'Los rescatamos de la calle, los sanamos y les buscamos la familia que merecen. No vendemos animales:';
+const manifiestoB = 'acompañamos adopciones responsables,';
+const manifiestoC = 'antes, durante y después.';
 
 const jsonLd = {
   '@context': 'https://schema.org', '@type': 'NGO', name: 'Ayuda a un Peludo',
@@ -38,347 +55,1821 @@ const preguntas = [
   { p: '¿Puedo adoptar si vivo en departamento?', r: 'Sí. En cada ficha indicamos qué peludos se adaptan bien a espacios pequeños.' },
   { p: '¿Por qué algunos no están esterilizados?', r: 'Son cachorros todavía muy pequeños. La esterilización se coordina con la familia cuando tienen la edad adecuada.' },
 ];
+
+// Escenas del mazo, en orden. El nombre es el que lee el lector de pantalla en el navegador de escenas.
+const secciones = [
+  ['inicio', 'Portada'], ['mensaje', 'Mensaje'], ['nosotros', 'Quiénes somos'], ['adopta', 'Adopta'], ['test', 'Test'],
+  ['proceso', 'Proceso'], ['ayuda', 'Cómo ayudar'], ['equipo', 'Equipo'], ['preguntas', 'Preguntas'], ['contacto', 'Contacto'],
+];
+
+const filtros = [['todos', `Todos (${peludos.length})`], ['perro', `Perros (${perros})`], ['gato', `Gatos (${gatos})`]];
+const iniciales = (nombre: string) => nombre.split(' ').map((w) => w[0]).slice(0, 2).join('');
 ---
 <Base titulo="Ayuda a un Peludo · Adopta un perro o un gato" descripcion="ONG de rescate de perros y gatos. Conoce a los peludos que buscan familia, descubre cuál calza contigo y aprende cómo ayudar." tema="peludo" jsonLd={jsonLd}>
-  <header class="sticky top-0 z-50 border-b border-linea/70 bg-fondo/80 backdrop-blur-md">
-    <nav class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3" aria-label="Principal">
+  <Fragment slot="head">
+    <link rel="preload" as="font" type="font/woff2" href={frauncesNormal} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={frauncesItalic} crossorigin />
+    <!-- Decide el modo mazo antes del primer pintado (mismas condiciones que el script del módulo).
+         Sin hash y con movimiento permitido, la portada se abre con su entrada (clase abriendo, 1,5 s). -->
+    <script is:inline>
+      (function () {
+        var h = document.documentElement;
+        var hash = location.hash.slice(1);
+        h.dataset.inicio = hash;
+        var mazo = !!document.startViewTransition && matchMedia('(prefers-reduced-motion: no-preference)').matches && innerHeight >= 560;
+        if (!mazo) return;
+        h.classList.add('escenas');
+        if (!hash) {
+          h.classList.add('abriendo');
+          setTimeout(function () { h.classList.remove('abriendo'); }, 1500);
+        }
+      })();
+    </script>
+  </Fragment>
+  <header class="cabecera fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-8">
+    <nav class="mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-full border border-tinta/10 bg-fondo/90 py-2 pl-4 pr-2 backdrop-blur-md" aria-label="Principal">
       <a href={`${base}ayuda-a-un-peludo/`} class="flex items-center gap-2.5 font-display text-lg font-semibold">
-        <Logo class="size-10" /> Ayuda a un Peludo
+        <Logo class="size-9" /> Ayuda a un Peludo
       </a>
-      <ul class="hidden items-center gap-7 text-sm font-medium text-suave md:flex">
-        <li><a class="hover:text-tinta" href="#adopta">Adopta</a></li>
-        <li><a class="hover:text-tinta" href="#test">¿Cuál es para ti?</a></li>
-        <li><a class="hover:text-tinta" href="#ayuda">Cómo ayudar</a></li>
-        <li><a class="hover:text-tinta" href="#equipo">Equipo</a></li>
-        <li><a class="hover:text-tinta" href="#preguntas">Preguntas</a></li>
-      </ul>
-      <a href="#contacto" class="hidden rounded-full bg-marca px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-marca-fuerte md:inline-flex">Quiero adoptar</a>
-      <button class="rounded-full border border-linea px-4 py-2 text-sm font-medium md:hidden" popovertarget="menu-movil" aria-label="Abrir menú">Menú</button>
+      <div class="lw cab-lw hidden md:block">
+        <ul class="flex items-center text-sm font-medium text-suave">
+          <li><a class="hover:text-tinta" href="#adopta">Adopta</a></li>
+          <li><a class="hover:text-tinta" href="#test">¿Cuál es para ti?</a></li>
+          <li><a class="hover:text-tinta" href="#ayuda">Cómo ayudar</a></li>
+          <li><a class="hover:text-tinta" href="#equipo">Equipo</a></li>
+          <li><a class="hover:text-tinta" href="#preguntas">Preguntas</a></li>
+        </ul>
+      </div>
+      <a id="cta-cabecera" href="#contacto" class="hidden rounded-full bg-tinta px-5 py-2.5 text-sm font-semibold text-fondo transition hover:bg-marca md:inline-flex"><span class="rotulo">Quiero adoptar</span></a>
+      <button class="rounded-full bg-tinta px-5 py-2.5 text-sm font-semibold text-fondo md:hidden" popovertarget="menu-movil" aria-label="Abrir menú">Menú</button>
       <div id="menu-movil" popover class="menu-movil m-0 ml-auto h-dvh w-[min(84vw,320px)] bg-fondo p-6 shadow-2xl">
         <button popovertarget="menu-movil" popovertargetaction="hide" class="mb-8 text-sm font-medium text-suave">Cerrar ✕</button>
         <ul class="space-y-5 font-display text-2xl">
           <li><a href="#adopta">Adopta</a></li><li><a href="#test">¿Cuál es para ti?</a></li><li><a href="#ayuda">Cómo ayudar</a></li>
-          <li><a href="#equipo">Equipo</a></li><li><a href="#preguntas">Preguntas</a></li><li><a href="#contacto" class="text-marca">Quiero adoptar</a></li>
+          <li><a href="#equipo">Equipo</a></li><li><a href="#preguntas">Preguntas</a></li><li><a href="#contacto" class="text-marca-fuerte">Quiero adoptar</a></li>
         </ul>
       </div>
     </nav>
   </header>
 
   <main id="contenido">
-    <!-- HERO -->
-    <section class="relative overflow-hidden">
-      <div class="mx-auto grid grid-cols-1 max-w-6xl items-center gap-12 px-5 pb-20 pt-14 md:grid-cols-[1.1fr_1fr] md:pt-24">
-        <div>
-          <p data-reveal class="mb-5 inline-flex items-center gap-2 rounded-full bg-[var(--rosa)] px-4 py-1.5 text-sm font-semibold text-marca-fuerte">
-            <Huella class="size-4" /> ONG de rescate de animalitos
-          </p>
-          <h1 class="text-5xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl">
-            <Palabras texto="Cada peludo merece un hogar donde lo esperen." />
-          </h1>
-          <p data-reveal style="--d:3" class="mt-6 max-w-xl text-lg leading-relaxed text-suave">
-            Los rescatamos de la calle, los sanamos y les buscamos la familia que merecen. Hoy hay <strong class="text-tinta">{perros} perros y {gatos} gatos</strong> esperando a alguien como tú.
-          </p>
-          <div data-reveal style="--d:4" class="mt-9 flex flex-wrap gap-3">
-            <a href="#adopta" class="group inline-flex items-center gap-2 rounded-full bg-marca px-7 py-3.5 font-semibold text-white shadow-lg shadow-marca/25 transition hover:-translate-y-0.5 hover:bg-marca-fuerte">
-              Conocer a los peludos <span class="transition group-hover:translate-x-1">→</span>
-            </a>
-            <a href="#test" class="inline-flex items-center rounded-full border-2 border-tinta/15 px-7 py-3.5 font-semibold transition hover:border-tinta/40">Hacer el test</a>
-          </div>
-        </div>
-        <div class="relative mx-auto aspect-square w-full max-w-[460px]" data-reveal="zoom">
-          <div class="mancha absolute inset-4 bg-[var(--mostaza)]/40"></div>
-          <Retrato peludo={peludos[0]} sufijo="hero" fondo="var(--menta)" class="absolute left-0 top-6 w-[62%] drop-shadow-xl flotar" />
-          <Retrato peludo={peludos[3]} sufijo="hero" fondo="var(--rosa)" class="absolute bottom-2 right-0 w-[56%] drop-shadow-xl flotar [animation-delay:-2s]" />
-          <Huella class="parallax absolute -left-4 bottom-10 size-10 text-marca/70" style="--p-desde:60px;--p-hasta:-60px" />
-          <Huella class="parallax absolute right-6 top-0 size-8 rotate-12 text-[var(--acento)]/70" style="--p-desde:-30px;--p-hasta:50px" />
-          <Huella class="parallax absolute left-1/2 top-1/2 size-6 -rotate-12 text-[var(--ciruela)]/40" style="--p-desde:20px;--p-hasta:-80px" />
-          <span class="corazon absolute right-[38%] top-[30%] text-3xl text-marca" aria-hidden="true">♥</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- MARQUESINA -->
-    <div class="overflow-hidden border-y border-linea bg-[var(--ciruela)] py-4 text-fondo" aria-hidden="true">
-      <div class="marquesina gap-10 font-display text-2xl italic" style="--vel:40s">
-        {[0, 1].map(() => ['Adopta', 'Apadrina', 'Sé voluntario', 'Hogar temporal', 'Dona', 'Difunde'].map((t) => (
-          <span class="flex items-center gap-10 whitespace-nowrap">{t}<Huella class="size-5 text-[var(--mostaza)]" /></span>
-        )))}
-      </div>
-    </div>
-
-    <!-- PELUDOS -->
-    <section id="adopta" class="mx-auto max-w-6xl scroll-mt-20 px-5 py-24">
-      <div class="flex flex-wrap items-end justify-between gap-6">
-        <div>
-          <p data-reveal class="font-semibold uppercase tracking-[.18em] text-marca text-xs">En adopción</p>
-          <h2 data-reveal style="--d:1" class="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Ellos te están esperando</h2>
-        </div>
-        <fieldset data-reveal style="--d:2" class="filtros flex rounded-full border border-linea bg-superficie p-1 text-sm font-semibold">
-          <legend class="sr-only">Filtrar por especie</legend>
-          {[['todos', `Todos (${peludos.length})`], ['perro', `Perros (${perros})`], ['gato', `Gatos (${gatos})`]].map(([v, l], i) => (
-            <label class="cursor-pointer rounded-full px-4 py-2 transition has-[:checked]:bg-tinta has-[:checked]:text-fondo">
-              <input type="radio" name="filtro" value={v} class="sr-only" checked={i === 0} />{l}
-            </label>
-          ))}
-        </fieldset>
-      </div>
-
-      <ul class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" id="lista-peludos">
-        {peludos.map((p, i) => (
-          <li data-especie={p.especie} data-reveal style={`--d:${i % 3}; view-transition-name: peludo-${p.id}`}
-              class="tarjeta group flex flex-col rounded-[28px] border border-linea bg-superficie p-5 transition-shadow duration-500 hover:shadow-[0_24px_60px_-28px_rgba(61,42,61,.45)]">
-            <div class="overflow-hidden rounded-[22px]" style={`background:${fondos[i]}`}>
-              <Retrato peludo={p} fondo={fondos[i]} class="mx-auto w-full max-w-[260px] transition duration-700 group-hover:scale-[1.04]" />
-            </div>
-            <div class="mt-5 flex items-center justify-between">
-              <h3 class="text-2xl font-semibold">{p.nombre}</h3>
-              <span class="rounded-full bg-fondo px-3 py-1 text-xs font-semibold text-suave">{p.especie === 'perro' ? 'Perro' : 'Gato'}</span>
-            </div>
-            <p class="mt-2 flex-1 text-[15px] leading-relaxed text-suave">{p.personalidad}</p>
-            <dl class="mt-5 grid grid-cols-3 gap-2 text-center text-xs">
-              <div class="rounded-2xl bg-fondo px-2 py-2.5"><dt class="text-suave">Edad</dt><dd class="mt-0.5 font-semibold">{p.edad}</dd></div>
-              <div class="rounded-2xl bg-fondo px-2 py-2.5"><dt class="text-suave">Género</dt><dd class="mt-0.5 font-semibold">{p.genero}</dd></div>
-              <div class="rounded-2xl bg-fondo px-2 py-2.5"><dt class="text-suave">Esterilizado</dt><dd class="mt-0.5 font-semibold">{p.esterilizado ? 'Sí' : 'Aún no'}</dd></div>
-            </dl>
-            <p class="mt-3 font-mono text-[11px] text-suave">Chip N° {p.chip}</p>
-            <a href="#contacto" data-adoptar={p.nombre} class="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-tinta px-5 py-3 text-sm font-semibold text-fondo transition hover:bg-marca">
-              Quiero conocer a {p.nombre}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </section>
-
-    <!-- TEST -->
-    <section id="test" class="scroll-mt-20 bg-[var(--ciruela)] py-24 text-fondo">
-      <div class="mx-auto grid grid-cols-1 max-w-6xl gap-12 px-5 lg:grid-cols-[1fr_1.1fr]">
-        <div>
-          <p data-reveal class="text-xs font-semibold uppercase tracking-[.18em] text-[var(--mostaza)]">Test de 20 segundos</p>
-          <h2 data-reveal style="--d:1" class="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">¿Qué peludo es para ti?</h2>
-          <p data-reveal style="--d:2" class="mt-5 max-w-md text-lg text-fondo/75">Tres preguntas sobre tu vida y te mostramos con quién harías mejor equipo.</p>
-          <div id="resultado" class="mt-10 hidden" aria-live="polite">
-            <p class="mb-4 font-semibold text-[var(--mostaza)]">Tu mejor compañía:</p>
-            <div class="grid grid-cols-2 gap-4">
-              {peludos.map((p, i) => (
-                <div data-resultado={p.id} class="resultado hidden rounded-3xl bg-fondo p-4 text-tinta">
-                  <Retrato peludo={p} sufijo="test" fondo={fondos[i]} class="w-full" />
-                  <p class="mt-3 font-display text-xl font-semibold">{p.nombre}</p>
-                  <p class="text-sm text-suave">{p.edad} · {p.especie === 'perro' ? 'Perro' : 'Gato'}</p>
-                </div>
+    <!-- 1 · INICIO: portada con el arco que se abre hacia la siguiente escena -->
+    <section id="inicio" class="diapo portada activa" aria-labelledby="t-inicio">
+      <div class="plano">
+        <div class="portada-grid">
+          <div class="portada-texto">
+            <p class="kick mini chip-etiqueta" data-ancla-sale="3"><Huella class="size-4" /><span class="rotulo">ONG de rescate de animalitos</span></p>
+            <h1 id="t-inicio" class="disp" tabindex="-1">
+              {titular.map((linea) => (
+                <span class="mask l"><span class="sube">
+                  {linea.map((w, j) => (<>{j > 0 ? ' ' : ''}<span class:list={[{ enf: w.e }]}>{w.t}</span></>))}
+                </span></span>
               ))}
+            </h1>
+            <div class="cta-portada">
+              <a href="#adopta" class="btn btn-lleno revela">Conocer a los peludos <span aria-hidden="true">→</span></a>
+              <a href="#test" class="btn btn-borde revela">Hacer el test</a>
             </div>
           </div>
+          <div class="escenario" aria-hidden="true">
+            <div class="arco" data-ancla-sale="1"></div>
+            <div class="retrato-hero" data-ancla-sale="2"><Retrato peludo={peludos[0]} sufijo="hero" fondo="var(--menta)" /></div>
+          </div>
         </div>
-        <form id="form-test" data-peludos={JSON.stringify(peludos.map(({ id, especie, energia, espacio }) => ({ id, especie, energia, espacio })))} class="space-y-8 rounded-[32px] bg-fondo/5 p-6 ring-1 ring-fondo/15 sm:p-9" data-reveal="der">
-          {[
-            { n: 'espacio', q: '¿Dónde vives?', o: [['depto', 'Departamento'], ['casa', 'Casa con patio']] },
-            { n: 'energia', q: '¿Cómo es tu ritmo?', o: [['tranquilo', 'Tranquilo, de sofá'], ['activo', 'Activo, de paseos']] },
-            { n: 'especie', q: '¿Qué prefieres?', o: [['perro', 'Perro'], ['gato', 'Gato'], ['cualquiera', 'Me da igual']] },
-          ].map((g, gi) => (
-            <fieldset>
-              <legend class="mb-3 font-display text-xl"><span class="mr-2 text-[var(--mostaza)]">0{gi + 1}</span>{g.q}</legend>
-              <div class="flex flex-wrap gap-2.5">
-                {g.o.map(([v, l]) => (
-                  <label class="cursor-pointer rounded-full border border-fondo/25 px-5 py-2.5 text-sm font-semibold transition hover:border-fondo/60 has-[:checked]:border-[var(--mostaza)] has-[:checked]:bg-[var(--mostaza)] has-[:checked]:text-[var(--ciruela)]">
-                    <input type="radio" name={g.n} value={v} required class="sr-only" />{l}
-                  </label>
+        <p class="pista-hint mini revela" aria-hidden="true">Rueda, flechas o puntos para avanzar</p>
+      </div>
+    </section>
+
+    <!-- 2 · MENSAJE: fondo menta completo; el arco llega aquí y el retrato queda centrado -->
+    <section id="mensaje" class="diapo mensaje" aria-labelledby="t-mensaje">
+      <div class="fondo-ancla" data-ancla-entra="1" data-ancla-sale="2" aria-hidden="true"><Huella class="motivo" /></div>
+      <div class="plano centro">
+        <p class="chip-etiqueta chip-mensaje mini" data-ancla-entra="3" data-ancla-sale="3"><span class="rotulo">Hoy · {enAdopcion} en adopción</span></p>
+        <h2 id="t-mensaje" class="disp" tabindex="-1"><span class="mask"><span class="sube">Hoy hay <span class="enf">{cuantos}</span> esperando a alguien como tú.</span></span></h2>
+        <div class="retrato-mensaje" data-ancla-entra="2" data-ancla-sale="1" aria-hidden="true"><Retrato peludo={peludos[0]} sufijo="mensaje" fondo="var(--superficie)" /></div>
+      </div>
+    </section>
+
+    <!-- 3 · NOSOTROS: manifiesto con la insignia del retrato junto a la etiqueta -->
+    <section id="nosotros" class="diapo manif" aria-labelledby="t-manif">
+      <div class="plano">
+        <div class="manif-cab">
+          <span class="insignia" data-ancla-entra="1" data-ancla-sale="1" aria-hidden="true"><Retrato peludo={peludos[0]} sufijo="insignia" fondo="var(--menta)" /></span>
+          <h2 id="t-manif" class="mini chip-etiqueta chip-manif" tabindex="-1" data-ancla-entra="3" data-ancla-sale="3"><span class="rotulo">Quiénes somos</span></h2>
+        </div>
+        <p class="txt disp">
+          <span class="linea"><span class="mask"><span class="sube">{manifiestoA}</span></span></span>
+          <span class="linea"><span class="banda" data-ancla-entra="2" data-ancla-sale="2"><span class="rotulo enf">{manifiestoB}</span></span></span>
+          <span class="linea"><span class="mask"><span class="sube">{manifiestoC}</span></span></span>
+        </p>
+      </div>
+    </section>
+
+    <!-- 4 · ADOPTA: una ficha grande a la vez; cada paso desplaza la pista. Al final, el botón del test -->
+    <section id="adopta" class="diapo galeria oscuro" data-subpasos="tarjetas" aria-labelledby="t-adopta">
+      <div class="plano">
+        <div class="galeria-cab">
+          <p class="cab mini chip-etiqueta chip-adopta" data-ancla-entra="3"><span class="rotulo">En adopción · <span id="cuenta-peludos">{peludos.length}</span> peludos</span></p>
+          <h2 id="t-adopta" class="disp" tabindex="-1"><span class="mask"><span class="sube">Ellos te <i>esperan</i></span></span></h2>
+          <p class="bajada"><span class="mask"><span class="sube">Cada uno tiene su ficha completa. Elige a quien quieras conocer o descubre con el test quién calza contigo.</span></span></p>
+          <p class="hint revela">Usa la rueda o las flechas: cada peludo toma el centro.</p>
+          <fieldset class="filtros">
+            <legend class="sr-only">Filtrar por especie</legend>
+            {filtros.map(([v, l], i) => (
+              <label data-ancla-entra="2" data-ancla-sale="3">
+                <input type="radio" name="filtro" value={v} class="sr-only" checked={i === 0} /><span class="rotulo">{l}</span>
+              </label>
+            ))}
+          </fieldset>
+        </div>
+
+        <div class="vista">
+          <ul id="lista-peludos" class="pista-fichas" role="list">
+            {peludos.map((p, i) => (
+              <li data-especie={p.especie} class="ficha">
+                <div class="img" data-ancla-entra="1" data-ancla-sale="2">
+                  <span class="num" aria-hidden="true"><span class="rotulo">N.º {i + 1}</span></span>
+                  <Retrato peludo={p} sufijo="gal" fondo={fondos[i]} class="retrato-ficha" />
+                </div>
+                <div class="dat revela">
+                  <div>
+                    <p class="mini esp">{p.especie === 'perro' ? 'Perro' : 'Gato'}</p>
+                    <h3 class="disp"><span class="mask"><span class="sube">{p.nombre}</span></span></h3>
+                    <p class="desc"><span class="mask"><span class="sube">{p.personalidad}</span></span></p>
+                  </div>
+                  <div class="pie">
+                    <dl>
+                      <div><dt>Edad</dt><dd>{p.edad}</dd></div>
+                      <div><dt>Género</dt><dd>{p.genero}</dd></div>
+                      <div><dt>Esterilizado</dt><dd>{p.esterilizado ? 'Sí' : 'Aún no'}</dd></div>
+                    </dl>
+                    <p class="chip">Chip N.º {p.chip}</p>
+                    <a href="#contacto" data-adoptar={p.nombre} class="btn btn-tinta"><span class="rotulo">Quiero conocer a {p.nombre}</span> <span aria-hidden="true">→</span></a>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div class="fin">
+          <p class="fin-texto disp"><span class="mask"><span class="sube">¿No sabes cuál es <i>para ti?</i></span></span></p>
+          <a href="#test" class="btn btn-mostaza" data-ancla-sale="1"><span class="rotulo">Haz el test de 20 segundos</span></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · TEST: el botón "Ver mi resultado" se convierte en la escena de los pasos -->
+    <section id="test" class="diapo test" aria-labelledby="t-test">
+      <div class="fondo-ancla" data-ancla-entra="1" aria-hidden="true"><Huella class="motivo" /></div>
+      <div class="plano test-grid">
+        <div class="test-texto">
+          <p class="mini eyebrow"><span class="mask"><span class="sube">Test de 20 segundos</span></span></p>
+          <span class="badge-test" data-ancla-entra="2" data-ancla-sale="2" aria-hidden="true"><Huella class="size-6" /></span>
+          <h2 id="t-test" class="disp secc-h" tabindex="-1"><span class="mask"><span class="sube">¿Qué peludo es para ti?</span></span></h2>
+          <p class="lead"><span class="mask"><span class="sube">Tres preguntas sobre tu vida y te mostramos con quién harías mejor equipo.</span></span></p>
+        </div>
+        <!-- Test por pasos (Stepper): una pregunta a la vez; el último paso es el resultado. Las tres preguntas y el resultado
+             están en el HTML (sin JavaScript se leen todas); el script deja visible solo la actual. -->
+        <form id="form-test" class="testform" data-peludos={JSON.stringify(peludos.map(({ id, especie, energia, espacio }) => ({ id, especie, energia, espacio })))}>
+          <div class="st-prog">
+            <span class="st-linea" aria-hidden="true"><span class="st-relleno"></span></span>
+            <ol class="st-pasos" role="list" aria-label="Progreso del test">
+              {['Hogar', 'Ritmo', 'Especie', 'Resultado'].map((t, i) => (
+                <li class="st-paso" data-estado={i === 0 ? 'actual' : 'pendiente'} aria-current={i === 0 ? 'step' : undefined}>
+                  <span class="st-dot" data-ancla-sale={i === 0 ? 1 : undefined}><span class="st-pt"></span><svg class="st-chk" viewBox="0 0 24 24" aria-hidden="true"><path pathLength="1" d="M7 12.6l3.6 3.6L17.4 8.4" /></svg></span>
+                  <span class="st-et"><span class="rotulo">{t}</span></span>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <div class="st-etapa" data-fase="reposo" data-dir="adelante">
+            {[
+              { n: 'espacio', q: '¿Dónde vives?', o: [['depto', 'Departamento'], ['casa', 'Casa con patio']] },
+              { n: 'energia', q: '¿Cómo es tu ritmo?', o: [['tranquilo', 'Tranquilo, de sofá'], ['activo', 'Activo, de paseos']] },
+              { n: 'especie', q: '¿Qué prefieres?', o: [['perro', 'Perro'], ['gato', 'Gato'], ['cualquiera', 'Me da igual']] },
+            ].map((g, gi) => (
+              <fieldset class:list={['preg', 'st-pane', { 'st-actual': gi === 0 }]} data-paso={gi}>
+                <legend tabindex="-1"><span class="mask"><span class="sube"><span class="rise" style="--s:0"><span class="num">0{gi + 1}</span>{g.q}</span></span></span></legend>
+                <div class="opciones">
+                  {g.o.map(([v, l], oi) => (
+                    <div class="op-mask">
+                      <label class="opcion revela rise" style={`--s:${oi + 1}`} data-ancla-entra={oi === 0 ? 3 : undefined} data-ancla-sale={oi === 0 ? 3 : undefined}>
+                        <input type="radio" name={g.n} value={v} required class="sr-only" /><span class="rotulo">{l}</span>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </fieldset>
+            ))}
+            <div id="resultado" class="st-pane res" data-paso="3" aria-live="polite">
+              <p class="mini eyebrow" tabindex="-1"><span class="mask"><span class="sube"><span class="rise" style="--s:0">Tu mejor compañía</span></span></span></p>
+              <div class="resultados">
+                {peludos.map((p, i) => (
+                  <div data-resultado={p.id} class="resultado hidden">
+                    <Retrato peludo={p} sufijo="test" fondo={fondos[i]} class="w-full" />
+                    <p class="nombre">{p.nombre}</p>
+                    <p class="meta">{p.edad} · {p.especie === 'perro' ? 'Perro' : 'Gato'}</p>
+                  </div>
                 ))}
               </div>
-            </fieldset>
-          ))}
-          <button class="w-full rounded-full bg-marca py-4 font-semibold text-white transition hover:brightness-110">Ver mi resultado</button>
+            </div>
+          </div>
+          <div class="st-pie">
+            <button type="button" class="btn btn-borde" data-volver disabled><span class="rotulo">← Volver</span></button>
+            <small class="revela" data-info>Paso 1 de 3</small>
+          </div>
         </form>
       </div>
     </section>
 
-    <!-- PROCESO -->
-    <section class="mx-auto max-w-6xl px-5 py-24">
-      <div class="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_1.3fr]">
-        <div class="lg:sticky lg:top-28 lg:self-start">
-          <p data-reveal class="text-xs font-semibold uppercase tracking-[.18em] text-marca">Adopción responsable</p>
-          <h2 data-reveal style="--d:1" class="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Cuatro pasos y un nuevo integrante en la familia</h2>
-        </div>
-        <ol class="proceso relative space-y-6 pl-14">
-          <span class="linea absolute left-[19px] top-2 bottom-2 w-[3px] rounded bg-linea" aria-hidden="true"><span class="relleno block h-full w-full origin-top rounded bg-marca"></span></span>
+    <!-- 6 · PROCESO: un paso a la vez, con su numeral grande -->
+    <section id="proceso" class="diapo proceso" data-subpasos="pasos" aria-labelledby="t-proceso">
+      <div class="plano">
+        <h2 id="t-proceso" class="etiqueta-proceso" tabindex="-1"><span class="mask"><span class="sube">Adopción responsable en {numeros[pasos.length] ?? pasos.length} pasos</span></span></h2>
+        <!-- Semillas de la división: cuatro círculos bajo la insignia del paso actual (solo modo mazo; su posición la fija colocarSemillas) -->
+        <span class="semilla" data-ancla-sale="1" aria-hidden="true"></span>
+        <span class="semilla" data-ancla-sale="2" aria-hidden="true"></span>
+        <span class="semilla" data-ancla-sale="3" aria-hidden="true"></span>
+        <span class="semilla" data-ancla-sale="4" aria-hidden="true"></span>
+        <ol class="pasos" role="list">
           {pasos.map((s, i) => (
-            <li data-reveal style={`--d:${i}`} class="relative rounded-3xl border border-linea bg-superficie p-7">
-              <span class="absolute -left-14 top-6 grid size-10 place-items-center rounded-full bg-marca font-display text-lg font-semibold text-white">{i + 1}</span>
-              <h3 class="text-2xl font-semibold">{s.t}</h3>
-              <p class="mt-2 text-suave">{s.d}</p>
+            <li class:list={['paso', { actual: i === 0 }]} data-n={i + 1}>
+              <span class="fantasma" data-ancla-entra="2" aria-hidden="true"><span class="rotulo">{i + 1}</span></span>
+              <span class="numeral" data-ancla-entra="1" aria-hidden="true"><span class="rotulo">{i + 1}</span></span>
+              <div class="paso-texto">
+                <h3 class="disp"><span class="mask"><span class="sube">{s.t}</span></span></h3>
+                <p><span class="mask"><span class="sube">{s.d}</span></span></p>
+              </div>
             </li>
           ))}
         </ol>
+        <div class="barras" data-ancla-entra="3" aria-hidden="true">
+          {pasos.map((_, i) => <i class:list={[{ hecha: i === 0 }]}></i>)}
+        </div>
       </div>
     </section>
 
-    <!-- CÓMO AYUDAR -->
-    <section id="ayuda" class="scroll-mt-20 bg-superficie py-24">
-      <div class="mx-auto max-w-6xl px-5">
-        <p data-reveal class="text-xs font-semibold uppercase tracking-[.18em] text-marca">Cómo ayudar</p>
-        <h2 data-reveal style="--d:1" class="mt-3 max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">No necesitas adoptar para cambiarle la vida a un peludo</h2>
-        <div class="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <!-- 7 · CÓMO AYUDAR -->
+    <section id="ayuda" class="diapo ayuda" aria-labelledby="t-ayuda">
+      <div class="plano">
+        <p class="mini eyebrow"><span class="mask"><span class="sube">Cómo ayudar</span></span></p>
+        <h2 id="t-ayuda" class="disp secc-h" tabindex="-1" style="max-width:16ch"><span class="mask"><span class="sube">No necesitas adoptar para cambiarle la vida a un peludo</span></span></h2>
+        <ul class="ayuda-lista" role="list">
           {ayudas.map((a, i) => (
-            <article data-reveal style={`--d:${i}`} class="group rounded-[28px] border border-linea bg-fondo p-7 transition duration-500 hover:-translate-y-2 hover:border-marca/40">
-              <span class="grid size-12 place-items-center rounded-2xl bg-marca/10 text-marca transition duration-500 group-hover:rotate-[-8deg] group-hover:bg-marca group-hover:text-white">
-                <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={a.icono} /></svg>
+            <li class="spot spot-claro">
+              <span class="icono-ayuda" data-ancla-entra={i + 1} data-ancla-sale={i + 1} aria-hidden="true">
+                <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={a.icono} /></svg>
               </span>
-              <h3 class="mt-6 text-xl font-semibold">{a.titulo}</h3>
-              <p class="mt-2 text-[15px] leading-relaxed text-suave">{a.texto}</p>
-            </article>
+              <h3 class="disp"><span class="mask"><span class="sube">{a.titulo}</span></span></h3>
+              <p><span class="mask"><span class="sube">{a.texto}</span></span></p>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
 
-    <!-- EQUIPO -->
-    <section id="equipo" class="mx-auto max-w-6xl scroll-mt-20 px-5 py-24">
-      <p data-reveal class="text-xs font-semibold uppercase tracking-[.18em] text-marca">Nuestro equipo</p>
-      <h2 data-reveal style="--d:1" class="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Las personas detrás de cada rescate</h2>
-      <ul class="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {equipo.map((m, i) => (
-          <li data-reveal style={`--d:${i}`} class="rounded-[28px] border border-linea bg-superficie p-7">
-            <span class="grid size-16 place-items-center rounded-full font-display text-xl font-semibold text-white" style={`background:${m.color}`} aria-hidden="true">
-              {m.nombre.split(' ').map((w) => w[0]).slice(0, 2).join('')}
-            </span>
-            <h3 class="mt-5 text-xl font-semibold">{m.nombre}</h3>
-            <p class="text-sm font-semibold text-marca">{m.rol}</p>
-            <p class="mt-3 text-[15px] leading-relaxed text-suave">{m.texto}</p>
-          </li>
-        ))}
-      </ul>
-    </section>
-
-    <!-- PREGUNTAS -->
-    <section id="preguntas" class="scroll-mt-20 border-t border-linea py-24">
-      <div class="mx-auto grid grid-cols-1 max-w-6xl gap-12 px-5 lg:grid-cols-[1fr_1.4fr]">
-        <h2 data-reveal class="text-4xl font-semibold tracking-tight sm:text-5xl">Preguntas frecuentes</h2>
-        <div class="divide-y divide-linea border-y border-linea">
-          {preguntas.map((q, i) => (
-            <details class="pregunta group" data-reveal style={`--d:${i}`} name="faq">
-              <summary class="flex cursor-pointer list-none items-center justify-between gap-6 py-6 font-display text-xl font-medium">
-                {q.p}<span class="icono grid size-9 shrink-0 place-items-center rounded-full bg-marca/10 text-2xl text-marca">+</span>
-              </summary>
-              <p class="pb-6 pr-12 leading-relaxed text-suave">{q.r}</p>
-            </details>
+    <!-- 8 · EQUIPO -->
+    <section id="equipo" class="diapo equipo" aria-labelledby="t-equipo">
+      <div class="plano">
+        <p class="mini eyebrow"><span class="mask"><span class="sube">Nuestro equipo</span></span></p>
+        <h2 id="t-equipo" class="disp secc-h" tabindex="-1" style="max-width:16ch"><span class="mask"><span class="sube">Las personas detrás de cada rescate</span></span></h2>
+        <ul class="equipo-lista" role="list">
+          {equipo.map((m, i) => (
+            <li>
+              <span class="avatar" style={`background:${m.color}`} data-ancla-entra={i < 4 ? i + 1 : undefined} data-ancla-sale={i < 4 ? i + 1 : undefined} aria-hidden="true"><span class="rotulo">{iniciales(m.nombre)}</span></span>
+              <h3 class="disp"><span class="mask"><span class="sube">{m.nombre}</span></span></h3>
+              <p class="rol mini"><span class="mask"><span class="sube">{m.rol}</span></span></p>
+              <p class="texto"><span class="mask"><span class="sube">{m.texto}</span></span></p>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
 
-    <!-- CONTACTO -->
-    <section id="contacto" class="scroll-mt-20 px-5 pb-24">
-      <div class="mx-auto grid max-w-6xl overflow-hidden rounded-[36px] bg-marca text-white lg:grid-cols-2">
-        <div class="relative p-9 sm:p-14">
-          <h2 data-reveal class="text-4xl font-semibold tracking-tight sm:text-5xl">Escríbenos</h2>
-          <p data-reveal style="--d:1" class="mt-4 max-w-md text-lg text-white/85">Para adoptar, ser hogar temporal o sumarte como voluntario. Respondemos en menos de 48 horas.</p>
-          <Huella class="parallax absolute -bottom-6 right-8 size-40 text-white/10" style="--p-desde:40px;--p-hasta:-40px" />
-        </div>
-        <div class="bg-fondo p-9 text-tinta sm:p-14">
-          <form id="form-contacto" class="space-y-5" novalidate>
-            <div>
-              <label for="c-nombre" class="mb-1.5 block text-sm font-semibold">Nombre</label>
-              <input id="c-nombre" name="nombre" required autocomplete="name" class="w-full rounded-2xl border border-linea bg-superficie px-4 py-3 outline-none transition focus:border-marca" />
-            </div>
-            <div>
-              <label for="c-correo" class="mb-1.5 block text-sm font-semibold">Correo</label>
-              <input id="c-correo" name="correo" type="email" required autocomplete="email" class="w-full rounded-2xl border border-linea bg-superficie px-4 py-3 outline-none transition focus:border-marca" />
-            </div>
-            <div>
-              <label for="c-motivo" class="mb-1.5 block text-sm font-semibold">Motivo</label>
-              <select id="c-motivo" name="motivo" class="w-full rounded-2xl border border-linea bg-superficie px-4 py-3 outline-none transition focus:border-marca">
-                <option>Quiero adoptar</option>
-                {peludos.map((p) => <option>Quiero adoptar a {p.nombre}</option>)}
-                <option>Hogar temporal</option><option>Voluntariado</option><option>Donaciones</option>
-              </select>
-            </div>
-            <div>
-              <label for="c-mensaje" class="mb-1.5 block text-sm font-semibold">Mensaje</label>
-              <textarea id="c-mensaje" name="mensaje" rows="3" class="w-full rounded-2xl border border-linea bg-superficie px-4 py-3 outline-none transition focus:border-marca"></textarea>
-            </div>
-            <p id="c-error" class="hidden text-sm font-semibold text-marca" role="alert">Revisa tu nombre y tu correo.</p>
-            <button class="w-full rounded-full bg-tinta py-4 font-semibold text-fondo transition hover:bg-marca">Enviar</button>
-            <p class="text-center text-xs text-suave">Sitio de demostración: este formulario no envía datos.</p>
-          </form>
-          <div id="c-exito" class="hidden py-10 text-center" aria-live="polite">
-            <svg viewBox="0 0 52 52" class="exito mx-auto size-20" aria-hidden="true"><circle cx="26" cy="26" r="24" fill="none" stroke="var(--acento)" stroke-width="3" /><path d="m15 27 7 7 15-15" fill="none" stroke="var(--acento)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" /></svg>
-            <p class="mt-5 font-display text-2xl font-semibold">¡Gracias, <span id="c-quien"></span>!</p>
-            <p class="mt-2 text-suave">En una ONG real, aquí te escribiríamos en menos de 48 horas.</p>
+    <!-- 9 · PREGUNTAS: maestro-detalle en escritorio; acordeón en el móvil -->
+    <section id="preguntas" class="diapo preguntas" aria-labelledby="t-preguntas">
+      <div class="plano">
+        <h2 id="t-preguntas" class="disp secc-h" tabindex="-1"><span class="mask"><span class="sube">Preguntas frecuentes</span></span></h2>
+        <div class="preguntas-grid">
+          <div class="faq">
+              {preguntas.map((q, i) => (
+                <details class="pregunta" name="faq" open={i === 0}>
+                  <summary>
+                    <span class="barra-activa" aria-hidden="true"></span>
+                    <span class="mask"><span class="sube">{q.p}</span></span>
+                    <span class="icono" aria-hidden="true" data-ancla-entra={i + 1} data-ancla-sale={i === 0 ? 2 : undefined}><span class="rotulo">+</span></span>
+                  </summary>
+                  <div class="respuesta">
+                    <p class="resp-num mini"><span class="mask"><span class="sube">Respuesta {String(i + 1).padStart(2, '0')}</span></span></p>
+                    <p class="resp-texto"><span class="mask"><span class="sube">{q.r}</span></span></p>
+                  </div>
+                </details>
+              ))}
           </div>
         </div>
       </div>
     </section>
-  </main>
 
-  <footer class="border-t border-linea bg-[var(--ciruela)] px-5 py-12 text-fondo/80">
-    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6 text-sm">
-      <p class="flex items-center gap-3"><Logo class="size-9" /> Ayuda a un Peludo · Sitio de demostración. La ONG y las personas son ficticias.</p>
-      <a href={base} class="font-semibold text-[var(--mostaza)] hover:underline">← Ver el antes y después</a>
-    </div>
-  </footer>
+    <!-- 10 · CONTACTO: el fondo terracota se abre desde el botón de la cabecera; el pie va al final de la escena -->
+    <section id="contacto" class="diapo cierre" aria-labelledby="t-contacto">
+      <div class="iris" data-ancla-entra="1" aria-hidden="true"><Huella class="motivo" /></div>
+      <div class="plano">
+        <h2 id="t-contacto" class="disp" tabindex="-1"><span class="mask"><span class="sube">Escríbenos</span></span></h2>
+        <div class="cierre-grid">
+          <div class="cierre-texto">
+            <p><span class="mask"><span class="sube">Para adoptar, ser hogar temporal o sumarte como voluntario. Respondemos en menos de 48 horas.</span></span></p>
+            <span class="huella-marca" data-ancla-entra="2" aria-hidden="true"><Huella class="huella-cierre" /></span>
+          </div>
+          <div class="tarjeta-form">
+            <div class="tarjeta-cuerpo">
+              <form id="form-contacto" novalidate>
+                <div class="campos-fila">
+                  <div class="campo" style="--c: 0">
+                    <label for="c-nombre"><span class="mask"><span class="sube">Nombre</span></span></label>
+                    <input id="c-nombre" name="nombre" required autocomplete="name" />
+                  </div>
+                  <div class="campo" style="--c: 1">
+                    <label for="c-correo"><span class="mask"><span class="sube">Correo</span></span></label>
+                    <input id="c-correo" name="correo" type="email" required autocomplete="email" />
+                  </div>
+                </div>
+                <div class="campo" style="--c: 2">
+                  <label for="c-motivo"><span class="mask"><span class="sube">Motivo</span></span></label>
+                  <select id="c-motivo" name="motivo" class="campo-cierra">
+                    <option>Quiero adoptar</option>
+                    {peludos.map((p) => <option>Quiero adoptar a {p.nombre}</option>)}
+                    <option>Hogar temporal</option><option>Voluntariado</option><option>Donaciones</option>
+                  </select>
+                </div>
+                <div class="campo" style="--c: 3">
+                  <label for="c-mensaje"><span class="mask"><span class="sube">Mensaje</span></span></label>
+                  <textarea id="c-mensaje" name="mensaje" rows="2" class="campo-cierra"></textarea>
+                </div>
+                <p id="c-error" class="error hidden" role="alert">Revisa tu nombre y tu correo.</p>
+                <button class="btn btn-tinta btn-ancho btn-enviar"><span class="mask"><span class="sube">Enviar</span></span></button>
+                <p class="demo">Sitio de demostración: este formulario no envía datos.</p>
+              </form>
+              <div id="c-exito" class="exito-caja hidden" aria-live="polite">
+                <svg viewBox="0 0 52 52" class="exito mx-auto size-20" aria-hidden="true"><circle cx="26" cy="26" r="24" fill="none" stroke="var(--acento)" stroke-width="3" /><path d="m15 27 7 7 15-15" fill="none" stroke="var(--acento)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                <p class="gracias">¡Gracias, <span id="c-quien"></span>!</p>
+                <p class="demo">En una ONG real, aquí te escribiríamos en menos de 48 horas.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="pie-cierre revela">
+          <p class="flex items-center gap-3"><Logo class="size-9" /> Ayuda a un Peludo · Sitio de demostración. La ONG y las personas son ficticias.</p>
+          <a href={base} class="font-semibold underline-offset-4 hover:underline">← Ver el antes y después</a>
+        </footer>
+      </div>
+    </section>
+  </main>
+  <!-- Escena inicial por hash: mueve .activa antes del primer pintado, para que el modo mazo no muestre la escena equivocada -->
+  <script is:inline>
+    (function () {
+      var h = document.documentElement;
+      if (!h.classList.contains('escenas') || !h.dataset.inicio) return;
+      var sec = null;
+      try {
+        var el = document.getElementById(decodeURIComponent(h.dataset.inicio));
+        sec = el && el.closest('main > section.diapo');
+      } catch (e) { sec = null; }
+      if (!sec) return;
+      document.querySelectorAll('main > section.diapo.activa').forEach(function (s) { s.classList.remove('activa'); });
+      sec.classList.add('activa');
+    })();
+  </script>
+
+  <nav class="puntos-nav" aria-label="Secciones">
+    <ol>
+      {secciones.map(([id, nombre]) => (
+        <li><a href={`#${id}`}><span class="sr-only">{nombre}</span></a></li>
+      ))}
+    </ol>
+  </nav>
 </Base>
 
-<style>
-  .mancha { border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%; animation: mancha 14s ease-in-out infinite; }
-  @keyframes mancha { 50% { border-radius: 58% 42% 38% 62% / 55% 38% 62% 45%; transform: rotate(8deg) scale(1.04); } }
-  .flotar { animation: flotar 6s ease-in-out infinite; }
-  @keyframes flotar { 50% { translate: 0 -14px; } }
-  .corazon { animation: latido 1.6s ease-in-out infinite; }
-  @keyframes latido { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.25); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } }
-  .menu-movil:popover-open { animation: entrar .4s var(--ease-salida); }
+<style is:global>
+  /* =====================================================================
+     Editorial · Ayuda a un Peludo
+     Orden: base (página normal, legible con scroll) → modo "mazo" (html.escenas).
+     El modo mazo solo se activa con startViewTransition, movimiento permitido y alto >= 560 px.
+     Ningún estilo del modo mazo aplica fuera de html.escenas.
+     ===================================================================== */
+
+  :root {
+    --friccion: cubic-bezier(0.16, 1, 0.3, 1);
+    --encastre: cubic-bezier(0.87, 0, 0.13, 1);
+    --hueco-faq: 4rem;
+    interpolate-size: allow-keywords;
+  }
+
+  /* Cabecera: los enlaces llevan 14 px de relleno a cada lado y el contenedor lo compensa con margen. El texto queda donde
+     estaba y la píldora (que se desliza detrás del enlace activo) tiene cuerpo alrededor de cada palabra. */
+  .cab-lw { margin-inline: -14px; --pill-bg: var(--marca); --pill-fg: #fff; }
+  .cab-lw a { display: block; padding: 8px 14px; border-radius: 999px; }
+
+  /* ---------- Tipografía y piezas comunes ---------- */
+  .mini { font-family: var(--fuente-cuerpo); font-size: .72rem; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; line-height: 1.4; }
+  .disp { font-family: var(--fuente-display); font-weight: 300; letter-spacing: -.04em; line-height: .95; }
+  .enf { color: var(--marca); font-style: italic; }
+  .secc-h { font-size: clamp(2.4rem, 6.2vw, 5.5rem); }
+  .eyebrow { color: var(--marca-fuerte); margin-bottom: 1.1rem; }
+  .wrap { max-width: 72rem; margin-inline: auto; padding-inline: clamp(18px, 5vw, 56px); }
+  .oscuro :focus-visible { outline-color: var(--mostaza); }
+  .oscuro .ficha :focus-visible { outline-color: var(--acento); }
+  .plano { max-width: 72rem; margin-inline: auto; padding-inline: clamp(18px, 5vw, 56px); }
+  .diapo h2[tabindex="-1"]:focus { outline: none; }
+  .pista-hint, .hint { display: none; }
+  /* Holgura vertical sin cambiar el diseño: el margen negativo compensa el relleno. Así las descendentes
+     (g, p, y, q, j) y los acentos altos no quedan cortados por las máscaras ni por el recorte de los rótulos. */
+  .rotulo { display: inline-block; padding-block: .14em .22em; margin-block: -.14em -.22em; }
+  .chip-etiqueta { display: inline-flex; align-items: center; gap: .5rem; border-radius: 999px; padding: .5rem .95rem; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; border-radius: 999px; padding: .95rem 1.6rem; font-size: .95rem; font-weight: 600; line-height: 1.2; text-align: center; border: 2px solid transparent; transition: background-color .3s var(--friccion), color .3s var(--friccion), border-color .3s var(--friccion), transform .3s var(--friccion); cursor: pointer; }
+  .btn:hover { transform: translateY(-2px); }
+  .btn-lleno { background: var(--marca); color: #fff; }
+  .btn-lleno:hover { background: var(--marca-fuerte); }
+  .btn-borde { border-color: color-mix(in srgb, var(--tinta) 30%, transparent); color: var(--tinta); }
+  .btn-borde:hover { border-color: var(--tinta); }
+  .btn-tinta { background: var(--tinta); color: var(--fondo); }
+  .btn-tinta:hover { background: var(--marca-fuerte); }
+  .btn-mostaza { background: var(--mostaza); color: var(--ciruela); }
+  .btn-mostaza:hover { background: #f3c961; }
+  .btn-ancho { width: 100%; }
+
+  .menu-movil:popover-open { animation: menu-entra .4s var(--friccion); }
   .menu-movil::backdrop { background: rgb(43 29 43 / .4); backdrop-filter: blur(4px); }
-  @keyframes entrar { from { transform: translateX(100%); } }
-  .tarjeta[hidden] { display: none; }
-  .exito circle { stroke-dasharray: 151; stroke-dashoffset: 151; animation: trazo .7s ease forwards; }
-  .exito path { stroke-dasharray: 36; stroke-dashoffset: 36; animation: trazo .4s .55s ease forwards; }
+  @keyframes menu-entra { from { transform: translateX(100%); } }
+  /* Respaldo sin Popover API (Safari 16): el panel se muestra con la clase .abierto */
+  @supports not selector(:popover-open) {
+    .menu-movil { display: none; position: fixed; inset: 0 0 0 auto; z-index: 60; }
+    .menu-movil.abierto { display: block; animation: menu-entra .4s var(--friccion); }
+  }
+
+  /* ---------- Base · 1 Inicio ---------- */
+  .portada { background: var(--fondo); padding: 7.5rem 0 4.5rem; }
+  .portada .plano { display: grid; justify-items: center; }
+  .portada-grid { display: grid; justify-items: center; gap: 2rem; text-align: center; width: 100%; }
+  .portada .kick { color: var(--marca-fuerte); margin: 0; background: color-mix(in srgb, var(--marca) 12%, transparent); }
+  .portada h1 { font-size: clamp(2.7rem, 11vw, 7rem); line-height: .95; letter-spacing: -.045em; margin: 0; }
+  .portada h1 .l { display: block; }
+  .escenario { position: relative; width: min(74vw, 340px); aspect-ratio: 4 / 5; overflow: clip; }
+  .arco { position: absolute; inset: 0; background: var(--menta); border-radius: 999px 999px 0 0; }
+  .retrato-hero { position: absolute; left: 50%; bottom: -2%; width: 90%; translate: -50% 0; transform-origin: 50% 100%; }
+  .retrato-hero svg { width: 100%; height: auto; }
+  .cta-portada { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
+
+  /* ---------- Base · 2 Mensaje ---------- */
+  .mensaje { background: var(--menta); padding: clamp(5rem, 12vw, 9rem) 0; }
+  .mensaje .plano { display: grid; justify-items: center; gap: 2.5rem; text-align: center; }
+  .mensaje h2 { font-size: clamp(2.2rem, 5.4vw, 4.6rem); line-height: 1.02; letter-spacing: -.03em; max-width: 16ch; margin: 0; }
+  .chip-mensaje { background: var(--fondo); color: var(--tinta); }
+  .retrato-mensaje { width: min(60vw, 300px); aspect-ratio: 1; }
+  .retrato-mensaje svg { width: 100%; height: 100%; display: block; }
+  .fondo-ancla { display: none; }
+
+  /* ---------- Base · 3 Nosotros ---------- */
+  .manif { background: var(--fondo); padding: clamp(5rem, 12vw, 9rem) 0; }
+  .manif-cab { display: flex; align-items: center; gap: 1.1rem; margin-bottom: 2rem; }
+  .manif h2 { color: var(--marca); margin: 0; font-weight: 600; background: color-mix(in srgb, var(--marca) 12%, transparent); }
+  .insignia { display: block; flex: none; width: 4.5rem; aspect-ratio: 1; border-radius: 50%; overflow: hidden; }
+  .insignia svg { width: 100%; height: 100%; display: block; }
+  .manif .txt { font-size: clamp(1.9rem, 4.3vw, 4.5rem); line-height: 1.12; letter-spacing: -.025em; margin: 0; }
+  .manif .linea { display: block; }
+  .banda { display: inline-block; background: var(--menta); color: var(--tinta); border-radius: .14em; padding: 0 .16em; font-style: italic; }
+
+  /* ---------- Base · 4 Adopta (galería) ---------- */
+  .galeria { background: var(--ciruela); color: var(--fondo); padding: clamp(5rem, 12vw, 9rem) 0; }
+  .galeria .cab { color: var(--mostaza); margin: 0 0 1.5rem; background: color-mix(in srgb, var(--mostaza) 20%, transparent); justify-self: start; }
+  .galeria h2 { font-size: clamp(3.2rem, 9vw, 8rem); line-height: .9; letter-spacing: -.045em; margin: 0; }
+  .galeria h2 i { color: var(--mostaza); }
+  .galeria .bajada { margin: 1.6rem 0 0; color: #d9cbd6; max-width: 34ch; font-size: 1.05rem; line-height: 1.5; }
+  .filtros { display: inline-flex; flex-wrap: wrap; margin: 2rem 0 0; padding: 4px; border: 1px solid rgb(255 255 255 / .3); border-radius: 999px; min-width: 0; }
+  .filtros label { cursor: pointer; border-radius: 999px; padding: .55rem 1.1rem; font-size: .875rem; font-weight: 600; transition: background-color .3s var(--friccion), color .3s var(--friccion); }
+  .filtros label:has(:checked) { background: var(--mostaza); color: var(--ciruela); }
+  .filtros label:has(:focus-visible) { outline: 3px solid var(--mostaza); outline-offset: 2px; }
+  .vista { margin-top: 3.5rem; }
+  #lista-peludos { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); }
+  #lista-peludos > li[hidden] { display: none; }
+  .ficha { position: relative; display: flex; flex-direction: column; background: var(--fondo); color: var(--tinta); border-radius: 28px; overflow: hidden; }
+  .ficha .img { position: relative; background: var(--bg); aspect-ratio: 4 / 3; overflow: hidden; }
+  .ficha .retrato-ficha { position: absolute; left: 50%; bottom: -6%; width: min(72%, 15rem); height: auto; translate: -50% 0; transform-origin: 50% 100%; }
+  .ficha .num { position: absolute; top: 1rem; left: 1.25rem; font-family: var(--fuente-display); font-style: italic; font-size: 1.15rem; z-index: 1; }
+  .ficha .dat { display: flex; flex: 1; flex-direction: column; justify-content: space-between; gap: 1.25rem; padding: clamp(1.25rem, 2.4vw, 2.25rem); }
+  .ficha .esp { color: var(--marca); margin: 0 0 .5rem; }
+  .ficha h3 { font-size: clamp(2.6rem, 5vw, 4.4rem); line-height: .9; margin: 0; }
+  .ficha .desc { font-family: var(--fuente-display); font-size: clamp(1.05rem, 1.5vw, 1.45rem); line-height: 1.3; margin: .9rem 0 0; letter-spacing: -.005em; }
+  .ficha dl { display: flex; flex-wrap: wrap; gap: .5rem 1.4rem; margin: 0; padding-top: 1rem; border-top: 1px solid var(--linea); }
+  .ficha dt { color: var(--suave); font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; }
+  .ficha dd { margin: 0; font-weight: 600; font-size: .875rem; }
+  .ficha .chip { margin: .75rem 0 0; font-family: var(--font-mono); font-size: .68rem; color: var(--suave); }
+  .ficha .btn { margin-top: 1.1rem; }
+  .fin { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1.5rem 2rem; margin-top: 3.5rem; text-align: center; }
+  .fin-texto { font-size: clamp(2.2rem, 5vw, 4.5rem); line-height: .95; letter-spacing: -.035em; margin: 0; }
+  .fin-texto i { color: var(--mostaza); }
+
+  /* ---------- Base · 5 Test ---------- */
+  .test { background: var(--rosa); color: var(--tinta); padding: clamp(5rem, 12vw, 9rem) 0; }
+  .test .plano { display: grid; gap: 3.5rem; }
+  .test .lead { margin: 1.4rem 0 0; max-width: 30ch; font-size: 1.15rem; line-height: 1.5; }
+  .badge-test { display: grid; place-items: center; width: 4.5rem; aspect-ratio: 1; border-radius: 50%; background: var(--mostaza); color: var(--ciruela); margin: 0 0 1.4rem; }
+  .badge-test svg { width: 2rem; height: 2rem; }
+  .testform { display: grid; gap: 2.4rem; }
+  .preg { border: 0; margin: 0; padding: 0; min-width: 0; }
+  .preg legend { padding: 0; margin-bottom: 1rem; font-family: var(--fuente-display); font-weight: 300; font-size: clamp(1.5rem, 2.6vw, 2rem); letter-spacing: -.02em; }
+  .preg legend .num { margin-right: .7rem; color: var(--marca-fuerte); font-style: italic; }
+  .opciones { display: flex; flex-wrap: wrap; gap: .6rem; }
+  .opcion { cursor: pointer; border: 1.5px solid var(--suave); border-radius: 999px; padding: .65rem 1.25rem; font-size: .9rem; font-weight: 600; transition: background-color .25s var(--friccion), color .25s var(--friccion), border-color .25s var(--friccion); }
+  .opcion:hover { border-color: var(--tinta); }
+  .opcion:has(:checked) { background: var(--tinta); border-color: var(--tinta); color: var(--fondo); }
+  .opcion:has(:focus-visible) { outline: 3px solid var(--tinta); outline-offset: 3px; }
+  .test :focus-visible { outline-color: var(--tinta); }
+  .resultados { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .resultado { background: var(--fondo); border-radius: 24px; padding: 1rem; }
+  .resultado .nombre { margin: .75rem 0 0; font-family: var(--fuente-display); font-weight: 300; font-size: 1.6rem; letter-spacing: -.02em; }
+  .resultado .meta { margin: 0; font-size: .875rem; color: var(--suave); }
+
+  /* ---------- Test por pasos (Stepper) ----------
+     Arriba, el indicador: puntos unidos por una línea que se llena (--friccion), el punto actual crece y los hechos dibujan
+     su check con stroke-dashoffset. La pregunta sale por su máscara (240 ms, --encastre) y la nueva sube (900 ms, --friccion)
+     con las opciones en cascada de 30 ms; "Volver" hace la reversa simétrica. Con .st-on (lo pone el script) solo se ve el paso actual. */
+  .st-prog { position: relative; }
+  .st-linea { position: absolute; left: 12.5%; right: 12.5%; top: 13px; height: 2px; background: color-mix(in srgb, var(--tinta) 16%, transparent); }
+  .st-relleno { display: block; height: 100%; background: var(--marca); transform-origin: 0 50%; transform: scaleX(var(--p, 0)); transition: transform .9s var(--friccion); }
+  .st-pasos { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); list-style: none; margin: 0; padding: 0; }
+  .st-paso { position: relative; z-index: 1; display: grid; justify-items: center; gap: 8px; }
+  .st-dot { position: relative; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--tinta) 38%, transparent); background: var(--rosa); transition: transform .7s var(--friccion), background-color .5s var(--friccion), border-color .5s var(--friccion); }
+  .st-pt { width: 8px; height: 8px; border-radius: 50%; background: #fff; transform: scale(0); transition: transform .6s var(--friccion); }
+  .st-chk { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset .55s var(--friccion); }
+  .st-et { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--suave); transition: color .5s var(--friccion); }
+  .st-paso[data-estado="actual"] .st-dot { transform: scale(1.32); background: var(--marca); border-color: var(--marca); }
+  .st-paso[data-estado="actual"] .st-pt { transform: scale(1); }
+  .st-paso[data-estado="actual"] .st-et { color: var(--tinta); }
+  .st-paso[data-estado="hecho"] .st-dot { background: var(--tinta); border-color: var(--tinta); }
+  .st-paso[data-estado="hecho"] .st-chk { stroke-dashoffset: 0; transition-delay: .18s; }
+  .st-on .st-pane:not(.st-actual) { display: none; }
+  .st-etapa { position: relative; --sal: -170%; --ent: 170%; --cps: 0 0 100% 0; --cpe: 100% 0 0 0; }
+  .st-etapa[data-dir="atras"] { --sal: 170%; --ent: -170%; --cps: 100% 0 0 0; --cpe: 0 0 100% 0; }
+  .st-etapa .rise { display: block; transform: none; transition: transform .9s var(--friccion) calc(var(--s, 0) * 30ms); }
+  .st-etapa[data-fase="sale"] .rise { transform: translateY(var(--sal)); transition: transform .24s var(--encastre) calc(min(var(--s, 0), 8) * 12ms); }
+  .st-etapa[data-fase="llega"] .rise { transform: translateY(var(--ent)); transition: none; }
+  .st-etapa .rise.activo { will-change: transform; }
+  /* Cada opción sube dentro de su propia máscara (el relleno deja ver el borde y el aro de foco) */
+  .op-mask { overflow: hidden; padding: 4px; margin: -4px; }
+  .op-mask > .opcion { display: block; }
+  .st-etapa .resultado { clip-path: inset(0 round 24px); transition: clip-path .9s var(--friccion) calc(var(--s, 0) * 30ms); }
+  .st-etapa[data-fase="sale"] .resultado { clip-path: inset(var(--cps) round 24px); transition: clip-path .24s var(--encastre); }
+  .st-etapa[data-fase="llega"] .resultado { clip-path: inset(var(--cpe) round 24px); transition: none; }
+  .preg legend:focus, .res .eyebrow:focus { outline: none; }
+  .st-pie { display: flex; align-items: center; gap: 12px; }
+  .st-pie .btn { padding: .7rem 1.3rem; font-size: .88rem; }
+  .st-pie .btn[disabled] { color: color-mix(in srgb, var(--tinta) 38%, transparent); border-color: color-mix(in srgb, var(--tinta) 14%, transparent); cursor: default; transform: none; }
+  .st-pie small { color: var(--suave); font-size: .8rem; }
+
+  /* ---------- Base · 6 Proceso ---------- */
+  .proceso { background: var(--fondo); padding: clamp(5rem, 12vw, 9rem) 0; }
+  .proceso .etiqueta-proceso { font-family: var(--fuente-cuerpo); font-size: .72rem; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--marca-fuerte); margin: 0; }
+  .pasos { list-style: none; margin: 3rem 0 0; padding: 0; display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+  .paso { position: relative; background: var(--superficie); border: 1px solid var(--linea); border-radius: 28px; padding: 1.75rem; isolation: isolate; }
+  .numeral { display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border-radius: 50%; background: var(--marca); color: #fff; font-family: var(--fuente-display); font-style: italic; font-size: 1.5rem; line-height: 1; }
+  .paso h3 { margin: 1.2rem 0 0; font-size: 2.1rem; }
+  .paso p { margin: .7rem 0 0; color: var(--suave); line-height: 1.5; }
+  .fantasma { display: none; }
+  .barras { display: none; }
+
+  /* ---------- Base · 7 Cómo ayudar ---------- */
+  .ayuda { background: var(--fondo); padding: clamp(5rem, 12vw, 9rem) 0; }
+  /* Tarjetas (con foco que sigue al puntero: src/scripts/foco.ts, variante terracota .spot-claro) */
+  .ayuda-lista { list-style: none; margin: 4rem 0 0; padding: 0; display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); }
+  .ayuda-lista li { min-width: 0; border: 1px solid var(--linea); border-radius: 24px; background: var(--superficie); padding: 1.5rem 1.5rem 1.75rem; }
+  .icono-ayuda { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%; background: color-mix(in srgb, var(--marca) 12%, transparent); color: var(--marca-fuerte); }
+  .ayuda-lista h3 { margin: 1.5rem 0 0; font-size: 2rem; line-height: 1; overflow-wrap: break-word; }
+  .ayuda-lista p { margin: .8rem 0 0; color: var(--suave); line-height: 1.55; overflow-wrap: break-word; }
+
+  /* ---------- Base · 8 Equipo ---------- */
+  .equipo { background: var(--superficie); padding: clamp(5rem, 12vw, 9rem) 0; }
+  .equipo-lista { list-style: none; margin: 4rem 0 0; padding: 0; display: grid; gap: 2.5rem 2rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); }
+  .equipo-lista li { min-width: 0; }
+  .avatar { display: grid; place-items: center; width: 4.5rem; height: 4.5rem; border-radius: 50%; color: #fff; font-family: var(--fuente-display); font-weight: 600; font-size: 1.5rem; }
+  .equipo-lista h3 { margin: 1.4rem 0 0; font-size: 1.9rem; line-height: 1; }
+  .equipo-lista .rol { margin: .6rem 0 0; color: var(--marca-fuerte); }
+  .equipo-lista .texto { margin: .8rem 0 0; color: var(--suave); line-height: 1.55; }
+
+  /* ---------- Base · 9 Preguntas ----------
+     Escritorio (>= 900 px): maestro-detalle. La lista va a la izquierda y cada respuesta
+     se coloca, en posición absoluta, en el panel de la derecha: abrir una pregunta no mueve la columna.
+     Móvil: acordeón anclado arriba; la altura se anima con interpolate-size. */
+  .preguntas-grid { position: relative; display: grid; gap: 3rem; }
+  .faq { border-top: 1px solid var(--tinta); }
+  .pregunta { border-bottom: 1px solid var(--linea); }
+  /* Fila: el fondo tintado es un ::before con clip-path (crece al abrirse); el texto y el icono van por encima.
+     El relleno lateral es fijo en todas las filas, así abrir una pregunta no mueve el texto ni la columna. */
+  .pregunta summary { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; cursor: pointer; list-style: none; padding: 1.6rem 1.25rem; font-family: var(--fuente-display); font-weight: 300; font-size: clamp(1.3rem, 2.4vw, 1.9rem); letter-spacing: -.02em; line-height: 1.15; }
+  .pregunta summary::-webkit-details-marker { display: none; }
+  .pregunta summary::before { content: ""; position: absolute; inset: 0; border-radius: 16px; background: color-mix(in srgb, var(--marca) 8%, transparent); clip-path: inset(0 100% 0 0 round 16px); transition: clip-path .5s var(--friccion); }
+  .pregunta[open] summary::before { clip-path: inset(0 0 0 0 round 16px); }
+  .pregunta summary .mask, .pregunta summary .icono { position: relative; }
+  .pregunta summary .mask { flex: 1; transition: color .4s var(--friccion); }
+  .pregunta[open] summary .mask { color: var(--marca-fuerte); font-weight: 400; }
+  .barra-activa { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 4px 0 0 4px; background: var(--marca); transform: scaleY(0); transform-origin: 50% 0; transition: transform .5s var(--friccion); }
+  .pregunta[open] .barra-activa { transform: scaleY(1); }
+  .pregunta .icono { display: grid; place-items: center; flex: none; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: color-mix(in srgb, var(--marca) 12%, transparent); color: var(--marca-fuerte); font-size: 1.6rem; line-height: 1; transition: background-color .4s var(--friccion), color .4s var(--friccion); }
+  .pregunta[open] .icono { background: var(--marca); color: #fff; }
+  details.pregunta .icono { transition: transform .6s var(--friccion), background-color .4s var(--friccion), color .4s var(--friccion); }
+  details.pregunta[open] .icono { transform: rotate(45deg); }
+  .respuesta { color: var(--suave); font-size: clamp(.9rem, 1vw, 1rem); line-height: 1.6; }
+  .respuesta p { margin: 0; }
+  .respuesta .resp-num { margin: 0 0 .9rem; color: var(--marca-fuerte); }
+  .respuesta .mask { display: block; overflow: hidden; padding-block: .14em .22em; margin-block: -.14em -.22em; }
+  .respuesta .sube { display: block; }
+  .pregunta .respuesta .sube { transform: translateY(-170%); transition: transform .25s var(--encastre); }
+  .pregunta[open] .respuesta .sube { transform: none; transition: transform .6s var(--friccion); }
+  @starting-style { .pregunta[open] .respuesta .sube { transform: translateY(110%); } }
+  /* details.pregunta (no solo .pregunta): iguala la especificidad de la hoja global de FAQ y gana en el orden */
+  details.pregunta::details-content { transition: content-visibility .3s allow-discrete, block-size .5s var(--friccion); overflow: clip; }
+  details.pregunta[open]::details-content { block-size: auto; }
+  details.pregunta:not([open])::details-content { block-size: 0; }
+  @starting-style { details.pregunta[open]::details-content { block-size: 0; } }
+  .pregunta .respuesta { padding: 0 3.5rem 1.8rem 0; }
+
+  /* ---------- Base · 10 Contacto ---------- */
+  .cierre { background: var(--marca); color: #fff; padding: clamp(5rem, 12vw, 8rem) 0 2rem; }
+  .iris { display: none; }
+  .cierre .plano { display: grid; gap: clamp(2.5rem, 6vw, 4.5rem); }
+  .cierre h2 { font-size: clamp(3.5rem, 13vw, 11rem); letter-spacing: -.05em; line-height: .9; text-align: center; margin: 0; }
+  .cierre-grid { display: grid; gap: 2.5rem; align-items: start; }
+  .cierre-texto { position: relative; }
+  .cierre-texto p { margin: 0; max-width: 24ch; font-family: var(--fuente-display); font-weight: 300; font-size: clamp(1.5rem, 2.6vw, 2.2rem); line-height: 1.2; letter-spacing: -.02em; }
+  .huella-marca { display: none; }
+  .huella-cierre { width: 100%; height: auto; opacity: .2; }
+  .tarjeta-form { background: var(--fondo); color: var(--tinta); border-radius: 28px; padding: clamp(1.5rem, 4vw, 2.75rem); }
+  .tarjeta-form form > * + * { margin-top: 1.4rem; }
+  .campos-fila { display: grid; gap: 1.4rem; }
+  .campo label { display: block; margin-bottom: .35rem; font-size: .7rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--suave); }
+  .campo input, .campo select, .campo textarea { width: 100%; border: 0; border-bottom: 1.5px solid var(--suave); border-radius: 0; background: transparent; padding: .5rem 0; font: inherit; font-size: 1.05rem; color: var(--tinta); transition: border-color .25s var(--friccion); }
+  .campo textarea { resize: vertical; }
+  .campo input:focus, .campo select:focus, .campo textarea:focus { border-bottom-color: var(--marca-fuerte); }
+  .campo input:focus-visible, .campo select:focus-visible, .campo textarea:focus-visible { outline-offset: 4px; border-radius: 4px; }
+  .error { margin: 0; font-size: .875rem; font-weight: 600; color: var(--marca-fuerte); }
+  .demo { margin: 0; text-align: center; font-size: .75rem; color: var(--suave); }
+  .exito-caja { padding: 2.5rem 0; text-align: center; }
+  .gracias { margin: 1.25rem 0 .5rem; font-family: var(--fuente-display); font-weight: 300; font-size: 2rem; letter-spacing: -.02em; }
+  .exito circle { stroke-dasharray: 151; stroke-dashoffset: 151; animation: trazo .7s var(--friccion) forwards; }
+  .exito path { stroke-dasharray: 36; stroke-dashoffset: 36; animation: trazo .4s .55s var(--friccion) forwards; }
   @keyframes trazo { to { stroke-dashoffset: 0; } }
-  .resultado:not(.hidden) { animation: aparecer .6s var(--ease-salida) both; }
-  .resultado:not(.hidden) + .resultado:not(.hidden) { animation-delay: .12s; }
-  @keyframes aparecer { from { opacity: 0; transform: translateY(20px) scale(.95); } }
-  @supports (animation-timeline: view()) {
-    .proceso .relleno { animation: llenar linear both; animation-timeline: view(); animation-range: entry 30% cover 70%; }
-    @keyframes llenar { from { transform: scaleY(0); } }
+  .pie-cierre { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; padding-top: 1.25rem; border-top: 1px solid rgb(255 255 255 / .3); font-size: .85rem; color: rgb(255 255 255 / .9); }
+  .pie-cierre p { margin: 0; }
+
+  /* ---------- Base · pantallas anchas ---------- */
+  @media (min-width: 820px) {
+    .portada-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); text-align: left; justify-items: start; }
+    .portada .kick { justify-content: flex-start; }
+    .cta-portada { justify-content: flex-start; }
+    .escenario { justify-self: center; }
+    .retrato-mensaje { width: min(30vw, 300px); }
+  }
+  @media (min-width: 900px) {
+    .preguntas-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); column-gap: var(--hueco-faq); min-height: 18rem; }
+    /* Panel de respuesta: columna derecha, desde la primera fila hasta el final de la lista (misma banda vertical).
+       El porcentaje sale del ancho del grid (fr = 1 y 1.2). Una regla fina marca su borde izquierdo. */
+    .pregunta .respuesta {
+      position: absolute; top: 0; bottom: 0;
+      left: calc((100% - var(--hueco-faq)) / 2.2 + var(--hueco-faq));
+      width: calc((100% - var(--hueco-faq)) * 1.2 / 2.2);
+      padding: clamp(.6rem, 1.8svh, 1.2rem) 0 0 2.2rem;
+      border-left: 1px solid color-mix(in srgb, var(--tinta) 35%, transparent);
+    }
+    .respuesta .resp-num { margin-bottom: 1.1rem; }
+    .respuesta .resp-texto { font-family: var(--fuente-display); font-weight: 300; font-size: clamp(1.35rem, 2vw, 1.9rem); line-height: 1.3; letter-spacing: -.015em; color: var(--tinta); max-width: 30ch; }
+    .pregunta::details-content { block-size: auto; }
+    .pregunta:not([open])::details-content { block-size: auto; }
+    /* Hilo fino desde la fila abierta hasta el panel de respuesta (ocupa exactamente el hueco entre columnas) */
+    .pregunta summary::after { content: ""; position: absolute; left: 100%; top: 50%; width: var(--hueco-faq); height: 1px; background: var(--marca); transform: scaleX(0); transform-origin: 0 50%; transition: transform .5s var(--friccion); }
+    .pregunta[open] summary::after { transform: scaleX(1); }
+  }
+  @media (min-width: 1024px) {
+    .test .plano { grid-template-columns: 1fr 1.1fr; align-items: start; gap: 5rem; }
+    .cierre-grid { grid-template-columns: 1fr 1.15fr; }
+    .campos-fila { grid-template-columns: 1fr 1fr; gap: 0 1.5rem; }
+    .huella-marca { display: block; width: 6rem; margin-top: 2.5rem; }
+  }
+
+  /* =====================================================================
+     MODO MAZO · html.escenas
+     Una escena a la vez, a pantalla completa. Tres fases por cambio:
+     1 despedida (los textos suben y se cierran) → 2 morph (anclas) → 3 llegada (los textos suben).
+     ===================================================================== */
+
+
+  /* Documento fijo: el desplazamiento lo hacen las escenas, no la página */
+  html.escenas, html.escenas body { overflow: hidden; height: 100%; overscroll-behavior: none; }
+  html.escenas .cabecera { view-transition-name: cabecera; }
+  html.escenas .diapo { position: fixed; inset: 0; overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 84px 0 0; box-sizing: border-box; margin: 0; }
+  html.escenas .diapo:not(.activa) { display: none; }
+  html.escenas .diapo.activa { display: block; }
+  html.escenas .diapo > .plano { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: safe center; gap: clamp(1rem, 3svh, 2.2rem); max-width: none; padding-block: clamp(12px, 3svh, 36px) clamp(18px, 4svh, 44px); }
+  html.escenas .diapo h2[tabindex="-1"], html.escenas .diapo h1[tabindex="-1"] { outline: none; }
+  html.escenas .pista-hint { display: block; position: absolute; left: 50%; bottom: 22px; translate: -50% 0; color: var(--suave); white-space: nowrap; }
+  html.escenas .hint { display: block; margin: 1rem 0 0; color: #d9cbd6; font-size: .9rem; max-width: 34ch; }
+  html.escenas .galeria .hint { display: none; }
+  html.escenas .mask { display: block; overflow: hidden; padding-block: .14em .22em; padding-inline: .3em; margin-block: -.14em -.22em; margin-inline: -.3em; }
+  html.escenas .sube { display: block; }
+  html.escenas .mask > .sube { will-change: transform; }
+  html.escenas .fondo-ancla { display: block; position: absolute; inset: 0; background: var(--menta); overflow: hidden; }
+  html.escenas .test .fondo-ancla { background: var(--rosa); }
+  html.escenas .iris { display: block; position: absolute; inset: 0; background: var(--marca); overflow: hidden; }
+  html.escenas .motivo { position: absolute; width: min(90vmin, 52rem); right: -14%; bottom: -18%; color: color-mix(in srgb, #fff 7%, transparent); transform: rotate(-16deg); pointer-events: none; }
+  html.escenas .fondo-ancla .motivo, html.escenas .iris .motivo { color: color-mix(in srgb, currentColor 7%, transparent); }
+  html.escenas .mensaje .fondo-ancla .motivo { color: color-mix(in srgb, var(--tinta) 7%, transparent); }
+  html.escenas .test .fondo-ancla .motivo { color: color-mix(in srgb, var(--ciruela) 8%, transparent); }
+  html.escenas .cierre { background: var(--marca); color: #fff; }
+
+  /* ---- Fase 1 · despedida (antes de startViewTransition) ----
+     Los .sube salen hacia arriba dentro de su máscara; los .revela se cierran; los rótulos (texto dentro de anclas) se borran.
+     Las anclas no tienen .sube ni .revela: se quedan como formas. */
+  /* Fase 1 dura 240 ms en total: cada .sube empieza con 12 ms de retraso (máximo 8 pasos) y acaba a los 240 ms */
+  html.escenas .diapo.saliendo .sube { transform: translateY(-170%); transition: transform calc(240ms - min(var(--k, 0), 8) * 12ms) var(--encastre) calc(min(var(--k, 0), 8) * 12ms); }
+  html.escenas .diapo.saliendo .revela { clip-path: inset(0 0 100% 0); transition: clip-path .24s var(--encastre); }
+  html.escenas .diapo.saliendo .rotulo { clip-path: inset(0 100% 0 0); transition: clip-path .24s var(--encastre); }
+  html.escenas .rotulo { clip-path: inset(0 0 0 0); }
+
+  /* ---- Fase 2 · morph: la escena que llega queda en "llegando": solo formas, sin texto en la captura ---- */
+  /* 160 % (no 110 %): con líneas de interlineado ajustado, a 110 % quedaban restos de trazos bajo el borde de la máscara */
+  html.escenas .diapo.llegando .sube { transform: translateY(170%); }
+  html.escenas .diapo.llegando .revela { clip-path: inset(100% 0 0 0); }
+  html.escenas .diapo.llegando .rotulo { clip-path: inset(0 100% 0 0); }
+  html.escenas[data-fase="morph"] .diapo .rotulo { clip-path: inset(0 100% 0 0); }
+
+  /* ---- Fase 3 · llegada: los textos suben desde sus máscaras; los rótulos se abren desde el lado de la ancla ---- */
+  html.escenas .diapo.entrando .sube { animation: sube .9s var(--friccion) both; animation-delay: calc(var(--k, 0) * 30ms); }
+  html.escenas .diapo.entrando .revela { animation: revela .9s var(--friccion) both; animation-delay: calc(var(--k, 0) * 30ms); }
+  html.escenas .diapo.entrando .rotulo { animation: rotulo-abre .6s var(--friccion) both; }
+  html[data-dir="atras"] .diapo.entrando .rotulo { animation-name: rotulo-abre-der; }
+  @keyframes sube { from { transform: translateY(170%); } }
+  @keyframes revela { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0 0 0 0); } }
+  @keyframes rotulo-abre { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+  @keyframes rotulo-abre-der { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
+
+  /* ---- Apertura de la portada · html.abriendo (solo carga directa en #inicio, una vez; el script del <head> la activa antes del primer pintado) ----
+     Arco: su máscara sube desde abajo. Retrato: sube dentro del arco. Titular: la primera línea empieza en 0 ms; 40 ms entre líneas.
+     Rótulo, botones y pista siguen con 30 ms. Cabecera y puntos entran desde sus bordes (solo transform). */
+  @keyframes abre-sube { from { transform: translateY(170%); } }
+  /* El arco conserva su curva superior durante toda la apertura: el recorte lleva el mismo radio que el arco */
+  @keyframes abre-arco { from { clip-path: inset(100% 0 0 0 round 999px 999px 0 0); } to { clip-path: inset(0 0 0 0 round 999px 999px 0 0); } }
+  @keyframes abre-retrato { from { transform: translateY(60%); } }
+  @keyframes abre-cabecera { from { transform: translateY(-110%); } }
+  @keyframes abre-puntos { from { transform: translateX(160%); } }
+  html.escenas.abriendo .portada .arco { animation: abre-arco 1s var(--friccion) both; }
+  html.escenas.abriendo .portada .retrato-hero { animation: abre-retrato .9s var(--friccion) .3s both; }
+  html.escenas.abriendo .portada h1 .mask > .sube { animation: abre-sube .62s var(--friccion) both; }
+  html.escenas.abriendo .portada h1 .mask:nth-child(2) > .sube { animation-delay: 40ms; }
+  html.escenas.abriendo .portada h1 .mask:nth-child(3) > .sube { animation-delay: 80ms; }
+  html.escenas.abriendo .portada .kick .rotulo { animation: rotulo-abre .6s var(--friccion) .24s both; }
+  html.escenas.abriendo .portada .cta-portada > a:nth-child(1) { animation: revela .6s var(--friccion) .27s both; }
+  html.escenas.abriendo .portada .cta-portada > a:nth-child(2) { animation: revela .6s var(--friccion) .30s both; }
+  html.escenas.abriendo .portada .pista-hint { animation: revela .6s var(--friccion) .33s both; }
+  html.escenas.abriendo .cabecera { animation: abre-cabecera .8s var(--friccion) both; }
+  html.escenas.abriendo .puntos-nav { animation: abre-puntos .8s var(--friccion) .15s both; }
+
+  /* ---- Morph: raíz y anclas ---- */
+  html.escenas::view-transition-group(root), html.escenas::view-transition-image-pair(root) { animation: none; inset: 0; width: 100%; height: 100%; }
+  html.escenas::view-transition-old(root) { animation: none; opacity: 1; transform: none; inset: 0; width: 100%; height: 100%; mix-blend-mode: normal; }
+  html.escenas::view-transition-new(root) { animation: funde-raiz .45s var(--encastre) both; inset: 0; width: 100%; height: 100%; mix-blend-mode: normal; }
+  /* Sin figuras: el fondo del destino se funde bajo las anclas (ambas capturas ya no tienen texto) */
+  @keyframes funde-raiz { from { opacity: 0; } }
+
+  /* Cuatro pares de anclas: cada uno con su retardo (45 ms; 60 ms en la división y la unión de #proceso/#ayuda) y su curva */
+  html.escenas { --escalon: 45ms; }
+  html.escenas[data-division] { --escalon: 60ms; }
+  html.escenas::view-transition-group(ancla-1) { animation-duration: .8s; animation-timing-function: var(--friccion); animation-delay: calc((1 - 1) * var(--escalon)); z-index: 5; }
+  html.escenas::view-transition-group(ancla-2) { animation-duration: .8s; animation-timing-function: var(--friccion); animation-delay: calc((2 - 1) * var(--escalon)); z-index: 5; }
+  html.escenas::view-transition-group(ancla-3) { animation-duration: .8s; animation-timing-function: var(--friccion); animation-delay: calc((3 - 1) * var(--escalon)); z-index: 5; }
+  html.escenas::view-transition-group(ancla-4) { animation-duration: .8s; animation-timing-function: var(--friccion); animation-delay: calc((4 - 1) * var(--escalon)); z-index: 5; }
+
+  html.escenas::view-transition-image-pair(ancla-1) { isolation: isolate; overflow: hidden; animation: radio-1 .8s var(--friccion) both; }
+  html.escenas::view-transition-image-pair(ancla-2) { isolation: isolate; overflow: hidden; animation: radio-2 .8s var(--friccion) both; }
+  html.escenas::view-transition-image-pair(ancla-3) { isolation: isolate; overflow: hidden; animation: radio-3 .8s var(--friccion) both; }
+  html.escenas::view-transition-image-pair(ancla-4) { isolation: isolate; overflow: hidden; animation: radio-4 .8s var(--friccion) both; }
+  @keyframes radio-1 { from { border-radius: var(--ar-sale-1, 0px); } to { border-radius: var(--ar-entra-1, 0px); } }
+  @keyframes radio-2 { from { border-radius: var(--ar-sale-2, 0px); } to { border-radius: var(--ar-entra-2, 0px); } }
+  @keyframes radio-3 { from { border-radius: var(--ar-sale-3, 0px); } to { border-radius: var(--ar-entra-3, 0px); } }
+  @keyframes radio-4 { from { border-radius: var(--ar-sale-4, 0px); } to { border-radius: var(--ar-entra-4, 0px); } }
+
+  html.escenas::view-transition-old(ancla-1), html.escenas::view-transition-new(ancla-1),
+  html.escenas::view-transition-old(ancla-2), html.escenas::view-transition-new(ancla-2),
+  html.escenas::view-transition-old(ancla-3), html.escenas::view-transition-new(ancla-3),
+  html.escenas::view-transition-old(ancla-4), html.escenas::view-transition-new(ancla-4) { animation: none; height: 100%; width: 100%; object-fit: cover; mix-blend-mode: normal; }
+  html.escenas::view-transition-old(ancla-1), html.escenas::view-transition-old(ancla-2),
+  html.escenas::view-transition-old(ancla-3), html.escenas::view-transition-old(ancla-4) { opacity: 0; }
+  html.escenas::view-transition-new(ancla-1), html.escenas::view-transition-new(ancla-2),
+  html.escenas::view-transition-new(ancla-3), html.escenas::view-transition-new(ancla-4) { opacity: 1; }
+
+  /* División y unión (#proceso ↔ #ayuda): las semillas conservan su color mientras viajan y se funden en el icono
+     hacia el final (60 % → 40 % de la curva). */
+  @keyframes fundido-sale { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes fundido-entra { 0%, 40% { opacity: 0; } 100% { opacity: 1; } }
+  html.escenas[data-division]::view-transition-old(ancla-1) { opacity: 1; animation: fundido-sale .8s var(--friccion) calc((1 - 1) * var(--escalon)) both; }
+  html.escenas[data-division]::view-transition-old(ancla-2) { opacity: 1; animation: fundido-sale .8s var(--friccion) calc((2 - 1) * var(--escalon)) both; }
+  html.escenas[data-division]::view-transition-old(ancla-3) { opacity: 1; animation: fundido-sale .8s var(--friccion) calc((3 - 1) * var(--escalon)) both; }
+  html.escenas[data-division]::view-transition-old(ancla-4) { opacity: 1; animation: fundido-sale .8s var(--friccion) calc((4 - 1) * var(--escalon)) both; }
+  html.escenas[data-division]::view-transition-new(ancla-1) { opacity: 1; animation: fundido-entra .8s var(--friccion) calc((1 - 1) * var(--escalon)) both; }
+  html.escenas[data-division]::view-transition-new(ancla-2) { opacity: 1; animation: fundido-entra .8s var(--friccion) calc((2 - 1) * var(--escalon)) both; }
+  html.escenas[data-division]::view-transition-new(ancla-3) { opacity: 1; animation: fundido-entra .8s var(--friccion) calc((3 - 1) * var(--escalon)) both; }
+  html.escenas[data-division]::view-transition-new(ancla-4) { opacity: 1; animation: fundido-entra .8s var(--friccion) calc((4 - 1) * var(--escalon)) both; }
+
+  html.escenas::view-transition-group(cabecera), html.escenas::view-transition-group(puntos) { animation: none; z-index: 10; }
+  html.escenas::view-transition-old(cabecera), html.escenas::view-transition-new(cabecera),
+  html.escenas::view-transition-old(puntos), html.escenas::view-transition-new(puntos) { animation: none; }
+  /* La captura nueva de la cabecera es en vivo (la píldora se desliza en ella); la vieja se oculta para que no se transparente su píldora */
+  html.escenas::view-transition-old(cabecera) { opacity: 0; }
+
+  /* Escena 1 · Portada: texto a la izquierda, arco a la derecha */
+  html.escenas .portada { background: var(--fondo); }
+  html.escenas .portada .plano { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); align-items: center; gap: clamp(1.5rem, 3vw, 3.5rem); justify-items: stretch; text-align: left; }
+  html.escenas .portada-grid { display: contents; }
+  html.escenas .portada-texto { display: grid; gap: clamp(1rem, 3svh, 2.2rem); justify-items: start; text-align: left; }
+  html.escenas .portada .kick { margin: 0; justify-content: flex-start; }
+  html.escenas .portada h1 { font-size: clamp(2.6rem, min(7vw, 12.5svh), 6.6rem); line-height: .95; letter-spacing: -.045em; margin: 0; }
+  html.escenas .portada h1 .l { display: block; }
+  html.escenas .cta-portada { justify-content: flex-start; }
+  html.escenas .escenario { width: min(100%, calc(min(66svh, 620px) * .8)); aspect-ratio: 4 / 5; justify-self: center; overflow: clip; }
+
+  /* Escena 2 · Mensaje: fondo menta, texto y retrato centrados */
+  html.escenas .mensaje { background: var(--menta); }
+  html.escenas .mensaje .plano { align-items: center; text-align: center; position: relative; z-index: 1; }
+  html.escenas .mensaje h2 { font-size: clamp(2.2rem, min(5.6vw, 9svh), 5rem); line-height: 1.02; letter-spacing: -.03em; max-width: 16ch; margin: 0; }
+  html.escenas .retrato-mensaje { width: min(30vw, 36svh); aspect-ratio: 1; }
+  html.escenas .retrato-mensaje svg, html.escenas .insignia svg { width: 100%; height: 100%; display: block; }
+  html.escenas .chip-mensaje { font-size: .72rem; }
+
+  /* Escena 3 · Nosotros: insignia y etiqueta arriba, manifiesto grande */
+  html.escenas .manif { background: var(--fondo); }
+  html.escenas .manif .plano { justify-content: safe center; gap: clamp(1.5rem, 4svh, 3rem); padding-inline: clamp(22px, 8vw, 150px); max-width: none; }
+  html.escenas .manif-cab { margin: 0; }
+  html.escenas .insignia { width: clamp(3.75rem, 8svh, 5.5rem); }
+  html.escenas .manif .txt { font-size: clamp(1.6rem, min(3.8vw, 6.4svh), 3.8rem); line-height: 1.12; max-width: 30ch; }
+
+  /* Escena 4 · Adopta: una ficha grande; la pista se desplaza por pasos */
+  html.escenas .galeria { color: var(--fondo); background: var(--ciruela); }
+  html.escenas .galeria .plano { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; gap: clamp(.6rem, 2svh, 1.4rem); max-width: 72rem; }
+  html.escenas .galeria .galeria-cab { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(.4rem, 1.2svh, .9rem); }
+  html.escenas .galeria .cab { margin: 0; }
+  html.escenas .galeria h2 { font-size: clamp(2.4rem, min(6vw, 8.5svh), 5rem); line-height: .9; }
+  html.escenas .galeria .bajada { margin: 0; font-size: clamp(.95rem, 1.2vw, 1.05rem); max-width: 60ch; }
+  html.escenas .galeria .filtros { margin: clamp(.4rem, 1.2svh, .8rem) 0 0; justify-self: start; }
+  html.escenas .galeria .vista { margin-top: 0; height: 100%; min-height: 0; overflow: hidden; min-width: 0; }
+  /* Pista: cada paso desplaza exactamente el ancho de la vista (una ficha = el 100 % de la pista) */
+  html.escenas #lista-peludos { display: flex; height: 100%; width: 100%; margin: 0; padding: 0; gap: 0; list-style: none; transform: translateX(calc(var(--paso, 0) * -100%)); transition: transform .8s var(--friccion); will-change: transform; }
+  html.escenas #lista-peludos.quieta { transition: none; }
+  html.escenas #lista-peludos > li { flex: 0 0 100%; width: 100%; min-width: 0; height: 100%; min-height: 0; }
+  html.escenas #lista-peludos > li[hidden] { display: none; }
+  html.escenas .ficha { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); height: 100%; min-height: 0; border-radius: 30px; }
+  html.escenas .ficha .img { height: 100%; aspect-ratio: auto; min-height: 0; }
+  html.escenas .ficha .retrato-ficha { width: 84%; }
+  html.escenas .ficha .dat { min-height: 0; overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: thin; padding: clamp(1rem, 2.6svh, 2rem) clamp(1.2rem, 2.4vw, 2.4rem); gap: clamp(.6rem, 1.8svh, 1.2rem); }
+  html.escenas .ficha h3 { font-size: clamp(2.4rem, min(5vw, 9svh), 5rem); }
+  html.escenas .ficha .desc { font-size: clamp(.95rem, min(1.4vw, 2.8svh), 1.3rem); margin-top: .5rem; }
+  html.escenas .ficha .chip { margin-top: .5rem; }
+  html.escenas .ficha .btn { margin-top: .6rem; }
+  html.escenas .fin { margin-top: 0; justify-content: space-between; justify-self: stretch; text-align: left; }
+  html.escenas .fin-texto { font-size: clamp(1.8rem, min(3.6vw, 6svh), 3.4rem); }
+
+  /* Escena 5 · Test: texto y formulario lado a lado */
+  html.escenas .test { background: var(--rosa); }
+  html.escenas .test .plano { display: grid; grid-template-columns: 1fr; align-content: safe center; gap: clamp(1.2rem, 3svh, 2rem); position: relative; z-index: 1; }
+  html.escenas .test .lead { margin-top: clamp(.6rem, 1.6svh, 1.2rem); font-size: clamp(1rem, 1.3vw, 1.15rem); }
+  html.escenas .test .secc-h { font-size: clamp(2.2rem, min(5vw, 8.5svh), 5rem); }
+  html.escenas .test .eyebrow { margin-bottom: clamp(.5rem, 1.4svh, 1rem); }
+  html.escenas .badge-test { width: clamp(3.2rem, min(5vw, 8svh), 4.5rem); margin: 0 0 clamp(.6rem, 1.6svh, 1.2rem); }
+  html.escenas .testform { gap: clamp(1rem, 2.8svh, 2rem); }
+  html.escenas .preg legend { font-size: clamp(1.3rem, min(2.4vw, 3.8svh), 2rem); margin-bottom: clamp(.5rem, 1.4svh, .9rem); }
+  html.escenas .opcion { padding: clamp(.45rem, 1.2svh, .65rem) 1.1rem; }
+  /* La etapa reserva el alto del resultado (la pila más alta): al pasar de pregunta a resultado nada se mueve */
+  html.escenas .st-etapa { min-height: calc(19svh + 6.8rem); }
+  html.escenas #resultado .mini { margin-bottom: .6rem; }
+  html.escenas .resultados { gap: .7rem; }
+  html.escenas .resultado { padding: .6rem; border-radius: 20px; }
+  html.escenas .resultado svg { display: block; width: min(100%, 19svh); height: auto; margin-inline: auto; }
+  html.escenas .resultado .nombre { font-size: clamp(1.1rem, 2.2svh, 1.5rem); margin-top: .4rem; }
+
+  /* Escena 6 · Proceso: un paso a la vez, con el numeral de la marca y el numeral fantasma detrás */
+  html.escenas .proceso { background: var(--fondo); }
+  html.escenas .proceso .plano { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; position: relative; }
+  html.escenas .proceso .etiqueta-proceso { text-align: center; }
+  /* Los cuatro pasos comparten una sola celda (grid-area 1 / 1): la pila va centrada y cada paso empieza arriba,
+     así título y párrafo quedan en la misma altura en todos (la celda reserva la altura del texto más largo). */
+  html.escenas .pasos { position: relative; display: grid; align-content: center; justify-items: stretch; overflow: clip; margin: 0; padding: 0; min-height: 0; height: 100%; }
+  html.escenas .paso { grid-area: 1 / 1; position: relative; visibility: hidden; display: grid; grid-template-rows: auto auto; align-content: start; justify-items: center; background: none; border: 0; border-radius: 0; padding: 0; text-align: center; }
+  html.escenas .paso.actual, html.escenas .paso.sale { visibility: visible; }
+  /* El paso que llega va por encima del que sale: al retroceder, la insignia que sale (en el orden del DOM, después)
+     no debe tapar el dígito que entra desde arriba */
+  html.escenas .paso.actual { z-index: 1; }
+  /* Caja fija del numeral fantasma: el dígito que rueda queda recortado dentro de ella (no pisa el título ni las barras) */
+  html.escenas .fantasma { display: flex; align-items: center; justify-content: center; height: 1.2em; padding-inline: .3em; overflow: clip; position: absolute; z-index: -1; left: 50%; top: 50%; translate: -50% -50%; font-family: var(--fuente-display); font-style: italic; font-weight: 300; font-size: min(60vw, 62svh); line-height: 1; color: color-mix(in srgb, var(--marca) 9%, transparent); pointer-events: none; }
+  /* La insignia recorta a su propio círculo: el dígito que sale o entra no se ve fuera de ella */
+  html.escenas .numeral { width: clamp(4.5rem, min(9vw, 14svh), 8.5rem); height: auto; aspect-ratio: 1; font-size: clamp(2.2rem, min(4.6vw, 7svh), 4.5rem); justify-self: center; overflow: clip; }
+  /* Semillas de la división (#proceso → #ayuda): círculos del color de la insignia, detrás de ella (solo son visibles al dividirse) */
+  .semilla { display: none; }
+  html.escenas .semilla { display: block; position: absolute; left: 0; top: 0; width: 0; height: 0; border-radius: 50%; background: var(--marca); pointer-events: none; }
+  /* Italic sin cortar: el rótulo de cada numeral tiene holgura horizontal (compensada con margen) */
+  html.escenas .numeral .rotulo, html.escenas .fantasma .rotulo { padding-inline: .14em; margin-inline: -.14em; }
+  html.escenas .paso-texto { width: min(100%, 46rem); text-align: center; }
+  html.escenas .paso-texto .mask { width: 100%; }
+  html.escenas .paso h3 { margin: clamp(.8rem, 2.4svh, 1.6rem) 0 0; font-size: clamp(2.6rem, min(7vw, 11svh), 6.5rem); line-height: .95; }
+  html.escenas .paso p { margin: clamp(.6rem, 1.8svh, 1rem) auto 0; max-width: 34ch; font-size: clamp(1rem, 1.5vw, 1.35rem); color: var(--suave); }
+  html.escenas .barras { display: flex; justify-content: center; gap: 10px; }
+  html.escenas .barras i { position: relative; overflow: hidden; width: 34px; height: 3px; border-radius: 3px; background: rgb(43 29 43 / .15); }
+  /* Relleno de la barra: scaleX desde la izquierda; al retroceder se vacía hacia la izquierda */
+  html.escenas .barras i::before { content: ""; position: absolute; inset: 0; background: var(--tinta); transform: scaleX(0); transform-origin: 0 50%; transition: transform .6s var(--friccion); }
+  html.escenas .barras i.hecha::before { transform: scaleX(1); }
+
+  /* Cambio de paso (cambiarPaso en el script): el saliente sube (o baja al retroceder) dentro de su máscara; el entrante
+     sube desde abajo (o desde arriba). Numeral: el dígito "rueda" dentro de su rótulo, que hace de máscara. */
+  @keyframes paso-sube { from { transform: translateY(170%); } }
+  @keyframes paso-sube-atras { from { transform: translateY(-170%); } }
+  @keyframes paso-sale { to { transform: translateY(-170%); } }
+  @keyframes paso-sale-atras { to { transform: translateY(170%); } }
+  @keyframes odo-entra { from { transform: translateY(100%); } }
+  @keyframes odo-entra-atras { from { transform: translateY(-100%); } }
+  @keyframes odo-sale { to { transform: translateY(-100%); } }
+  @keyframes odo-sale-atras { to { transform: translateY(100%); } }
+  html.escenas .paso.llega .paso-texto h3 .sube { animation: paso-sube .6s var(--friccion) both; }
+  html.escenas .paso.llega .paso-texto p .sube { animation: paso-sube .6s var(--friccion) 40ms both; }
+  html.escenas .paso.llega.atras .paso-texto h3 .sube { animation-name: paso-sube-atras; }
+  html.escenas .paso.llega.atras .paso-texto p .sube { animation-name: paso-sube-atras; }
+  html.escenas .paso.sale .paso-texto h3 .sube { animation: paso-sale .22s var(--encastre) both; }
+  html.escenas .paso.sale .paso-texto p .sube { animation: paso-sale .22s var(--encastre) both; }
+  html.escenas .paso.sale.atras .paso-texto h3 .sube { animation-name: paso-sale-atras; }
+  html.escenas .paso.sale.atras .paso-texto p .sube { animation-name: paso-sale-atras; }
+  html.escenas .paso.llega .numeral .rotulo { animation: odo-entra .6s var(--friccion) both; }
+  html.escenas .paso.llega.atras .numeral .rotulo { animation-name: odo-entra-atras; }
+  html.escenas .paso.sale .numeral .rotulo { animation: odo-sale .4s var(--encastre) both; }
+  html.escenas .paso.sale.atras .numeral .rotulo { animation-name: odo-sale-atras; }
+  html.escenas .paso.llega .fantasma .rotulo { animation: odo-entra .8s var(--friccion) both; }
+  html.escenas .paso.llega.atras .fantasma .rotulo { animation-name: odo-entra-atras; }
+  html.escenas .paso.sale .fantasma .rotulo { animation: odo-sale .5s var(--encastre) both; }
+  html.escenas .paso.sale.atras .fantasma .rotulo { animation-name: odo-sale-atras; }
+
+  /* Escena 7 · Cómo ayudar: cuatro tarjetas en fila */
+  html.escenas .ayuda { background: var(--fondo); }
+  html.escenas .ayuda .plano { justify-content: safe center; }
+  html.escenas .ayuda .secc-h { font-size: clamp(2.2rem, min(5.4vw, 9svh), 5rem); }
+  html.escenas .ayuda-lista { margin-top: clamp(1rem, 4svh, 3rem); grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(.7rem, 2svh, 1.25rem); }
+  html.escenas .ayuda-lista li { padding: clamp(.9rem, 2.6svh, 1.5rem) clamp(1rem, 1.6vw, 1.5rem); }
+  html.escenas .ayuda-lista h3 { margin-top: clamp(.8rem, 2.2svh, 1.4rem); font-size: clamp(1.6rem, min(2.6vw, 4.6svh), 2.2rem); }
+  html.escenas .ayuda-lista p { font-size: clamp(.9rem, min(1.1vw, 2.2svh), 1rem); margin-top: .5rem; }
+
+  /* Escena 8 · Equipo: fila de cuatro (dos por dos en el móvil) */
+  html.escenas .equipo { background: var(--superficie); }
+  html.escenas .equipo .plano { justify-content: safe center; }
+  html.escenas .equipo .secc-h { font-size: clamp(2.2rem, min(5.4vw, 9svh), 5rem); }
+  html.escenas .equipo-lista { margin-top: clamp(1rem, 4svh, 3rem); grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem; }
+  html.escenas .avatar { width: clamp(3.5rem, min(5.4vw, 9svh), 5rem); height: clamp(3.5rem, min(5.4vw, 9svh), 5rem); font-size: clamp(1.2rem, 2.4svh, 1.5rem); }
+  html.escenas .equipo-lista h3 { margin-top: clamp(.8rem, 2.2svh, 1.3rem); font-size: clamp(1.4rem, min(2.2vw, 3.8svh), 1.9rem); }
+  html.escenas .equipo-lista .texto { font-size: clamp(.88rem, min(1vw, 2.2svh), 1rem); margin-top: .5rem; }
+
+  /* Escena 9 · Preguntas: título a la izquierda, respuesta a la derecha (maestro-detalle) */
+  html.escenas .preguntas { background: var(--fondo); }
+  html.escenas .preguntas .plano { justify-content: safe center; }
+  html.escenas .preguntas .secc-h { font-size: clamp(2.2rem, min(5.4vw, 9svh), 4.6rem); }
+  html.escenas .pregunta summary { padding-block: clamp(.6rem, 1.8svh, 1.2rem); font-size: clamp(1.1rem, min(1.9vw, 3.4svh), 1.5rem); }
+  html.escenas .pregunta .icono { width: 2.2rem; height: 2.2rem; font-size: 1.4rem; }
+
+  /* Escena 10 · Contacto: fondo terracota; formulario de dos columnas; pie al final */
+  html.escenas .cierre .plano { display: flex; flex-direction: column; justify-content: safe center; gap: clamp(.8rem, 2.6svh, 2rem); position: relative; z-index: 1; }
+  html.escenas .cierre h2 { font-size: clamp(2.8rem, min(8vw, 13svh), 7.5rem); text-align: left; }
+  html.escenas .cierre-grid { align-items: center; gap: clamp(1.5rem, 3vw, 3.5rem); }
+  html.escenas .cierre-texto p { font-size: clamp(1.2rem, min(2.2vw, 4svh), 2rem); }
+  html.escenas .huella-marca { display: block; width: clamp(3.5rem, 9svh, 6rem); margin-top: clamp(.6rem, 2svh, 1.5rem); }
+  html.escenas .tarjeta-form { padding: clamp(1rem, 2.6svh, 2.2rem) clamp(1.2rem, 2.6vw, 2.4rem); }
+  html.escenas .tarjeta-form form > * + * { margin-top: clamp(.6rem, 1.8svh, 1.2rem); }
+  html.escenas .campo input, html.escenas .campo select, html.escenas .campo textarea { font-size: 1rem; }
+  html.escenas .campo label { margin-bottom: .2rem; }
+  html.escenas .pie-cierre { padding-top: clamp(.6rem, 1.6svh, 1rem); font-size: .8rem; }
+  html.escenas .cierre-texto { display: grid; gap: 0; }
+
+  /* Formulario: la tarjeta llega como una hoja de papel puesta sobre el terracota (desde abajo, girada y recortada),
+     y luego el formulario se construye dentro: subrayado, etiqueta, select/textarea y, al final, el botón.
+     Sin ancla de morph: la tarjeta entra por su propia animación al empezar la fase 3 (.entrando). */
+  html.escenas .campo { position: relative; }
+  html.escenas .campo input, html.escenas .campo select, html.escenas .campo textarea { border-bottom-color: transparent; }
+  html.escenas .campo::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px; background: var(--suave); transform-origin: 0 50%; transition: background-color .25s var(--friccion); }
+  html.escenas .campo:focus-within::after { background: var(--marca-fuerte); }
+  /* Llegando: la hoja y el formulario quedan aparcados (no se ven en la captura del morph) */
+  html.escenas .diapo.llegando .tarjeta-form { transform: translateY(18%) rotate(-3.5deg); clip-path: inset(100% 0 0 0 round 28px); }
+  html.escenas .diapo.llegando .campo::after { transform: scaleX(0); }
+  html.escenas .diapo.llegando .campo-cierra { clip-path: inset(0 0 100% 0); }
+  html.escenas .diapo.llegando .btn-enviar { clip-path: inset(0 100% 0 0 round 999px); }
+  /* Salida (fase 1, 240 ms como máximo): los campos se cierran y la hoja baja */
+  html.escenas .diapo.saliendo .tarjeta-form { transform: translateY(18%) rotate(-3.5deg); clip-path: inset(100% 0 0 0 round 28px); transition: transform .24s var(--encastre), clip-path .24s var(--encastre); }
+  html.escenas .diapo.saliendo .campo::after { transform: scaleX(0); transition: transform .2s var(--encastre); }
+  html.escenas .diapo.saliendo .campo-cierra { clip-path: inset(0 0 100% 0); transition: clip-path .2s var(--encastre); }
+  html.escenas .diapo.saliendo .btn-enviar { clip-path: inset(0 100% 0 0 round 999px); transition: clip-path .2s var(--encastre); }
+  /* Llegada (fase 3) */
+  @keyframes hoja { from { transform: translateY(18%) rotate(-3.5deg); clip-path: inset(100% 0 0 0 round 28px); } to { transform: none; clip-path: inset(0 round 28px); } }
+  @keyframes linea { from { transform: scaleX(0); } }
+  @keyframes recorte { from { clip-path: inset(0 0 100% 0); } }
+  @keyframes pastilla { from { clip-path: inset(0 100% 0 0 round 999px); } to { clip-path: inset(0 round 999px); } }
+  /* Tiempos: la hoja se asienta en 0,6 s; los campos empiezan a 120 ms con 40 ms entre ellos (dura 0,45 s cada uno);
+     el botón crece desde su borde izquierdo a 360 ms. Todo el formulario queda listo unos 0,8 s después de empezar la fase 3. */
+  html.escenas .diapo.entrando .tarjeta-form { animation: hoja .6s var(--friccion) both; }
+  html.escenas .diapo.entrando .campo::after { animation: linea .45s var(--friccion) both; animation-delay: calc(120ms + var(--c, 0) * 40ms); }
+  html.escenas .diapo.entrando .campo .sube { animation: sube .45s var(--friccion) both; animation-delay: calc(120ms + var(--c, 0) * 40ms); }
+  html.escenas .diapo.entrando .campo-cierra { animation: recorte .45s var(--encastre) both; animation-delay: calc(120ms + var(--c, 0) * 40ms); }
+  html.escenas .diapo.entrando .btn-enviar { animation: pastilla .4s var(--friccion) .36s both; }
+  html.escenas .diapo.entrando .btn-enviar .sube { animation: sube .4s var(--friccion) .4s both; }
+
+  /* Puntos de navegación: píldora fija a la derecha (abajo al centro en el móvil) */
+  .puntos-nav { display: none; }
+  html.escenas .puntos-nav { display: block; position: fixed; z-index: 40; right: clamp(10px, 1.6vw, 22px); top: 50%; translate: 0 -50%; view-transition-name: puntos; background: var(--fondo); border: 1px solid var(--linea); border-radius: 999px; padding: 10px 6px; box-shadow: 0 6px 20px rgb(0 0 0 / .12); }
+  /* Cada enlace es un área de 24 px; el punto visible se dibuja centrado dentro con ::before */
+  html.escenas .puntos-nav ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  html.escenas .puntos-nav a { position: relative; display: block; width: 24px; height: 24px; border-radius: 50%; }
+  html.escenas .puntos-nav a::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; border: 1.5px solid var(--tinta); background: transparent; transition: background-color .4s var(--friccion), transform .4s var(--friccion); }
+  html.escenas .puntos-nav a:hover::before { transform: scale(1.2); }
+  html.escenas .puntos-nav a[aria-current="true"]::before { background: var(--tinta); transform: scale(1.25); }
+  html.escenas .puntos-nav a:focus-visible { outline: 2px solid var(--marca); outline-offset: 3px; }
+
+  /* Cabecera: el botón "Quiero adoptar" viaja solo entre preguntas y contacto (data-cabecera); su texto se borra y se abre */
+  html.escenas #cta-cabecera .rotulo { transition: clip-path .5s var(--friccion); }
+  html[data-fase="salida"][data-cabecera] #cta-cabecera .rotulo { clip-path: inset(0 100% 0 0); transition: clip-path .24s var(--encastre); }
+  html[data-fase="morph"][data-cabecera] #cta-cabecera .rotulo { clip-path: inset(0 100% 0 0); transition: none; }
+
+  /* ---------- Modo mazo · móvil (< 820 px) ---------- */
+  @media (max-width: 819px) {
+    /* Reserva abajo para la píldora de puntos (40 px + 16 px) en todas las escenas */
+    html.escenas .diapo { padding-bottom: 64px; }
+    html.escenas .portada .plano { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+    html.escenas .portada-texto { justify-items: center; text-align: center; }
+    html.escenas .portada h1 { font-size: clamp(2.4rem, min(11vw, 9svh), 3.6rem); }
+    html.escenas .cta-portada { justify-content: center; }
+    html.escenas .escenario { width: min(56vw, calc(min(30svh, 300px) * .8)); }
+    html.escenas .mensaje h2 { font-size: clamp(2rem, 9vw, 3.2rem); }
+    html.escenas .retrato-mensaje { width: min(60vw, 30svh); }
+    html.escenas .manif .plano { padding-inline: 22px; }
+    html.escenas .galeria h2 { font-size: clamp(2rem, 9vw, 2.6rem); }
+    html.escenas .galeria .bajada { display: none; }
+    html.escenas .galeria .galeria-cab { gap: .35rem; }
+    /* La ficha entera cabe en la tarjeta: retrato acotado en alto (20 svh como máximo), filas y paddings compactos */
+    html.escenas .ficha { grid-template-columns: 1fr; grid-template-rows: min(14svh, 120px) minmax(0, 1fr); }
+    html.escenas .ficha .img { height: auto; }
+    html.escenas .ficha .retrato-ficha { width: auto; height: 90%; max-width: 70%; bottom: -2%; }
+    html.escenas .ficha .dat { padding: .5rem 1rem .6rem; gap: .25rem; justify-content: flex-start; }
+    html.escenas .ficha .esp { margin-bottom: .1rem; }
+    html.escenas .ficha h3 { font-size: clamp(1.8rem, 7.6vw, 2.2rem); }
+    html.escenas .ficha .desc { font-size: .88rem; line-height: 1.3; margin-top: .3rem; }
+    html.escenas .ficha .desc .sube { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; padding-block: .14em .22em; margin-block: -.14em -.22em; }
+    html.escenas .ficha dl { flex-wrap: nowrap; gap: .3rem .7rem; padding-top: .45rem; }
+    html.escenas .ficha dt { font-size: .58rem; letter-spacing: .08em; }
+    html.escenas .ficha dd { font-size: .8rem; }
+    html.escenas .ficha .chip { margin-top: .3rem; font-size: .62rem; }
+    html.escenas .ficha .btn { width: 100%; margin-top: .45rem; padding: .6rem 1rem; font-size: .88rem; }
+    /* "Haz el test" apilado: la pregunta arriba y el botón debajo, todo por encima de la píldora */
+    html.escenas .fin { flex-direction: column; flex-wrap: nowrap; justify-content: center; align-items: stretch; gap: .4rem; text-align: center; }
+    html.escenas .fin-texto { font-size: clamp(1.1rem, 4.8vw, 1.35rem); line-height: 1; }
+    html.escenas .fin .btn { padding: .55rem 1rem; font-size: .88rem; white-space: nowrap; }
+    /* Cómo ayudar en el móvil: cuatro tarjetas compactas en 2×2, arriba de la píldora de puntos (alto = píldora + 16 px) */
+    html.escenas .ayuda { padding-bottom: 56px; }
+    html.escenas .ayuda .plano { gap: clamp(.5rem, 1.6svh, 1rem); }
+    html.escenas .ayuda .eyebrow { margin-bottom: 0; }
+    html.escenas .ayuda .secc-h { font-size: clamp(1.7rem, min(6.4vw, 4.8svh), 2.3rem); }
+    html.escenas .ayuda-lista { margin-top: clamp(.2rem, 1.2svh, .8rem); grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+    html.escenas .ayuda-lista li { min-width: 0; border-radius: 1rem; padding: .8rem .8rem .9rem; }
+    html.escenas .icono-ayuda { width: 2.25rem; height: 2.25rem; }
+    html.escenas .ayuda-lista h3 { margin-top: .6rem; font-size: clamp(1.1rem, 4.6vw, 1.3rem); }
+    html.escenas .ayuda-lista p { margin-top: .3rem; font-size: .8rem; line-height: 1.4; }
+    /* Texto acotado a 3 líneas. Relleno solo arriba: el de abajo dejaría asomar la primera línea oculta; las descendentes
+       de la última línea caben en el interlineado (1,4). */
+    html.escenas .ayuda-lista p .sube { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; padding-block: .14em 0; margin-block: -.14em 0; }
+    html.escenas .equipo-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4rem 1rem; }
+    html.escenas .cierre h2 { font-size: 3rem; }
+    html.escenas .cierre-grid { grid-template-columns: 1fr; }
+    html.escenas .campos-fila { grid-template-columns: 1fr; }
+    html.escenas .pie-cierre { font-size: .7rem; padding-top: .5rem; gap: .4rem 1rem; }
+    html.escenas .cierre .plano { gap: .6rem; }
+    html.escenas .cierre h2 { font-size: 2.4rem; }
+    html.escenas .cierre-grid { gap: .6rem; }
+    html.escenas .cierre-texto p { font-size: 1rem; line-height: 1.25; max-width: none; }
+    html.escenas .tarjeta-form { padding: .8rem 1.1rem .9rem; border-radius: 22px; }
+    html.escenas .tarjeta-form form > * + * { margin-top: .5rem; }
+    html.escenas .campo input, html.escenas .campo select, html.escenas .campo textarea { padding: .3rem 0; }
+    html.escenas .campo textarea { height: 3.2rem; }
+    html.escenas .btn-enviar { padding: .6rem 1rem; }
+    /* Escenas que pueden desplazarse: el plano crece con su contenido y deja libre la píldora de puntos (alto + 12 px) */
+    html.escenas .equipo, html.escenas .preguntas, html.escenas .cierre { padding-bottom: 0; }
+    html.escenas .equipo .plano, html.escenas .preguntas .plano, html.escenas .cierre .plano { height: auto; min-height: 100%; padding-bottom: 66px; }
+    html.escenas .preguntas .plano { justify-content: flex-start; }
+    html.escenas .preguntas-grid { gap: 1rem; }
+    html.escenas .pista-hint { display: none; }
+    html.escenas .puntos-nav { top: auto; bottom: 12px; left: 50%; right: auto; translate: -50% 0; width: max-content; padding: 8px 12px; }
+    html.escenas .puntos-nav ol { display: flex; gap: 2px; }
+  }
+  /* Teléfono bajo (≤ 700 px de alto, p. ej. 375×667): la personalidad se corta a 2 líneas y la ficha se compacta */
+  @media (max-width: 819px) and (max-height: 700px) {
+    html.escenas .portada .plano { gap: .6rem; }
+    html.escenas .portada-texto { gap: .55rem; }
+    html.escenas .portada h1 { font-size: 2.15rem; }
+    html.escenas .cta-portada { gap: .5rem; }
+    html.escenas .cta-portada .btn { padding: .65rem 1.3rem; }
+    html.escenas .escenario { width: min(56vw, calc(26svh * .8)); }
+    html.escenas .galeria .cab { display: none; }
+    html.escenas .galeria h2 { font-size: 1.9rem; }
+    html.escenas .galeria .plano { gap: .4rem; }
+    html.escenas .ficha { grid-template-rows: min(12svh, 90px) minmax(0, 1fr); }
+    html.escenas .ficha .retrato-ficha { height: 92%; }
+    html.escenas .ficha .num { top: .5rem; left: 1rem; font-size: 1rem; }
+    html.escenas .ficha .dat { padding: .45rem .9rem .5rem; gap: .2rem; }
+    html.escenas .ficha h3 { font-size: 1.7rem; }
+    html.escenas .ficha .desc .sube { -webkit-line-clamp: 2; }
+    html.escenas .ficha dl { padding-top: .25rem; }
+    html.escenas .ficha .chip { margin-top: .2rem; }
+    html.escenas .ficha .btn { margin-top: .3rem; padding: .5rem .9rem; }
+    html.escenas .test .plano { grid-template-columns: 1fr; gap: .8rem; }
+    html.escenas .test .secc-h { font-size: 2.3rem; }
+    /* El test por pasos (indicador, pregunta o resultado y "Volver") cabe en la pantalla baja sin desplazarse: se quitan el
+       rótulo y la bajada, y el ícono se achica */
+    html.escenas .test-texto .eyebrow, html.escenas .test .lead { display: none; }
+    html.escenas .badge-test { width: 2.6rem; margin-bottom: .4rem; }
+    html.escenas .testform { gap: .9rem; }
+    html.escenas .st-etapa { min-height: calc(15svh + 6.2rem); }
+    html.escenas .resultados { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    html.escenas .resultado svg { width: min(100%, 15svh); }
+    html.escenas .paso h3 { font-size: clamp(2.4rem, 13vw, 4.4rem); }
+    html.escenas .paso p { font-size: .98rem; }
+    html.escenas .numeral { width: 4.5rem; font-size: 2rem; }
+    html.escenas .ayuda .secc-h, html.escenas .equipo .secc-h, html.escenas .preguntas .secc-h { font-size: 2.3rem; }
+    html.escenas .ayuda .secc-h { font-size: 1.7rem; }
+    html.escenas .ayuda-lista { margin-top: .4rem; }
+    html.escenas .ayuda-lista li { padding: .6rem .6rem .65rem; }
+    html.escenas .icono-ayuda { width: 2rem; height: 2rem; }
+    html.escenas .ayuda-lista h3 { font-size: 1.15rem; margin-top: .45rem; }
+    html.escenas .ayuda-lista p { font-size: .78rem; line-height: 1.35; margin-top: .25rem; }
+    html.escenas .ayuda-lista p .sube { -webkit-line-clamp: 2; }
+    html.escenas .equipo-lista { margin-top: .6rem; gap: .9rem .8rem; }
+    html.escenas .equipo .avatar { width: 3rem; height: 3rem; font-size: 1.1rem; }
+    html.escenas .equipo-lista h3 { margin-top: .5rem; font-size: 1.15rem; }
+    html.escenas .equipo-lista .rol { margin-top: .2rem; font-size: .8rem; }
+    html.escenas .equipo-lista .texto { margin-top: .3rem; font-size: .78rem; line-height: 1.35; }
+  }
+  @media (min-width: 820px) {
+    html.escenas .galeria .galeria-cab { grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); grid-template-areas: "cab cab" "titulo bajada" "filtros bajada"; column-gap: clamp(2rem, 4vw, 4rem); align-items: end; }
+    html.escenas .galeria .cab { grid-area: cab; }
+    html.escenas .galeria h2 { grid-area: titulo; }
+    html.escenas .galeria .bajada { grid-area: bajada; align-self: end; }
+    html.escenas .galeria .filtros { grid-area: filtros; }
+    html.escenas .ayuda-lista { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    html.escenas .ayuda-lista h3 { font-size: clamp(1.3rem, min(2vw, 3.4svh), 1.9rem); }
+    html.escenas .campos-fila { grid-template-columns: 1fr 1fr; gap: 0 1.5rem; }
+    html.escenas .cierre-grid { grid-template-columns: 1fr 1.25fr; }
+    html.escenas .cierre-texto p { max-width: 20ch; }
+    html.escenas .diapo > .plano { padding-inline: clamp(24px, 5vw, 64px); }
+  }
+  @media (min-width: 1024px) {
+    html.escenas .test .plano { grid-template-columns: 1fr 1.1fr; align-items: center; gap: clamp(2rem, 5vw, 5rem); }
+    html.escenas .test .plano > * { min-width: 0; }
+  }
+  @media (min-width: 820px) and (max-height: 700px) {
+    html.escenas .galeria .bajada { display: none; }
+    html.escenas .ficha .desc { display: none; }
+    html.escenas .ficha .chip { display: none; }
+  }
+
+  /* ---------- Movimiento reducido: el modo mazo nunca se activa; aquí solo se quita lo que moleste ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    .btn, .opcion, .filtros label, .st-relleno, .st-dot, .st-pt, .st-chk, .st-et { transition: none; }
   }
 </style>
 
 <script>
-  function iniciarPeludo() {
-    // Filtro con transición animada entre estados
-    const tarjetas = document.querySelectorAll<HTMLElement>('#lista-peludos > li');
-    document.querySelectorAll<HTMLInputElement>('input[name="filtro"]').forEach((r) =>
-      r.addEventListener('change', () => {
-        const aplicar = () => tarjetas.forEach((t) => { t.hidden = r.value !== 'todos' && t.dataset.especie !== r.value; t.classList.add('visible'); });
-        const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
-        doc.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches ? doc.startViewTransition(aplicar) : aplicar();
-      }),
-    );
+  // Modo mazo: una escena a pantalla completa, cambiada con View Transitions en tres fases
+  // (despedida, morph con anclas y llegada). Sin dependencias. Si el navegador no cumple los requisitos,
+  // la página se queda como página normal.
 
-    // "Quiero conocer a X" preselecciona el motivo del formulario
-    const motivo = document.querySelector<HTMLSelectElement>('#c-motivo');
-    document.querySelectorAll<HTMLAnchorElement>('[data-adoptar]').forEach((a) =>
-      a.addEventListener('click', () => { if (motivo) motivo.value = `Quiero adoptar a ${a.dataset.adoptar}`; }),
-    );
+  import { crearPildora, type Pildora } from '../../scripts/pildora';
+  import { iniciarFoco } from '../../scripts/foco';
 
-    // Test de compatibilidad
-    const formTest = document.querySelector<HTMLFormElement>('#form-test');
-    if (!formTest) return;
-    const datos = JSON.parse(formTest.dataset.peludos!) as { id: string; especie: string; energia: string; espacio: string }[];
-    formTest.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const f = new FormData(formTest);
+  type VT = { finished: Promise<unknown> };
+  type DocVT = Document & { startViewTransition?: (cb: () => void) => VT };
+
+  // Distancia en píxeles para contar un gesto como paso de escena
+  const UMBRAL = 50;
+  // Tras el morph, la entrada queda libre a los 150 ms (la llegada de textos sigue en marcha); los eventos de rueda
+  // se ignoran hasta entonces, para no contar la inercia del trackpad como un paso nuevo
+  const ESPERA_RUEDA = 150;
+  // Duración de la despedida (fase 1, 240 ms) antes de empezar el morph
+  const DESPEDIDA = 240;
+  // Tiempo tras el morph hasta liberar la entrada de nuevo
+  const LIBERA = 150;
+  // Número de pares de anclas (ancla-1 … ancla-4)
+  const PARES = 4;
+
+  let cancelar: AbortController | null = null;
+  const esperar = (ms: number) => new Promise<void>((resolver) => setTimeout(resolver, ms));
+
+  // Test «¿Qué peludo es para ti?» (Stepper): una pregunta a la vez con indicador de pasos; el cuarto paso es el resultado.
+  // Salida por máscara (240 ms, --encastre) y entrada (900 ms, --friccion, opciones en cascada de 30 ms); «Volver» es la reversa.
+  // Teclado: las flechas solo cambian la opción marcada; se avanza con clic, Enter o Espacio.
+  function iniciarTest(form: HTMLFormElement) {
+    const datos = JSON.parse(form.dataset.peludos!) as { id: string; especie: string; energia: string; espacio: string }[];
+    const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const etapa = form.querySelector<HTMLElement>('.st-etapa');
+    const prog = form.querySelector<HTMLElement>('.st-prog');
+    const volver = form.querySelector<HTMLButtonElement>('[data-volver]');
+    const info = form.querySelector<HTMLElement>('[data-info]');
+    if (!etapa || !prog || !volver || !info) return;
+    const paneles = [...etapa.querySelectorAll<HTMLElement>('.st-pane')];
+    const items = [...form.querySelectorAll<HTMLElement>('.st-paso')];
+    const PREGUNTAS = 3; // el paso 3 (cuarto) es el resultado
+    let paso = 0;
+    let ocupado = false;
+    let porTeclado = false;
+
+    // Con el test por pasos ya no hay campos obligatorios ocultos que bloqueen el envío; la lógica es la del botón de antes
+    form.querySelectorAll<HTMLInputElement>('input[required]').forEach((i) => { i.required = false; });
+    form.classList.add('st-on');
+    form.addEventListener('submit', (e) => e.preventDefault());
+
+    // Mismo puntaje de siempre: espacio, energía y especie
+    const calcular = () => {
+      const f = new FormData(form);
       const puntaje = (p: (typeof datos)[number]) =>
         (p.espacio === f.get('espacio') || f.get('espacio') === 'casa' ? 2 : 0) +
         (p.energia === f.get('energia') ? 2 : 0) +
         (f.get('especie') === 'cualquiera' || p.especie === f.get('especie') ? 3 : -5);
       const mejores = [...datos].sort((a, b) => puntaje(b) - puntaje(a)).slice(0, 2).map((p) => p.id);
-      document.querySelectorAll<HTMLElement>('[data-resultado]').forEach((el) => {
+      form.querySelectorAll<HTMLElement>('[data-resultado]').forEach((el) => {
         const pos = mejores.indexOf(el.dataset.resultado!);
         el.classList.toggle('hidden', pos < 0);
         el.style.order = String(pos);
+        el.style.setProperty('--s', String(pos + 1));
       });
-      const caja = document.getElementById('resultado')!;
-      caja.classList.remove('hidden');
-      if (innerWidth < 1024) caja.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    // Indicador: estado de cada punto, línea que se llena y el punto actual como ancla de la escena (se mueve con el paso)
+    const estado = () => {
+      items.forEach((li, k) => {
+        li.dataset.estado = k < paso ? 'hecho' : k === paso ? 'actual' : 'pendiente';
+        if (k === paso) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+        const dot = li.querySelector<HTMLElement>('.st-dot');
+        if (k === paso) dot?.setAttribute('data-ancla-sale', '1'); else dot?.removeAttribute('data-ancla-sale');
+      });
+      prog.style.setProperty('--p', String(paso / PREGUNTAS));
+      volver.disabled = paso === 0;
+      info.textContent = paso < PREGUNTAS ? `Paso ${paso + 1} de ${PREGUNTAS}` : 'Listo';
+    };
+    const mostrar = () => paneles.forEach((p, k) => p.classList.toggle('st-actual', k === paso));
+    // Tras avanzar, el foco va al nuevo enunciado (legend) o al título del resultado
+    const enfocar = () => paneles[paso]?.querySelector<HTMLElement>('legend, .eyebrow')?.focus({ preventScroll: true });
+    const animados = () => etapa.querySelectorAll<HTMLElement>('.rise');
+
+    const ir = (nuevo: number) => {
+      if (ocupado || nuevo < 0 || nuevo > PREGUNTAS || nuevo === paso) return;
+      if (nuevo === PREGUNTAS) calcular();
+      const adelante = nuevo > paso;
+      ocupado = true;
+      paso = nuevo;
+      estado();
+      etapa.dataset.dir = adelante ? 'adelante' : 'atras';
+      if (quieto) { mostrar(); enfocar(); ocupado = false; return; }
+      animados().forEach((e) => e.classList.add('activo'));
+      etapa.dataset.fase = 'sale';
+      window.setTimeout(() => {
+        mostrar();
+        etapa.dataset.fase = 'llega';
+        void etapa.offsetWidth;
+        etapa.dataset.fase = 'reposo';
+        enfocar();
+        window.setTimeout(() => { animados().forEach((e) => e.classList.remove('activo')); ocupado = false; }, 1000);
+      }, 300);
+    };
+
+    // Un clic con ratón o dedo en una opción avanza (tras dejar ver la opción marcada). Con teclado no: las flechas
+    // disparan "click" al cambiar de opción y no deben avanzar; para eso están Enter y Espacio.
+    etapa.addEventListener('pointerdown', () => { porTeclado = false; });
+    etapa.addEventListener('click', (e) => {
+      const inp = e.target instanceof Element ? e.target.closest<HTMLInputElement>('input[type="radio"]') : null;
+      if (!inp || porTeclado || ocupado) return;
+      window.setTimeout(() => ir(paso + 1), 260);
     });
+    form.addEventListener('keydown', (e) => {
+      porTeclado = true;
+      const inp = e.target instanceof Element ? e.target.closest<HTMLInputElement>('input[type="radio"]') : null;
+      if (!inp || (e.key !== 'Enter' && e.key !== ' ')) return;
+      e.preventDefault();
+      if (ocupado) return;
+      inp.checked = true;
+      ir(paso + 1);
+    });
+    volver.addEventListener('click', () => ir(paso - 1));
+    estado();
+    mostrar();
+  }
+
+  function iniciarPeludo() {
+    // El controlador es de esta página: otras páginas con "main > section.diapo" (la galería) tienen el suyo
+    if (!document.documentElement.classList.contains('tema-peludo')) return;
+    const main = document.getElementById('contenido');
+    const escenas = [...document.querySelectorAll<HTMLElement>('main > section.diapo')];
+    if (!main || escenas.length === 0) return;
+
+    cancelar?.abort();
+    cancelar = new AbortController();
+    const señal = { signal: cancelar.signal };
+    const html = document.documentElement;
+    const doc = document as DocVT;
+    const pistaPasos = escenas.find((e) => e.id === 'adopta') ?? null;
+    const procesoEl = escenas.find((e) => e.id === 'proceso') ?? null;
+    // Semillas de la división: van sobre la insignia del paso actual (todos los pasos comparten la misma posición)
+    const semillas = [...(procesoEl?.querySelectorAll<HTMLElement>('.semilla') ?? [])];
+    const colocarSemillas = () => {
+      const plano = procesoEl?.querySelector<HTMLElement>('.plano');
+      const insignia = procesoEl?.querySelector<HTMLElement>('.paso.actual .numeral');
+      if (!plano || !insignia) return;
+      const r = insignia.getBoundingClientRect();
+      const p = plano.getBoundingClientRect();
+      for (const s of semillas) {
+        s.style.left = `${r.left - p.left}px`;
+        s.style.top = `${r.top - p.top}px`;
+        s.style.width = `${r.width}px`;
+        s.style.height = `${r.height}px`;
+      }
+    };
+    // Mientras las semillas son las anclas, la insignia (y su dígito) no debe estar en ninguna captura
+    const ocultarInsignia = () => procesoEl?.querySelectorAll<HTMLElement>('.numeral').forEach((n) => { n.style.visibility = 'hidden'; });
+    const mostrarInsignia = () => procesoEl?.querySelectorAll<HTMLElement>('.numeral').forEach((n) => { n.style.visibility = ''; });
+    const nav = document.querySelector<HTMLElement>('.puntos-nav');
+    const menu = document.getElementById('menu-movil') as (HTMLElement & { hidePopover?: () => void }) | null;
+
+    // Respaldo del menú sin Popover API (Safari 16): el botón alterna la clase .abierto
+    const botonMenu = document.querySelector<HTMLElement>('button[popovertarget="menu-movil"]:not([popovertargetaction])');
+    const cerrarRespaldo = () => { menu?.classList.remove('abierto'); botonMenu?.setAttribute('aria-expanded', 'false'); };
+    if (menu && !Object.prototype.hasOwnProperty.call(HTMLElement.prototype, 'popover')) {
+      botonMenu?.setAttribute('aria-expanded', 'false');
+      botonMenu?.addEventListener('click', () => {
+        const abierto = menu.classList.toggle('abierto');
+        botonMenu.setAttribute('aria-expanded', String(abierto));
+      }, señal);
+      menu.querySelector('[popovertargetaction="hide"]')?.addEventListener('click', cerrarRespaldo, señal);
+      addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarRespaldo(); }, señal);
+    }
+
+    // Pulsar un enlace del menú lo cierra, con o sin modo escenas (el popover nativo no se cierra solo al navegar con #)
+    menu?.addEventListener('click', (e) => { if ((e.target as Element | null)?.closest('a[href]')) cerrarMenu(); }, señal);
+
+    let modo = false;
+    let ocupado = false;
+    let acumulado = 0;
+    let ultimaRueda = 0;
+    let finVT = 0;
+    let temporizadorEntrada = 0;
+    let tacto: { x: number; y: number } | null = null;
+    let multitoque = false;
+    let tactoScroll: { el: HTMLElement; top: number; enTope: boolean; enFondo: boolean } | null = null;
+    let rafagaInterna = false;
+    // Cambio de paso en #proceso: tras cada paso, la rueda espera 450 ms (la animación dura 600-700 ms)
+    let bloqueoPaso = false;
+    let temporizadorPaso = 0;
+
+    const indiceDe = (id: string): number => {
+      const el = id ? document.getElementById(id) : null;
+      const sec = el?.closest('main > section.diapo') ?? null;
+      return sec ? escenas.indexOf(sec as HTMLElement) : -1;
+    };
+    let indice = Math.max(0, indiceDe(decodeURIComponent(location.hash.slice(1))));
+
+    const cercano = (t: EventTarget | null, sel: string) => (t instanceof Element ? t.closest(sel) : null);
+
+    // Sub-pasos: tarjetas visibles de adopta, o pasos de proceso
+    const subpasosDe = (sec: HTMLElement): number => {
+      if (sec.dataset.subpasos === 'tarjetas') return sec.querySelectorAll('#lista-peludos > li:not([hidden])').length;
+      if (sec.dataset.subpasos === 'pasos') return sec.querySelectorAll('.paso').length;
+      return 1;
+    };
+    const pasoDe = (sec: HTMLElement) => Number(sec.dataset.paso ?? 0);
+
+    // Fija el sub-paso. Sin animar (al entrar a la escena) la pista salta sin deslizarse.
+    const fijarPaso = (sec: HTMLElement, n: number, animar: boolean) => {
+      const total = subpasosDe(sec);
+      const k = Math.min(Math.max(n, 0), Math.max(total - 1, 0));
+      const pista = sec.querySelector<HTMLElement>('.pista-fichas');
+      if (pista && !animar) pista.classList.add('quieta');
+      sec.dataset.paso = String(k);
+      sec.style.setProperty('--paso', String(k));
+      if (pista && !animar) {
+        void pista.offsetWidth;
+        pista.classList.remove('quieta');
+      }
+      sec.querySelectorAll<HTMLElement>('.paso').forEach((p, i) => {
+        p.classList.remove('sale', 'llega', 'atras');
+        p.classList.toggle('actual', i === k);
+      });
+      sec.querySelectorAll<HTMLElement>('.barras i').forEach((b, i) => b.classList.toggle('hecha', i <= k));
+    };
+
+    // Cambio de paso en #proceso: el paso saliente sale, el entrante llega; el título de la sección no se toca.
+    // Hacia atrás todo va en sentido vertical contrario (clase "atras").
+    const cambiarPaso = (sec: HTMLElement, k: number) => {
+      const pasos = [...sec.querySelectorAll<HTMLElement>('.paso')];
+      const previo = pasos.findIndex((p) => p.classList.contains('actual'));
+      const atras = k < previo;
+      pasos.forEach((p, i) => {
+        p.classList.remove('sale', 'llega', 'atras', 'actual');
+        if (i === k) p.classList.add('actual', 'llega');
+        else if (i === previo) p.classList.add('sale');
+        p.classList.toggle('atras', atras && (i === k || i === previo));
+      });
+      sec.dataset.paso = String(k);
+      sec.querySelectorAll<HTMLElement>('.barras i').forEach((b, i) => b.classList.toggle('hecha', i <= k));
+      clearTimeout(temporizadorPaso);
+      temporizadorPaso = window.setTimeout(() => {
+        pasos.forEach((p) => p.classList.remove('sale', 'llega', 'atras'));
+      }, 700);
+    };
+    const limpiarPasos = () => {
+      clearTimeout(temporizadorPaso);
+      document.querySelectorAll<HTMLElement>('#proceso .paso').forEach((p) => p.classList.remove('sale', 'llega', 'atras'));
+    };
+
+    // Ancla N de una escena: el primer elemento visible con data-ancla-{tipo}="N"; si hay una pastilla marcada, esa
+    const anclaDe = (sec: HTMLElement, tipo: 'entra' | 'sale', n: number): HTMLElement | null => {
+      let primero: HTMLElement | null = null;
+      for (const el of sec.querySelectorAll<HTMLElement>(`[data-ancla-${tipo}="${n}"]`)) {
+        const r = el.getBoundingClientRect();
+        const visible = r.width > 0 && r.height > 0 && r.right > 0 && r.left < innerWidth && r.bottom > 0 && r.top < innerHeight;
+        // Los pasos de #proceso fuera de turno ocupan su celda con visibility: hidden: no son ancla
+        if (!visible || getComputedStyle(el).visibility === 'hidden') continue;
+        if (el.querySelector('input:checked')) return el;
+        primero ??= el;
+      }
+      return primero;
+    };
+    const existeAncla = (sec: HTMLElement, tipo: 'entra' | 'sale', n: number) =>
+      sec.querySelector(`[data-ancla-${tipo}="${n}"]`) !== null;
+
+    const cabeceraCta = (): HTMLElement | null => {
+      const el = document.getElementById('cta-cabecera');
+      return el && el.getClientRects().length > 0 ? el : null;
+    };
+
+    // Radios de las cuatro esquinas de un ancla (medidas simples en px; si no, 0px). Se devuelven las cuatro, no solo la superior
+    // izquierda: el arco de la portada tiene la base recta y, con un único radio, la captura ganaba esquinas inferiores redondeadas
+    const radioDe = (el: HTMLElement | null) => {
+      if (!el) return '0px';
+      const cs = getComputedStyle(el);
+      return [cs.borderTopLeftRadius, cs.borderTopRightRadius, cs.borderBottomRightRadius, cs.borderBottomLeftRadius]
+        .map((v) => (/^\d+(\.\d+)?px$/.test(v) ? v : '0px')).join(' ');
+    };
+
+    // Píldora de la cabecera: se desliza al enlace de la escena activa (en escenas sin enlace se recoge)
+    const lwCab = document.querySelector<HTMLElement>('.cab-lw');
+    const pildora: Pildora | null = lwCab ? crearPildora(lwCab) : null;
+    señal.signal.addEventListener('abort', () => pildora?.destruir());
+    // Foco que sigue al puntero en las tarjetas de «Cómo ayudar»
+    const escenaAyuda = document.getElementById('ayuda');
+    if (escenaAyuda) iniciarFoco(escenaAyuda, [...escenaAyuda.querySelectorAll<HTMLElement>('.ayuda-lista .spot')], señal.signal);
+
+    const actualizarPuntos = (animarPildora = false) => {
+      nav?.querySelectorAll('a').forEach((a, i) => {
+        if (i === indice) a.setAttribute('aria-current', 'true');
+        else a.removeAttribute('aria-current');
+      });
+      pildora?.marcar(escenas[indice].id, animarPildora);
+    };
+
+    // Desplazamiento interno: si la escena puede scrollear en esa dirección, la rueda no cambia de escena
+    const scrollInterno = (sec: HTMLElement, dy: number) => {
+      if (sec.scrollHeight <= sec.clientHeight + 1) return false;
+      return dy > 0 ? sec.scrollTop + sec.clientHeight < sec.scrollHeight - 1 : sec.scrollTop > 0;
+    };
+
+    const cerrarMenu = () => {
+      if (menu?.matches(':popover-open')) menu.hidePopover?.();
+      if (menu?.classList.contains('abierto')) cerrarRespaldo();
+    };
+
+    // Marca la escena que se activa para que sus textos suban (fase 3, o cambio de sub-paso en proceso)
+    const animarEntrada = (sec: HTMLElement) => {
+      sec.classList.add('entrando');
+      clearTimeout(temporizadorEntrada);
+      // 2 s: el formulario de contacto encadena su construcción (hasta ~1,9 s); quitar la clase antes la cortaría
+      temporizadorEntrada = window.setTimeout(() => sec.classList.remove('entrando'), 2000);
+    };
+
+    // Cambia a la escena destino en tres fases. Las anclas solo viajan entre vecinas; un salto largo revela desde el centro.
+    const ir = async (destino: number) => {
+      if (!modo || ocupado || destino === indice || destino < 0 || destino >= escenas.length) return;
+      ocupado = true;
+      // Si el usuario sigue durante la llegada (fase 3), esa llegada se corta limpiamente
+      clearTimeout(temporizadorEntrada);
+      escenas.forEach((s) => s.classList.remove('entrando'));
+      limpiarPasos();
+      const origen = indice;
+      const origenSec = escenas[origen];
+      const sec = escenas[destino];
+      const adelante = destino > origen;
+      const adyacente = Math.abs(destino - origen) === 1;
+      const cabeceraSale = adelante && origenSec.id === 'preguntas' && sec.id === 'contacto';
+      const cabeceraEntra = !adelante && origenSec.id === 'contacto' && sec.id === 'preguntas';
+      const tipoSale = adelante ? 'sale' : 'entra';
+      const tipoEntra = adelante ? 'entra' : 'sale';
+      // División (#proceso → #ayuda) y unión (#ayuda → #proceso): la insignia se cambia por las cuatro semillas
+      const dividir = origenSec.id === 'proceso' && sec.id === 'ayuda';
+      const unir = origenSec.id === 'ayuda' && sec.id === 'proceso';
+
+      // Sub-paso de destino: primero (al entrar hacia delante, el primero; hacia atrás, el último)
+      fijarPaso(sec, adelante ? 0 : subpasosDe(sec) - 1, false);
+
+      // Fase 1 · despedida: la escena de origen sale; sus anclas quedan como formas
+      origenSec.classList.remove('entrando');
+      html.dataset.fase = 'salida';
+      if (cabeceraSale || cabeceraEntra) html.dataset.cabecera = '1';
+      origenSec.classList.add('saliendo');
+      await esperar(DESPEDIDA);
+      if (dividir) colocarSemillas();
+
+      // Pares: solo los números presentes en ambos lados; el origen se mide ya sin movimiento de textos
+      const origenEls: (HTMLElement | null)[] = [];
+      const destinoEls: (HTMLElement | null)[] = [];
+      const pares: number[] = [];
+      for (let n = 1; n <= PARES && adyacente; n++) {
+        const hayDestino = (cabeceraEntra && n === 1) || existeAncla(sec, tipoEntra, n);
+        if (!hayDestino) continue;
+        const el = cabeceraSale && n === 1 ? cabeceraCta() : anclaDe(origenSec, tipoSale, n);
+        if (el) { origenEls[n] = el; pares.push(n); }
+      }
+      // La insignia sale de la captura vieja: las semillas ya son el mismo círculo en su sitio
+      if (dividir) ocultarInsignia();
+      if (dividir || unir) html.dataset.division = '1';
+      html.dataset.dir = adelante ? 'adelante' : 'atras';
+      for (const n of pares) {
+        const el = origenEls[n]!;
+        el.style.viewTransitionName = `ancla-${n}`;
+        html.style.setProperty(`--ar-sale-${n}`, radioDe(el));
+      }
+
+      // Fase 2 · morph: la escena de destino llega en "llegando" (solo formas en la captura)
+      const actualizar = () => {
+        // El nombre de origen se quita aquí (la captura vieja ya está hecha): así el botón de cabecera no duplica el nombre del destino
+        for (const n of pares) origenEls[n]!.style.viewTransitionName = '';
+        origenSec.classList.remove('activa', 'saliendo');
+        sec.classList.add('activa', 'llegando');
+        html.dataset.fase = 'morph';
+        // Al unirse, las semillas (ya visibles) reciben a los iconos; la insignia no entra en la captura nueva
+        if (unir) { colocarSemillas(); ocultarInsignia(); }
+        indice = destino;
+        for (const n of pares) {
+          const el = cabeceraEntra && n === 1 ? cabeceraCta() : anclaDe(sec, tipoEntra, n);
+          if (!el) continue;
+          el.style.viewTransitionName = `ancla-${n}`;
+          destinoEls[n] = el;
+          html.style.setProperty(`--ar-entra-${n}`, radioDe(el));
+        }
+        actualizarPuntos(true);
+        history.replaceState(history.state, '', `#${sec.id}`);
+      };
+
+      // Fase 3 · llegada: los textos de la escena nueva suben; luego se libera la entrada
+      const llegada = () => {
+        for (const el of [...origenEls, ...destinoEls]) if (el) el.style.viewTransitionName = '';
+        html.dataset.fase = 'llegada';
+        sec.classList.remove('llegando');
+        delete html.dataset.division;
+        mostrarInsignia();
+        // Al volver a #proceso, la insignia llega con su dígito rodando desde arriba
+        if (unir) {
+          const actual = procesoEl?.querySelector<HTMLElement>('.paso.actual') ?? null;
+          if (actual) {
+            actual.classList.add('llega', 'atras');
+            window.setTimeout(() => actual.classList.remove('llega', 'atras'), 700);
+          }
+        }
+        animarEntrada(sec);
+        finVT = performance.now();
+        setTimeout(() => {
+          ocupado = false;
+          acumulado = 0;
+          delete html.dataset.fase;
+          delete html.dataset.cabecera;
+        }, LIBERA);
+        sec.querySelector<HTMLElement>('h1[tabindex="-1"], h2[tabindex="-1"]')?.focus({ preventScroll: true });
+      };
+
+      if (!doc.startViewTransition) {
+        actualizar();
+        llegada();
+        return;
+      }
+      let t: VT;
+      try {
+        t = doc.startViewTransition(actualizar);
+      } catch {
+        actualizar();
+        llegada();
+        return;
+      }
+      t.finished.then(llegada, llegada);
+    };
+
+    // Un paso hacia delante o atrás: primero el sub-paso de la escena actual, luego la escena vecina
+    const avanzar = (dir: 1 | -1) => {
+      if (!modo || ocupado || bloqueoPaso) return;
+      const sec = escenas[indice];
+      const siguiente = pasoDe(sec) + dir;
+      if (siguiente >= 0 && siguiente < subpasosDe(sec)) {
+        // En proceso solo cambian los pasos (la sección no se anima); en adopta se desliza la pista
+        if (sec.dataset.subpasos === 'pasos') {
+          cambiarPaso(sec, siguiente);
+          bloqueoPaso = true;
+          setTimeout(() => { bloqueoPaso = false; }, 450);
+        } else {
+          fijarPaso(sec, siguiente, true);
+        }
+        return;
+      }
+      void ir(indice + dir);
+    };
+
+    // ¿Puede moverse la rueda en esa dirección? (sub-paso o escena vecina)
+    const puedeAvanzar = (dir: 1 | -1) => {
+      const sec = escenas[indice];
+      const sig = pasoDe(sec) + dir;
+      return (sig >= 0 && sig < subpasosDe(sec)) || (indice + dir >= 0 && indice + dir < escenas.length);
+    };
+
+    // Rueda: acumula el desplazamiento; ignora inercia tras una transición
+    addEventListener('wheel', (e) => {
+      if (!modo || e.ctrlKey || e.metaKey) return;
+      // Firefox con rueda de ratón envía líneas (deltaMode 1) o páginas (2), no píxeles
+      const px = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaMode === 2 ? e.deltaY * innerHeight : e.deltaY;
+      const ahora = performance.now();
+      if (ahora - ultimaRueda > 200) rafagaInterna = false;
+      // Solo un textarea con scroll propio, en esa dirección, retiene la rueda; un select cerrado no
+      const ta = cercano(e.target, 'textarea') as HTMLTextAreaElement | null;
+      const taScroll = !!ta && (px > 0 ? ta.scrollTop + ta.clientHeight < ta.scrollHeight - 1 : ta.scrollTop > 0);
+      if (ocupado || ahora - finVT < ESPERA_RUEDA || taScroll) {
+        acumulado = 0;
+        ultimaRueda = ahora;
+        return;
+      }
+      if (scrollInterno(escenas[indice], px)) {
+        // La ráfaga que desplazó el contenido no cambia de escena: hace falta otra que empiece en el tope
+        rafagaInterna = true;
+        acumulado = 0;
+        ultimaRueda = ahora;
+        return;
+      }
+      if (rafagaInterna) {
+        acumulado = 0;
+        ultimaRueda = ahora;
+        return;
+      }
+      // (c) pausa de más de 200 ms: empieza un gesto nuevo
+      if (ahora - ultimaRueda > 200) acumulado = 0;
+      // (b) cambio de sentido: descarta lo acumulado en el sentido anterior
+      if (acumulado !== 0 && Math.sign(acumulado) !== Math.sign(px)) acumulado = 0;
+      ultimaRueda = ahora;
+      acumulado += px;
+      if (Math.abs(acumulado) < UMBRAL) return;
+      const dir = acumulado > 0 ? 1 : -1;
+      acumulado = 0;
+      // (a) no se puede mover (primera/última escena y sub-paso): se descarta
+      if (!puedeAvanzar(dir)) return;
+      avanzar(dir);
+    }, { passive: true, ...señal });
+
+    // Teclado: flechas, AvPág, espacio, inicio y fin; no actúa dentro de campos ni sobre botones con espacio
+    addEventListener('keydown', (e) => {
+      if (!modo || e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target as HTMLElement;
+      if (cercano(t, 'input, textarea, select, [contenteditable]')) return;
+      // Con el foco en el test (el enunciado recibe el foco al avanzar) las flechas y el espacio no cambian de escena
+      if (cercano(t, '#form-test') && !['PageDown', 'PageUp', 'Home', 'End'].includes(e.key)) return;
+      const enBoton = !!cercano(t, 'button, a, summary');
+      const sec = escenas[indice];
+      let dir: 1 | -1;
+      switch (e.key) {
+        case 'ArrowDown':
+        case 'PageDown':
+          dir = 1; break;
+        case 'ArrowUp':
+        case 'PageUp':
+          dir = -1; break;
+        case ' ':
+          if (enBoton) return;
+          dir = e.shiftKey ? -1 : 1; break;
+        case 'Home':
+          e.preventDefault(); void ir(0); return;
+        case 'End':
+          e.preventDefault(); void ir(escenas.length - 1); return;
+        default:
+          return;
+      }
+      if (scrollInterno(sec, dir)) return;
+      e.preventDefault();
+      avanzar(dir);
+    }, señal);
+
+    // Táctil: deslizar en vertical, con poco movimiento horizontal
+    addEventListener('touchstart', (e) => {
+      if (e.touches.length > 1) { tacto = null; multitoque = true; return; }
+      tacto = null;
+      multitoque = false;
+      // Un campo solo bloquea el gesto si es un textarea/select o un input que ya tiene el foco (escribiendo)
+      const campo = cercano(e.target, 'input');
+      if (!modo || cercano(e.target, 'textarea, select') || (campo && campo === document.activeElement)) return;
+      if ((window.visualViewport?.scale ?? 1) > 1.01) return;
+      const t = e.touches[0];
+      tacto = { x: t.clientX, y: t.clientY };
+      // Contenedor con scroll propio bajo el dedo: se anota si ya estaba en el tope al empezar el gesto
+      tactoScroll = null;
+      let o = e.target instanceof Element ? e.target : null;
+      while (o) {
+        if (o instanceof HTMLElement && o.scrollHeight > o.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(o).overflowY)) {
+          tactoScroll = { el: o, top: o.scrollTop, enTope: o.scrollTop <= 0, enFondo: o.scrollTop + o.clientHeight >= o.scrollHeight - 1 };
+          break;
+        }
+        if (o.classList.contains('diapo')) break;
+        o = o.parentElement;
+      }
+    }, { passive: true, ...señal });
+    addEventListener('touchend', (e) => {
+      if (!modo || !tacto) return;
+      if (multitoque || e.touches.length > 0 || (window.visualViewport?.scale ?? 1) > 1.01) { tacto = null; return; }
+      const t = e.changedTouches[0];
+      const dx = t.clientX - tacto.x;
+      const dy = tacto.y - t.clientY;
+      tacto = null;
+      if (Math.abs(dy) < UMBRAL || Math.abs(dx) > Math.abs(dy) * 0.5) return;
+      // Si el gesto desplazó un contenedor, o este no estaba en su tope al empezar, no cambia de escena
+      if (tactoScroll && (tactoScroll.el.scrollTop !== tactoScroll.top || (dy > 0 ? !tactoScroll.enFondo : !tactoScroll.enTope))) return;
+      if (scrollInterno(escenas[indice], dy)) return;
+      avanzar(dy > 0 ? 1 : -1);
+    }, { passive: true, ...señal });
+
+    // Enlaces internos (con "#" o con la ruta de esta página). Se atienden en fase de captura, antes que el
+    // router de Astro (ClientRouter), que si no los resuelve él mismo con su propio preventDefault.
+    addEventListener('click', (e) => {
+      if (!modo || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      const a = cercano(e.target, 'a[href]') as HTMLAnchorElement | null;
+      if (!a) return;
+      const u = new URL(a.href, location.href);
+      if (u.origin !== location.origin || u.pathname !== location.pathname || !u.hash) return;
+      const destino = indiceDe(decodeURIComponent(u.hash.slice(1)));
+      if (destino < 0) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      // "Quiero conocer a X" preselecciona el motivo antes de ir a contacto
+      if (a.dataset.adoptar && motivo) motivo.value = `Quiero adoptar a ${a.dataset.adoptar}`;
+      cerrarMenu();
+      void ir(destino);
+    }, { capture: true, ...señal });
+
+    // Atrás/adelante del navegador o un hash que no pasó por ir(): activa la escena sin transición
+    addEventListener('hashchange', () => {
+      if (!modo || ocupado) return;
+      const destino = indiceDe(decodeURIComponent(location.hash.slice(1)));
+      if (destino < 0 || destino === indice) return;
+      escenas[indice].classList.remove('activa');
+      indice = destino;
+      escenas[destino].classList.add('activa');
+      fijarPaso(escenas[destino], 0, false);
+      actualizarPuntos();
+    }, señal);
+
+    // Filtro de especie: recuenta las fichas y vuelve a la primera
+    const tarjetas = [...document.querySelectorAll<HTMLElement>('#lista-peludos > li')];
+    const cuenta = document.getElementById('cuenta-peludos');
+    const filtrar = () => {
+      const valor = document.querySelector<HTMLInputElement>('input[name="filtro"]:checked')?.value ?? 'todos';
+      tarjetas.forEach((t) => { t.hidden = valor !== 'todos' && t.dataset.especie !== valor; });
+      if (cuenta) cuenta.textContent = String(tarjetas.filter((t) => !t.hidden).length);
+      if (pistaPasos) fijarPaso(pistaPasos, 0, false);
+    };
+    filtrar();
+    document.querySelectorAll<HTMLInputElement>('input[name="filtro"]').forEach((r) => r.addEventListener('change', filtrar, señal));
+
+    // Teclado dentro de la pista: enfocar una ficha lleva la pista hasta ella
+    const vista = pistaPasos?.querySelector<HTMLElement>('.vista') ?? null;
+    vista?.addEventListener('scroll', () => { vista.scrollLeft = 0; }, señal);
+    pistaPasos?.addEventListener('focusin', (e) => {
+      if (!modo) return;
+      const li = cercano(e.target, '#lista-peludos > li') as HTMLElement | null;
+      if (!li) return;
+      const idx = tarjetas.filter((t) => !t.hidden).indexOf(li);
+      if (idx >= 0 && idx !== pasoDe(pistaPasos)) fijarPaso(pistaPasos, idx, true);
+    }, señal);
+
+    // "Quiero conocer a X" preselecciona el motivo del formulario (después el enlace lleva a contacto)
+    const motivo = document.querySelector<HTMLSelectElement>('#c-motivo');
+    document.querySelectorAll<HTMLAnchorElement>('[data-adoptar]').forEach((a) =>
+      a.addEventListener('click', () => { if (motivo) motivo.value = `Quiero adoptar a ${a.dataset.adoptar}`; }, señal),
+    );
+
+    // Test de compatibilidad por pasos (la rueda no responde preguntas: el test es parte de la escena #test)
+    const formTest = document.querySelector<HTMLFormElement>('#form-test');
+    if (formTest) iniciarTest(formTest);
 
     // Formulario de contacto (demo, no envía datos)
     const form = document.querySelector<HTMLFormElement>('#form-contacto');
@@ -392,6 +1883,78 @@ const preguntas = [
       document.getElementById('c-quien')!.textContent = nombre.value.trim().split(' ')[0];
       form.classList.add('hidden');
       document.getElementById('c-exito')!.classList.remove('hidden');
+    });
+
+    // Activación del modo mazo: requisitos de navegador, movimiento y altura
+    // Histéresis: se activa desde 560 px de alto y solo se desactiva por debajo de 480 (en iOS el alto cambia al plegar las barras)
+    const modoPosible = () =>
+      !!doc.startViewTransition &&
+      matchMedia('(prefers-reduced-motion: no-preference)').matches &&
+      (modo ? innerHeight >= 480 : innerHeight >= 560);
+
+    // Asigna --k en orden del DOM dentro de cada escena (cascada de 30 ms)
+    escenas.forEach((sec) =>
+      sec.querySelectorAll<HTMLElement>('.sube, .revela').forEach((el, k) => el.style.setProperty('--k', String(k))),
+    );
+
+    const activar = (on: boolean) => {
+      modo = on;
+      html.classList.toggle('escenas', on);
+      if (on) {
+        escenas.forEach((sec, i) => sec.classList.toggle('activa', i === indice));
+        escenas.forEach((sec) => { if (subpasosDe(sec) > 0 && sec.dataset.subpasos) fijarPaso(sec, pasoDe(sec), false); });
+        actualizarPuntos();
+      } else {
+        escenas.forEach((sec) => sec.classList.remove('activa'));
+      }
+    };
+    const evaluar = () => {
+      const quiere = modoPosible();
+      if (quiere !== modo) activar(quiere);
+    };
+    // Si la escena inicial viene con #ancla, se activa sin transición
+    if (procesoEl) fijarPaso(procesoEl, 0, false);
+    evaluar();
+    let anchoPrev = innerWidth;
+    let altoPrev = innerHeight;
+    addEventListener('resize', () => {
+      // Las barras del navegador (mismo ancho, menos de 120 px de alto) no reevalúan el modo, pero las semillas sí se recolocan
+      if (innerWidth !== anchoPrev || Math.abs(innerHeight - altoPrev) >= 120) {
+        anchoPrev = innerWidth;
+        altoPrev = innerHeight;
+        evaluar();
+      }
+      colocarSemillas();
+    }, señal);
+  }
+
+  // Al salir de la página se limpian listeners y el modo mazo
+  const ventana = window as Window & { __peludoEnlazado?: boolean };
+  if (!ventana.__peludoEnlazado) {
+    ventana.__peludoEnlazado = true;
+    document.addEventListener('astro:before-swap', () => {
+      cancelar?.abort();
+      cancelar = null;
+      document.documentElement.classList.remove('escenas', 'abriendo');
+      document.documentElement.removeAttribute('data-dir');
+      document.documentElement.removeAttribute('data-fase');
+      document.documentElement.removeAttribute('data-cabecera');
+    });
+    // Llegada por navegación de cliente: el <html> llega sin la clase; se vuelve a poner, con la escena inicial
+    // (por hash o la portada), antes del primer pintado. La carga directa lo hace el script del <head>.
+    document.addEventListener('astro:after-swap', () => {
+      const html = document.documentElement;
+      const mazo = !!(document as DocVT).startViewTransition &&
+        matchMedia('(prefers-reduced-motion: no-preference)').matches && innerHeight >= 560;
+      html.classList.toggle('escenas', mazo);
+      if (!mazo) return;
+      const secciones = [...document.querySelectorAll<HTMLElement>('main > section.diapo')];
+      let destino: HTMLElement | null = secciones[0] ?? null;
+      try {
+        const el = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+        destino = (el?.closest('main > section.diapo') as HTMLElement | null) ?? destino;
+      } catch { /* hash mal codificado: se queda la portada */ }
+      secciones.forEach((s) => s.classList.toggle('activa', s === destino));
     });
   }
   document.addEventListener('astro:page-load', iniciarPeludo);

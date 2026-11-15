@@ -54,8 +54,8 @@ const id = `r-${peludo.nombre.toLowerCase().replace(/[^a-z]/g, '')}-${sufijo}`;
 <style>
   .retrato .ojos { transform-box: fill-box; transform-origin: center; animation: parpadeo 5.5s infinite; }
   .retrato .oreja { transform-box: fill-box; }
-  .retrato:hover .oreja-i { animation: oreja-i .5s ease-in-out 2; transform-origin: 80% 10%; }
-  .retrato:hover .oreja-d { animation: oreja-d .5s ease-in-out 2; transform-origin: 20% 10%; }
+  .retrato:hover .oreja-i { animation: oreja-i .5s var(--encastre) 2; transform-origin: 80% 10%; }
+  .retrato:hover .oreja-d { animation: oreja-d .5s var(--encastre) 2; transform-origin: 20% 10%; }
   .retrato .lengua { transform-box: fill-box; transform-origin: top; transform: scaleY(0); transition: transform .3s; }
   .retrato:hover .lengua { transform: scaleY(1); }
   @keyframes parpadeo { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
